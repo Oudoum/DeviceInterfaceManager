@@ -1,0 +1,135 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:device="clr-namespace:DeviceInterfaceManager.Devices"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DeviceInterfaceManager.Views.OutputTestView"
+             x:DataType="vm:OutputTestViewModel">
+
+    <Viewbox>
+
+        <Grid ColumnDefinitions="400,400" Margin="25">
+
+            <StackPanel Orientation="Vertical" Spacing="25">
+
+                <Border Name="Border" BorderThickness="3" BorderBrush="DimGray" CornerRadius="15"
+                        HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
+                        <TextBlock Text="Dataline" FontSize="22" HorizontalAlignment="Center" />
+                        <ComboBox
+                            PlaceholderText="Position"
+                            FontSize="18"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            Width="100"
+                            SelectedItem="{Binding DatalineSelectedPosition}"
+                            ItemsSource="{Binding InputOutputDevice.Dataline.Range }" />
+                        <StackPanel Orientation="Horizontal" Spacing="15">
+                            <Button Content="On" Command="{Binding SetDatalineCommand}">
+                                <Button.CommandParameter>
+                                    <sys:Boolean>True</sys:Boolean>
+                                </Button.CommandParameter>
+                            </Button>
+                            <Button Content="Off" Command="{Binding SetDatalineCommand}">
+                                <Button.CommandParameter>
+                                    <sys:Boolean>False</sys:Boolean>
+                                </Button.CommandParameter>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                    <i:Interaction.Behaviors>
+                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.Dataline.Count}"
+                                                Value="0">
+                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="False" />
+                        </ia:DataTriggerBehavior>
+                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.Dataline.Count}"
+                                                ComparisonCondition="GreaterThan"
+                                                Value="0">
+                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="True" />
+                        </ia:DataTriggerBehavior>
+                    </i:Interaction.Behaviors>
+                </Border>
+
+                <Border BorderThickness="3" BorderBrush="DimGray" CornerRadius="15" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
+                        <TextBlock Text="7 Segment" FontSize="22" HorizontalAlignment="Center" />
+                        <ComboBox
+                            PlaceholderText="Digit"
+                            FontSize="18"
+                            FontWeight="Bold"
+                            HorizontalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            Width="100"
+                            SelectedItem="{Binding SevenSegmentSelectedPosition}"
+                            ItemsSource="{Binding InputOutputDevice.SevenSegment.Range }" />
+                        <TextBox
+                            Watermark="Data"
+                            MinWidth="100"
+                            HorizontalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            FontSize="18"
+                            Text="{Binding SevenSegmentText}"
+                            FontWeight="Bold" />
+                    </StackPanel>
+                    <i:Interaction.Behaviors>
+                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.SevenSegment.Count}"
+                                                Value="0">
+                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="False" />
+                        </ia:DataTriggerBehavior>
+                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.SevenSegment.Count}"
+                                                ComparisonCondition="GreaterThan"
+                                                Value="0">
+                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="True" />
+                        </ia:DataTriggerBehavior>
+                    </i:Interaction.Behaviors>
+                </Border>
+
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Center" Spacing="25">
+                <Button Content="Set all LEDs to On" Command="{Binding SetAllLedCommand}" HorizontalAlignment="Stretch">
+                    <Button.CommandParameter>
+                        <sys:Boolean>True</sys:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+                <Button Content="Set all LEDs to Off" Command="{Binding SetAllLedCommand}"
+                        HorizontalAlignment="Stretch">
+                    <Button.CommandParameter>
+                        <sys:Boolean>False</sys:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+
+                <DataGrid Name="LedDataGrid" Tag="Test" ItemsSource="{Binding InputOutputDevice.Led.Components}"
+                          AutoGenerateColumns="False" MaxHeight="500">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Position" Binding="{Binding Position}" />
+
+                        <DataGridTemplateColumn Header="On/Off" SortMemberPath="IsSet">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="device:Component">
+                                    <CheckBox
+                                        Command="{Binding Path=((vm:OutputTestViewModel)DataContext).IsCheckedCommand,
+                                        FallbackValue={x:Null},
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        IsChecked="{Binding IsSet}"
+                                        HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+            </StackPanel>
+
+        </Grid>
+
+    </Viewbox>
+
+</UserControl>

@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="DeviceInterfaceManager.Views.DeviceView"
+             x:DataType="vm:DeviceViewModel">
+
+    <TabControl>
+        <TabControl.Styles>
+            <Style Selector="StackPanel">
+                <Setter Property="Orientation" Value="Horizontal" />
+            </Style>
+            <Style Selector="ui|IconSourceElement">
+                <Setter Property="Height" Value="18" />
+                <Setter Property="Margin" Value="0 3 10 0" />
+            </Style>
+            <Style Selector="Rectangle#PART_SelectedPipe">
+                <Setter Property="Width" Value="20" />
+            </Style>
+        </TabControl.Styles>
+
+        <TabItem IsSelected="{Binding IsHomeSelected}" Content="{Binding InformationViewModel}">
+            <TabItem.Header>
+                <StackPanel>
+                    <ui:IconSourceElement IconSource="{StaticResource InformationBoxOutline}" />
+                    <TextBlock Text="Information" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem IsSelected="{Binding IsInputTestSelected}" Content="{Binding InputTestViewModel}">
+            <TabItem.Header>
+                <StackPanel>
+                    <ui:IconSourceElement IconSource="{StaticResource Import}" />
+                    <TextBlock Text="Input" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+        <TabItem IsSelected="{Binding IsOutputTestSelected}" Content="{Binding OutputTestViewModel}">
+            <TabItem.Header>
+                <StackPanel>
+                    <ui:IconSourceElement IconSource="{StaticResource Export}" />
+                    <TextBlock Text="Output" />
+                </StackPanel>
+            </TabItem.Header>
+        </TabItem>
+    </TabControl>
+
+</UserControl>

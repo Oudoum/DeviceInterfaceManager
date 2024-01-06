@@ -1,0 +1,14 @@
+{
+  "content": [
+    {
+      "path": "ContentInfo/dim-event-module/Thumbnail.jpg",
+      "size": 17994,
+      "date": 133258662849027937
+    },
+    {
+      "path": "modules/DIM_WASM_Module.wasm",
+      "size": 30195,
+      "date": 133258964195734773
+    }
+  ]
+}

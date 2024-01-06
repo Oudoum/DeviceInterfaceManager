@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+        mc:Ignorable="d"
+        x:Class="DeviceInterfaceManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1440"
+        Height="900"
+        MinWidth="640"
+        MinHeight="480"
+        Title="">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid>
+
+        <ui:NavigationView AlwaysShowHeader="False"
+                           IsSettingsVisible="False"
+                           SelectedItem="{Binding SelectedItem}"
+                           Content="{Binding CurrentViewModel}">
+
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem IsSelected="True" Content="Home" IconSource="{StaticResource HomeOutline}" />
+                <ui:NavigationViewItemSeparator />
+                <ui:NavigationViewItem Content="Profile Creator" IconSource="{StaticResource ShapePlusOutline}" />
+                <ui:NavigationViewItemSeparator />
+                <ui:NavigationViewItem Content="Devices" IconSource="{StaticResource Devices}" SelectsOnInvoked="False">
+                    <ui:NavigationViewItem.InfoBadge>
+                        <ui:InfoBadge Value="{Binding DeviceItems.Count}" />
+                    </ui:NavigationViewItem.InfoBadge>
+                    <ui:NavigationViewItem.MenuItemsSource>
+                        <Binding Path="DeviceItems" />
+                    </ui:NavigationViewItem.MenuItemsSource>
+                    <ui:NavigationViewItem.DataTemplates>
+                        <DataTemplate DataType="{x:Type vm:DeviceItem}">
+                            <ToolTip Margin="-51 0 -22 0"
+                                     Background="Transparent"
+                                     CornerRadius="0"
+                                     BorderThickness="0"
+                                     Tip="{Binding ToolTip}">
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="40 0 0 0">
+                                    <ui:IconSourceElement IconSource="{Binding Icon}" />
+                                    <TextBlock VerticalAlignment="Center" FontSize="14" Text="{Binding Name}" />
+                                </StackPanel>
+                            </ToolTip>
+                        </DataTemplate>
+                    </ui:NavigationViewItem.DataTemplates>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.MenuItems>
+
+            <ui:NavigationView.FooterMenuItems>
+                <ui:NavigationViewItem Content="Settings" IconSource="{StaticResource CogOutline}" />
+            </ui:NavigationView.FooterMenuItems>
+
+        </ui:NavigationView>
+
+    </Grid>
+
+</Window>
