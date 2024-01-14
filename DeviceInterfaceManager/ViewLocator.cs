@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
+using DeviceInterfaceManager.Devices;
 
 namespace DeviceInterfaceManager;
 
@@ -9,7 +10,7 @@ public class ViewLocator : IDataTemplate
 {
     public Control Build(object? data)
     {
-        if (data is null)
+        if (data is null or Component)
         {
             return new TextBlock { Text = "data was null" };
         }
