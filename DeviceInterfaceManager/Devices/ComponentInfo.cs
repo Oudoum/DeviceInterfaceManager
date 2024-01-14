@@ -6,15 +6,26 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeviceInterfaceManager.Devices;
 
-public readonly struct ComponentInfo(int count, int first, int last)
+public readonly struct ComponentInfo(int first, int last)
 {
-    public int Count { get; } = count;
+    public int Count => Components.Count();
+
     public int First { get; } = first;
+
     public int Last { get; } = last;
-    public IEnumerable<Component> Components { get; } = Component.GetComponents(first, last);
-    public IEnumerable<int> Range { get; } = Enumerable.Range(first, count);
     
-    public async Task PerformOperationOnRange(Func<int, Task> operationOnElement)
+    public IEnumerable<Component> Components { get; } = Component.GetComponents(first, last);
+    
+    public void UpdatePosition(int position, bool isSet)
+    {
+        Component? component = Components.FirstOrDefault(c => c.Position == position);
+        if (component is not null)
+        {
+            component.IsSet = isSet;
+        }
+    }
+    
+    public async Task PerformOperationOnAllComponents(Func<int, Task> operationOnElement)
     {
         for (int i = First; i <= Last; i++)
         {
@@ -33,6 +44,11 @@ public partial class Component(int position) : ObservableObject
     public static IEnumerable<Component> GetComponents(int first, int last)
     {
         List<Component> components = [];
+        if (first == 0 || last == 0)
+        {
+            return components;
+        }
+        
         for (int i = first; i <= last; i++)
         {
             components.Add(new Component(i));
