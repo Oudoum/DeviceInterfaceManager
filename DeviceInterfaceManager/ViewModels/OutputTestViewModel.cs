@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Devices;
@@ -11,20 +12,30 @@ public partial class OutputTestViewModel(DeviceItem deviceItem) : ObservableObje
     private IInputOutputDevice _inputOutputDevice = deviceItem.InputOutputDevice;
 
     [ObservableProperty]
-    private int _datalineSelectedPosition;
+    private Component? _selectedDataline = deviceItem.InputOutputDevice.Dataline.Components.FirstOrDefault();
 
     [RelayCommand]
     private async Task SetDataline(bool direction)
     {
-        await InputOutputDevice.SetDatalineAsync(DatalineSelectedPosition.ToString(), direction);
+        if (SelectedDataline is null)
+        {
+            return;
+        }
+        
+        await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position.ToString(), direction);
     }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SevenSegmentText))]
-    private int _sevenSegmentSelectedPosition;
+    private Component? _selectedSevenSegment = deviceItem.InputOutputDevice.SevenSegment.Components.FirstOrDefault();
 
-    partial void OnSevenSegmentSelectedPositionChanged(int value)
+    partial void OnSelectedSevenSegmentChanged(Component? value)
     {
+        if (value is null)
+        {
+            return;
+        }
+
         Reset7SegmentDisplay();
         SevenSegmentText = _sevenSegmentText;
     }
@@ -36,20 +47,25 @@ public partial class OutputTestViewModel(DeviceItem deviceItem) : ObservableObje
         get => _sevenSegmentText;
         set
         {
+            if (SelectedSevenSegment is null)
+            {
+                return;
+            }
+            
             if (SevenSegmentText.Length > value.Length)
             {
                 Reset7SegmentDisplay();
             }
 
-            int length = InputOutputDevice.SevenSegment.Count - SevenSegmentSelectedPosition + InputOutputDevice.SevenSegment.First;
+            int length = InputOutputDevice.SevenSegment.Count - SelectedSevenSegment.Position + InputOutputDevice.SevenSegment.First;
             if (value.Length > length)
             {
                 _sevenSegmentText = value.Remove(length);
-                InputOutputDevice.SetSevenSegmentAsync(SevenSegmentSelectedPosition.ToString(), _sevenSegmentText);
+                InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position.ToString(), _sevenSegmentText);
                 return;
             }
 
-            InputOutputDevice.SetSevenSegmentAsync(SevenSegmentSelectedPosition.ToString(), _sevenSegmentText = value);
+            InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position.ToString(), _sevenSegmentText = value);
         }
     }
 
