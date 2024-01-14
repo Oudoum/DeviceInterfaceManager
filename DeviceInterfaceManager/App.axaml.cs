@@ -5,13 +5,15 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using DeviceInterfaceManager.ViewModels;
 using DeviceInterfaceManager.Views;
+using HotAvalonia;
 
 namespace DeviceInterfaceManager;
 
-public partial class App : Application
+public class App : Application
 {
     public override void Initialize()
     {
+        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
     }
 
