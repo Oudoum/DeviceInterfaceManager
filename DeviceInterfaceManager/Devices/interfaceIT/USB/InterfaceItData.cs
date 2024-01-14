@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DeviceInterfaceManager.Devices.interfaceIT.USB;
@@ -32,7 +32,7 @@ public partial class InterfaceItData : IDeviceSerial
         interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position));
         return Task.CompletedTask;
     }
-    
+
     public string? BoardName { get; private set; }
     public string? SerialNumber { get; private set; }
 
@@ -44,25 +44,25 @@ public partial class InterfaceItData : IDeviceSerial
             {
                 continue;
             }
-            
+
             interfaceIT_GetBoardInfo(_session, out BoardInfo boardInfo);
             InterfaceItBoardId boardId = GetInterfaceItBoardId(boardInfo.BoardType);
             if (boardId is InterfaceItBoardId.FDS_CONTROLLER_MCP or InterfaceItBoardId.FDS_737_PMX_MCP or InterfaceItBoardId.JetMAX_737_RADIO)
             {
                 interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64);
             }
-            
+
             SerialNumber = device;
             BoardName = boardId.ToString().Replace('_', ' ') + $" ({boardInfo.BoardType})";
             _features = boardInfo.Features;
-            Switch = new ComponentInfo(boardInfo.SwitchCount, boardInfo.SwitchFirst, boardInfo.SwitchLast);
-            Led = new ComponentInfo(boardInfo.LedCount, boardInfo.LedFirst, boardInfo.LedLast);
-            Dataline = new ComponentInfo(boardInfo.DatalineCount, boardInfo.DatalineFirst, boardInfo.DatalineLast);
-            SevenSegment = new ComponentInfo(boardInfo.SevenSegmentCount, boardInfo.SevenSegmentFirst, boardInfo.SevenSegmentLast);
-            
+            Switch = new ComponentInfo(boardInfo.SwitchFirst, boardInfo.SwitchLast);
+            Led = new ComponentInfo(boardInfo.LedFirst, boardInfo.LedLast);
+            Dataline = new ComponentInfo(boardInfo.DatalineFirst, boardInfo.DatalineLast);
+            SevenSegment = new ComponentInfo(boardInfo.SevenSegmentFirst, boardInfo.SevenSegmentLast);
+
             EnableDeviceFeatures();
             interfaceIT_Switch_Enable_Callback(_session, true, _keyNotifyCallback = KeyPressedProc);
-            
+
             return Task.FromResult(ConnectionStatus.Connected);
         }
 
@@ -77,20 +77,27 @@ public partial class InterfaceItData : IDeviceSerial
     }
 
     private KeyNotifyCallback? _keyNotifyCallback;
-    
+
     private void KeyPressedProc(uint session, int key, uint direction)
     {
         bool isPressed = direction == (int)SwitchDirection.Down;
+        Switch.UpdatePosition(key, isPressed);
         InputChanged?.Invoke(this, new InputChangedEventArgs(key, isPressed));
     }
-    
+
     //
-    public static void OpenControllers() => interfaceIT_OpenControllers();
-    
-    public static void CloseControllers() => interfaceIT_CloseControllers();
-    
+    public static void OpenControllers()
+    {
+        interfaceIT_OpenControllers();
+    }
+
+    public static void CloseControllers()
+    {
+        interfaceIT_CloseControllers();
+    }
+
     public static int TotalControllers => interfaceIT_GetTotalControllers();
-    
+
     public static string ApiVersion => interfaceIT_GetAPIVersion();
 
     private static bool _isLoggingEnabled;
@@ -106,14 +113,6 @@ public partial class InterfaceItData : IDeviceSerial
 
     // API
     private delegate void KeyNotifyCallback(uint session, int key, uint direction);
-
-    private delegate void DeviceChangeCallback(int action);
-
-    private enum DeviceNotification : byte
-    {
-        Removal = 0x01,
-        Arrival = 0x02
-    }
 
     private enum SwitchDirection : byte
     {
@@ -196,23 +195,23 @@ public partial class InterfaceItData : IDeviceSerial
         public readonly int LedCount;
         public readonly int LedFirst;
         public readonly int LedLast;
-        
+
         public readonly int SwitchCount;
         public readonly int SwitchFirst;
         public readonly int SwitchLast;
-        
+
         public readonly int SevenSegmentCount;
         public readonly int SevenSegmentFirst;
         public readonly int SevenSegmentLast;
-        
+
         public readonly int DatalineCount;
         public readonly int DatalineFirst;
         public readonly int DatalineLast;
-        
+
         public readonly int ServoControllerCount;
         public readonly int ServoControllerFirst;
         public readonly int ServoControllerLast;
-        
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
         public readonly int[] Reserved;
 
@@ -226,7 +225,7 @@ public partial class InterfaceItData : IDeviceSerial
         public readonly int UpdateLevel;
     }
 #pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
-    
+
     //Main Functions
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCodes interfaceIT_OpenControllers();
@@ -281,7 +280,7 @@ public partial class InterfaceItData : IDeviceSerial
 
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCodes interfaceIT_LED_Set(uint session, int led, [MarshalAs(UnmanagedType.Bool)] bool on);
-    
+
 
     //Switch Functions
     [LibraryImport("interfaceITAPI x64.dll")]
@@ -330,12 +329,6 @@ public partial class InterfaceItData : IDeviceSerial
 
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCodes interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
-
-
-    //Device Change Notification
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Enable_DeviceChange_Notification_Callback([MarshalAs(UnmanagedType.Bool)] bool enable, DeviceChangeCallback pProc); //NOT WORKING!!!
-
 
     //Misc Functions
     [LibraryImport("interfaceITAPI x64.dll")]
@@ -416,7 +409,7 @@ public partial class InterfaceItData : IDeviceSerial
             {
                 interfaceIT_Dataline_Set(_session, i, false);
             }
-
+            
             interfaceIT_Dataline_Enable(_session, false);
         }
 
@@ -437,9 +430,18 @@ public partial class InterfaceItData : IDeviceSerial
         return (_features & feature) != 0;
     }
 
-    private static ushort GetProduct(ushort hexCode) => (ushort)((hexCode & 0xFF00) >> 8);
+    private static ushort GetProduct(ushort hexCode)
+    {
+        return (ushort)((hexCode & 0xFF00) >> 8);
+    }
 
-    private static ushort GetModel(ushort hexCode) => (ushort)((hexCode & 0xFF) >> 0);
-    
-    private static InterfaceItBoardId GetInterfaceItBoardId(string boardType) => (InterfaceItBoardId)Convert.ToUInt16(boardType, 16);
+    private static ushort GetModel(ushort hexCode)
+    {
+        return (ushort)((hexCode & 0xFF) >> 0);
+    }
+
+    private static InterfaceItBoardId GetInterfaceItBoardId(string boardType)
+    {
+        return (InterfaceItBoardId)Convert.ToUInt16(boardType, 16);
+    }
 }
