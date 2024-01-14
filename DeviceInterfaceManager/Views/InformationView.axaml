@@ -2,97 +2,87 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:ui="using:FluentAvalonia.UI.Controls"
-             xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="1000"
              x:Class="DeviceInterfaceManager.Views.InformationView"
              x:DataType="vm:InformationViewModel">
 
-    <Viewbox HorizontalAlignment="Left">
+    <Viewbox Margin="25">
 
-        <Grid ColumnDefinitions="*,*" Margin="25">
+        <StackPanel Spacing="25" MinWidth="300">
+            
+            <StackPanel.Styles>
+                <Style Selector="StackPanel">
+                    <Setter Property="Orientation" Value="Vertical" />
+                    <Setter Property="Spacing" Value="0" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+                <Style Selector="Border.b1">
+                    <Setter Property="BorderThickness" Value="5" />
+                    <Setter Property="BorderBrush" Value="DimGray" />
+                    <Setter Property="CornerRadius" Value="25" />
+                </Style>
+                <Style Selector="TextBlock">
+                    <Setter Property="FontSize" Value="32" />
+                </Style>
+                <Style Selector="PathIcon">
+                    <Setter Property="Margin" Value="0 4 0 0" />
+                </Style>
+            </StackPanel.Styles>
 
-            <ui:IconSourceElement Height="200" Margin="75 0 100 0" IconSource="{Binding DeviceItem.Icon}" />
-
-            <StackPanel Grid.Column="1" Spacing="25" MinWidth="300" >
-                <StackPanel.Styles>
-                    <Style Selector="StackPanel">
-                        <Setter Property="Orientation" Value="Vertical" />
-                        <Setter Property="Spacing" Value="0" />
-                        <Setter Property="HorizontalAlignment" Value="Center" />
-                        <Setter Property="VerticalAlignment" Value="Center" />
-                    </Style>
-                    <Style Selector="Border">
-                        <Setter Property="BorderThickness" Value="5" />
-                        <Setter Property="BorderBrush" Value="DimGray" />
-                        <Setter Property="CornerRadius" Value="25" />
-                    </Style>
-                    <Style Selector="TextBlock">
-                        <Setter Property="FontSize" Value="32" />
-                        <Setter Property="Margin" Value="5" />
-                        <Setter Property="HorizontalAlignment" Value="Center" />
-                        <Setter Property="VerticalAlignment" Value="Center" />
-                    </Style>
-                    <Style Selector="ui|IconSourceElement">
-                        <Setter Property="Height" Value="25" />
-                        <Setter Property="Margin" Value="0 3 10 0" />
-                    </Style>
-                </StackPanel.Styles>
-
-                <Border>
-                    <StackPanel Margin="10 0 10 10">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:IconSourceElement IconSource="{StaticResource Devices}" />
-                            <TextBlock Text="Device" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding DeviceItem.InputOutputDevice.BoardName}"
-                                   ToolTip.Tip="{Binding DeviceItem.InputOutputDevice.SerialNumber}" />
+            <Border Classes="b1">
+                <StackPanel Margin="10 0 10 10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource Devices}" />
+                        <TextBlock Text="Device" />
                     </StackPanel>
-                </Border>
+                    <TextBlock Text="{Binding InputOutputDevice.BoardName}"
+                               ToolTip.Tip="{Binding InputOutputDevice.SerialNumber}" />
+                </StackPanel>
+            </Border>
 
-                <Border>
-                    <StackPanel Margin="10 0 10 10">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:IconSourceElement IconSource="{StaticResource ElectricSwitch}" />
-                            <TextBlock Text="Switch" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding ButtonInformation}" />
+            <Border Classes="b1">
+                <StackPanel Margin="10 0 10 10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource ElectricSwitch}" />
+                        <TextBlock Text="Switch" />
                     </StackPanel>
-                </Border>
+                    <TextBlock Text="{Binding ButtonInformation}" />
+                </StackPanel>
+            </Border>
 
-                <Border>
-                    <StackPanel Margin="10 0 10 10">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:IconSourceElement IconSource="{StaticResource LedOutline}" />
-                            <TextBlock Text="LED" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding LedInformation}" />
+            <Border Classes="b1">
+                <StackPanel Margin="10 0 10 10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource LedOutline}" />
+                        <TextBlock Text="LED" />
                     </StackPanel>
-                </Border>
+                    <TextBlock Text="{Binding LedInformation}" />
+                </StackPanel>
+            </Border>
 
-                <Border>
-                    <StackPanel Margin="10 0 10 10">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:IconSourceElement IconSource="{StaticResource LightningBolt}" />
-                            <TextBlock Text="Dataline" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding DatalineInformation}" />
+            <Border Classes="b1">
+                <StackPanel Margin="10 0 10 10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource LightningBolt}" />
+                        <TextBlock Text="Dataline" />
                     </StackPanel>
-                </Border>
+                    <TextBlock Text="{Binding DatalineInformation}" />
+                </StackPanel>
+            </Border>
 
-                <Border>
-                    <StackPanel Margin="10 0 10 10">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:IconSourceElement IconSource="{StaticResource Numeric7BoxOutline}" />
-                            <TextBlock Text="7 Segment" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding SevenSegmentInformation}" />
+            <Border Classes="b1">
+                <StackPanel Margin="10 0 10 10">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
+                        <TextBlock Text="7 Segment" />
                     </StackPanel>
-                </Border>
+                    <TextBlock Text="{Binding SevenSegmentInformation}" />
+                </StackPanel>
+            </Border>
 
-            </StackPanel>
-
-        </Grid>
+        </StackPanel>
 
     </Viewbox>
 
