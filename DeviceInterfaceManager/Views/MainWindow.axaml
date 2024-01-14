@@ -25,11 +25,22 @@
                            Content="{Binding CurrentViewModel}">
 
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem IsSelected="True" Content="Home" IconSource="{StaticResource HomeOutline}" />
+                <ui:NavigationViewItem IsSelected="True" Content="Home">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:PathIconSource Data="{StaticResource HomeOutline}" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItemSeparator />
-                <ui:NavigationViewItem Content="Profile Creator" IconSource="{StaticResource ShapePlusOutline}" />
+                <ui:NavigationViewItem Content="Profile Creator">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:PathIconSource Data="{StaticResource ShapePlusOutline}" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
                 <ui:NavigationViewItemSeparator />
-                <ui:NavigationViewItem Content="Devices" IconSource="{StaticResource Devices}" SelectsOnInvoked="False">
+                <ui:NavigationViewItem Content="Devices" SelectsOnInvoked="False">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:PathIconSource Data="{StaticResource Devices}" />
+                    </ui:NavigationViewItem.IconSource>
                     <ui:NavigationViewItem.InfoBadge>
                         <ui:InfoBadge Value="{Binding DeviceItems.Count}" />
                     </ui:NavigationViewItem.InfoBadge>
@@ -38,23 +49,21 @@
                     </ui:NavigationViewItem.MenuItemsSource>
                     <ui:NavigationViewItem.DataTemplates>
                         <DataTemplate DataType="{x:Type vm:DeviceItem}">
-                            <ToolTip Margin="-51 0 -22 0"
-                                     Background="Transparent"
-                                     CornerRadius="0"
-                                     BorderThickness="0"
-                                     Tip="{Binding ToolTip}">
-                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="40 0 0 0">
-                                    <ui:IconSourceElement IconSource="{Binding Icon}" />
-                                    <TextBlock VerticalAlignment="Center" FontSize="14" Text="{Binding Name}" />
-                                </StackPanel>
-                            </ToolTip>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding ToolTip}" />
+                                <TextBlock FontSize="14" Text="{Binding Name}" />
+                            </StackPanel>
                         </DataTemplate>
                     </ui:NavigationViewItem.DataTemplates>
                 </ui:NavigationViewItem>
             </ui:NavigationView.MenuItems>
 
             <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="Settings" IconSource="{StaticResource CogOutline}" />
+                <ui:NavigationViewItem Content="Settings">
+                    <ui:NavigationViewItem.IconSource>
+                        <ui:PathIconSource Data="{StaticResource CogOutline}" />
+                    </ui:NavigationViewItem.IconSource>
+                </ui:NavigationViewItem>
             </ui:NavigationView.FooterMenuItems>
 
         </ui:NavigationView>
