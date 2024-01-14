@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Templates;
+using Avalonia.Media;
 using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DeviceInterfaceManager.Devices;
@@ -17,7 +18,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (Design.IsDesignMode)
         {
-            DeviceItems.Add(new DeviceItem(new InterfaceItData()));
+            DeviceItems.Add(new DeviceItem(new DeviceSerialBase()));
             return;
         }
 
@@ -101,7 +102,7 @@ public class DeviceItem(IInputOutputDevice inputOutputDevice)
     public IInputOutputDevice InputOutputDevice { get; } = inputOutputDevice;
     public string? Name { get; } = inputOutputDevice.BoardName;
     public string? ToolTip { get; } = inputOutputDevice.SerialNumber;
-    public IconSource? Icon { get; } = (IconSource?)Application.Current!.FindResource(inputOutputDevice is IDeviceSerial ? "UsbPort" : "Ethernet");
+    public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource(inputOutputDevice is IDeviceSerial ? "UsbPort" : "Ethernet");
 
     private DeviceViewModel? _deviceViewModel;
     public DeviceViewModel DeviceViewModel => _deviceViewModel ??= new DeviceViewModel(this);
@@ -109,7 +110,8 @@ public class DeviceItem(IInputOutputDevice inputOutputDevice)
 
 public class MenuItemTemplateSelector : DataTemplateSelector
 {
-    [Content] public IDataTemplate? ItemTemplate { get; set; }
+    [Content]
+    public IDataTemplate? ItemTemplate { get; set; }
 
     protected override IDataTemplate? SelectTemplateCore(object item)
     {
