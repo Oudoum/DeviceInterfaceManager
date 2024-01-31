@@ -6,16 +6,21 @@ using Avalonia.Controls.Templates;
 using Avalonia.Media;
 using Avalonia.Metadata;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Devices;
-using DeviceInterfaceManager.Devices.interfaceIT.USB;
+using DeviceInterfaceManager.Models.Devices;
 using FluentAvalonia.UI.Controls;
+using InterfaceItData = DeviceInterfaceManager.Models.Devices.interfaceIT.USB.InterfaceItData;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel()
+    public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel,SettingsViewModel settingsViewModel, ObservableCollection<DeviceItem> deviceItems)
     {
+        _homeViewModel = homeViewModel;
+        _profileCreatorViewModel = profileCreatorViewModel;
+        _settingsViewModel = settingsViewModel;
+        _deviceItems = deviceItems;
+        
         if (Design.IsDesignMode)
         {
             DeviceItems.Add(new DeviceItem(new DeviceSerialBase()));
@@ -26,47 +31,36 @@ public partial class MainWindowViewModel : ObservableObject
 
         Startup();
     }
+    
+    private readonly HomeViewModel _homeViewModel;
+
+    private readonly ProfileCreatorViewModel _profileCreatorViewModel;
+
+    private readonly SettingsViewModel _settingsViewModel;
 
     [ObservableProperty]
-    private ObservableCollection<DeviceItem> _deviceItems = [];
+    private ObservableCollection<DeviceItem> _deviceItems;
 
     [ObservableProperty]
     private ObservableObject? _currentViewModel;
 
-    private readonly HomeViewModel _homeViewModel = new();
-
-    //ProfileCreatorViewModel
-
-    private readonly SettingsViewModel _settingsViewModel = new();
-
     [ObservableProperty]
     private object? _selectedItem;
-
+    
     partial void OnSelectedItemChanged(object? value)
     {
-        switch (value)
+        CurrentViewModel = value switch
         {
-            case NavigationViewItem navigationViewItem:
-                switch (navigationViewItem.Content as string)
-                {
-                    case "Home":
-                        CurrentViewModel = _homeViewModel;
-                        break;
-
-                    case "Profile Creator":
-                        break;
-
-                    case "Settings":
-                        CurrentViewModel = _settingsViewModel;
-                        break;
-                }
-
-                break;
-
-            case DeviceItem categoryItem:
-                CurrentViewModel = categoryItem.DeviceViewModel;
-                break;
-        }
+            NavigationViewItem navigationViewItem => (navigationViewItem.Content as string) switch
+            {
+                "Home" => _homeViewModel,
+                "Profile Creator" => _profileCreatorViewModel,
+                "Settings" => _settingsViewModel,
+                _ => CurrentViewModel
+            },
+            DeviceItem categoryItem => categoryItem.DeviceViewModel,
+            _ => CurrentViewModel
+        };
     }
 
     private void Startup()
@@ -100,7 +94,7 @@ public partial class MainWindowViewModel : ObservableObject
 public class DeviceItem(IInputOutputDevice inputOutputDevice)
 {
     public IInputOutputDevice InputOutputDevice { get; } = inputOutputDevice;
-    public string? Name { get; } = inputOutputDevice.BoardName;
+    public string? Name { get; } = inputOutputDevice.DeviceName;
     public string? ToolTip { get; } = inputOutputDevice.SerialNumber;
     public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource(inputOutputDevice is IDeviceSerial ? "UsbPort" : "Ethernet");
 
