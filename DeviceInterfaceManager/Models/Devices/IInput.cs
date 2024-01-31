@@ -1,6 +1,6 @@
 using System;
 
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public interface IInput
 {
