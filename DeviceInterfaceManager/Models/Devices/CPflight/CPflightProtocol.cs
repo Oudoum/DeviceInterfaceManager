@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
-using System.Collections.Generic;
 
-namespace DeviceInterfaceManager.Devices.CPflight
+namespace DeviceInterfaceManager.Models.Devices.CPflight
 {
     public record Device
     {
