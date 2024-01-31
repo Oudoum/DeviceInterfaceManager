@@ -37,7 +37,7 @@
                         <PathIcon Data="{StaticResource Devices}" />
                         <TextBlock Text="Device" />
                     </StackPanel>
-                    <TextBlock Text="{Binding InputOutputDevice.BoardName}"
+                    <TextBlock Text="{Binding InputOutputDevice.DeviceName}"
                                ToolTip.Tip="{Binding InputOutputDevice.SerialNumber}" />
                 </StackPanel>
             </Border>
