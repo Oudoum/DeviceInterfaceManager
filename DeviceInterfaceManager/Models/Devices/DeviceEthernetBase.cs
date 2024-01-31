@@ -1,4 +1,4 @@
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public abstract class DeviceEthernetBase
 {
