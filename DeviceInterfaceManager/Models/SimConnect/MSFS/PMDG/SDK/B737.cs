@@ -10,9 +10,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace DeviceInterfaceManager.SimConnect.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
 
-public class PmdgNg3
+public class B737
 {
     public const string DataName = "PMDG_NG3_Data";
     public const string ControlName = "PMDG_NG3_Control";
@@ -403,7 +403,7 @@ public class PmdgNg3
         [MarshalAs(UnmanagedType.I1)] public bool MAIN_RMISelector1_VOR;
         [MarshalAs(UnmanagedType.I1)] public bool MAIN_RMISelector2_VOR;
         public byte MAIN_N1SetSelector;                         // 0: 2 1: 1 2: AUTO 3: BOTH
-        public byte MAIN_SpdRefSelector;                        // 0: SET 1: AUTO 2: V1 3: VR 4: WT 5: VREF 6: Bug
+        public byte MAIN_SpdRefSelector;                        // 0: SET 1: AUTO 2: V1 3: VR 4: WT 5: VREF 6: Bug5
         public byte MAIN_FuelFlowSelector;                      // 0: RESET 1: RATE 2: USED
         public byte MAIN_AutobrakeSelector;                     // 0: RTO 1: OFF ... 5: MAX
         [MarshalAs(UnmanagedType.I1)] public bool MAIN_annunANTI_SKID_INOP;
@@ -545,9 +545,9 @@ public class PmdgNg3
 
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
-    public readonly struct Cdu : SDK.Cdu.ICduScreen
+    public readonly struct Cdu : Models.SimConnect.MSFS.PMDG.SDK.Cdu.ICduScreen
     {
-        public SDK.Cdu.Screen Screen { get; }
+        public Models.SimConnect.MSFS.PMDG.SDK.Cdu.Screen Screen { get; }
     }
 
     //Mouse Flag
