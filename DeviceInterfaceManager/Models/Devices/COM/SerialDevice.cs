@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO.Ports;
 
-namespace DeviceInterfaceManager.Devices.COM;
+namespace DeviceInterfaceManager.Models.Devices.COM;
 
 public class SerialDevice
 {
