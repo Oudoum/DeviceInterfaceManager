@@ -1,16 +1,19 @@
-// ReSharper disable All
-namespace DeviceInterfaceManager.Devices.interfaceIT.USB;
+using System.Diagnostics.CodeAnalysis;
 
+namespace DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
+
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+[SuppressMessage("ReSharper", "IdentifierTypo")]
 public enum InterfaceItBoardId : ushort
 {
     //Board type identifiers
     INTERFACEIT_BOARD_ALL = 0,
 
     // Misc
-    // FDS-MFP - Origional version
+    // FDS-MFP - Original version
     FDS_MFP = 0x0201,
 
-    // FDS-SYS boards - Older origional boards
+    // FDS-SYS boards - Older original boards
     FDSSYS1 = 0x32E1,
 
     FDSSYS2 = 0x32E2,
