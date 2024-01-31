@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
+             x:DataType="vm:ProfileCreatorViewModel">
+    
+    <StackPanel>
+        
+    <TextBlock Text="Profile Creator" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    
+    <Button Content="LoadProfileAsync" Command="{Binding LoadProfileCommand}"/>
+    
+    <Button Content="ProfileNameSave" Command="{Binding ProfileNameSaveCommand}"/>
+    
+    <Button Content="SaveProfile" Command="{Binding SaveProfileCommand}"/>
+    
+    <Button Content="SaveProfile As" Command="{Binding SaveProfileAsCommand}"/>
+    
+    
+    <ui:TaskDialog Name="TaskDialog1"
+                   Title="FluentAvalonia"
+                   Header="Header Here"
+                   SubHeader="SubHeader"
+                   Content="This is some sample text, but you can put more advanced content here if you like"
+                   FooterVisibility="Always"
+                   IsFooterExpanded="False"
+                   ShowProgressBar="False">
+        <ui:TaskDialog.Commands>
+            <ui:TaskDialogCommand Text="Sample Command"
+                                  Description="This is a description of the Sample Command"
+                                  IsEnabled="True"
+                                  DialogResult="CommandResult"/>
+        </ui:TaskDialog.Commands>
+
+        <ui:TaskDialog.Buttons>
+            <ui:TaskDialogButton Text="OK" DialogResult="OK" />
+            <ui:TaskDialogButton Text="Cancel" DialogResult="Cancel" />
+        </ui:TaskDialog.Buttons>
+
+        <ui:TaskDialog.Footer>
+            <CheckBox Content="Never show me this again" />
+        </ui:TaskDialog.Footer>
+    </ui:TaskDialog>
+    
+    </StackPanel>
+    
+
+    
+    
+</UserControl>
