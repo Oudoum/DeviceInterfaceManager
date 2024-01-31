@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public class DeviceSerialBase : IDeviceSerial
 {
@@ -25,7 +25,7 @@ public class DeviceSerialBase : IDeviceSerial
         return Task.CompletedTask;
     }
 
-    public string BoardName => "Debug";
+    public string DeviceName => "Debug";
     public string SerialNumber => "000000";
 
     public Task<ConnectionStatus> ConnectAsync()
