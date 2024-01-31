@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace DeviceInterfaceManager.SimConnect.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
 
 public static class Cdu
 {
