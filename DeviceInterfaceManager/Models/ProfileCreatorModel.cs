@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.SimConnect.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+
+#pragma warning disable CS0657 // Not a valid attribute location for this declaration
 
 namespace DeviceInterfaceManager.Models;
 
@@ -71,7 +73,7 @@ public partial class InputCreator : ObservableObject
     private string? _eventType;
 
     [ObservableProperty]
-    private PmdgNg3.Event? _pmdgEvent;
+    private B737.Event? _pmdgEvent;
 
     [ObservableProperty]
     private string? _event;
