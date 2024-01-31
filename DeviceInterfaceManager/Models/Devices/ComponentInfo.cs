@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public readonly struct ComponentInfo(int first, int last)
 {
