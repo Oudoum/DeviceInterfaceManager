@@ -13,10 +13,6 @@
         MinHeight="480"
         Title="">
 
-    <Design.DataContext>
-        <vm:MainWindowViewModel />
-    </Design.DataContext>
-
     <Grid>
 
         <ui:NavigationView AlwaysShowHeader="False"
