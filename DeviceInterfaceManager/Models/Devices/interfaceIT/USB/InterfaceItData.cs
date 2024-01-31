@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Devices.interfaceIT.USB;
+namespace DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 
 public partial class InterfaceItData : IDeviceSerial
 {
@@ -33,7 +33,7 @@ public partial class InterfaceItData : IDeviceSerial
         return Task.CompletedTask;
     }
 
-    public string? BoardName { get; private set; }
+    public string? DeviceName { get; private set; }
     public string? SerialNumber { get; private set; }
 
     public Task<ConnectionStatus> ConnectAsync()
@@ -53,7 +53,7 @@ public partial class InterfaceItData : IDeviceSerial
             }
 
             SerialNumber = device;
-            BoardName = boardId.ToString().Replace('_', ' ') + $" ({boardInfo.BoardType})";
+            DeviceName = boardId.ToString().Replace('_', ' ') + $" ({boardInfo.BoardType})";
             _features = boardInfo.Features;
             Switch = new ComponentInfo(boardInfo.SwitchFirst, boardInfo.SwitchLast);
             Led = new ComponentInfo(boardInfo.LedFirst, boardInfo.LedLast);
