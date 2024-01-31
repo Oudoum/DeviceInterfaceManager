@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public interface IInputOutputDevice : IInput, IOutput
 {
-    string? BoardName { get; }
+    string? DeviceName { get; }
     string? SerialNumber { get; }
 
     Task<ConnectionStatus> ConnectAsync();
