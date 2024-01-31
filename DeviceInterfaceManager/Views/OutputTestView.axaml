@@ -6,7 +6,7 @@
              xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
              xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
-             xmlns:device="clr-namespace:DeviceInterfaceManager.Devices"
+             xmlns:devices="clr-namespace:DeviceInterfaceManager.Models.Devices"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.OutputTestView"
              x:DataType="vm:OutputTestViewModel">
@@ -139,7 +139,7 @@
                             <DataGridTextColumn Header="Position" Binding="{ReflectionBinding Position}" />
                             <DataGridTemplateColumn Header="On/Off" SortMemberPath="IsSet">
                                 <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate DataType="device:Component">
+                                    <DataTemplate DataType="devices:Component">
                                         <CheckBox
                                             Command="{Binding Path=((vm:OutputTestViewModel)DataContext).IsCheckedCommand,
                                             FallbackValue={x:Null},
