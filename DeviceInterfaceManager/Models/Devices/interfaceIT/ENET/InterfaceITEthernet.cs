@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Devices.interfaceIT.ENET;
+namespace DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
 
 public class InterfaceItEthernet(
     string iPAddress,
@@ -81,7 +81,7 @@ public class InterfaceItEthernet(
         {
             try
             {
-                client = new();
+                client = new TcpClient();
                 await client.ConnectAsync(HostIpAddress, TcpPort, cancellationToken);
                 stream = client.GetStream();
                 return true;
@@ -102,7 +102,7 @@ public class InterfaceItEthernet(
         return false;
     }
 
-    public async Task<InterfaceItEthernetInfo> GetInterfaceItEthernetDataAsync(Action<int, uint> interfacItKeyAction, CancellationToken cancellationToken)
+    public async Task<InterfaceItEthernetInfo> GetInterfaceItEthernetDataAsync(Action<int, uint> interfaceItKeyAction, CancellationToken cancellationToken)
     {
         TaskCompletionSource<InterfaceItEthernetInfo> tcs = new();
         _ = Task.Run(async () =>
@@ -156,7 +156,7 @@ public class InterfaceItEthernet(
                         default:
                             if (isSwitchIdentifying || !isInitializing)
                             {
-                                ProcessSwitchData(interfacItKeyAction, ethernetData);
+                                ProcessSwitchData(interfaceItKeyAction, ethernetData);
                             }
                             else if (isInitializing && !isSwitchIdentifying)
                             {
@@ -284,36 +284,36 @@ public class InterfaceItEthernet(
         switch (config[1])
         {
             case "LED":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].LedsConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].LedConfig = GetConfigData(config);
                 break;
 
             case "SWITCH":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SwitchesConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SwitchConfig = GetConfigData(config);
                 break;
 
             case "7 SEGMENT":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SevenSegmentsConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SevenSegmentConfig = GetConfigData(config);
                 break;
 
             case "DATALINE":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].DataLinesConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].DataLineConfig = GetConfigData(config);
                 break;
 
             case "ENCODER":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].EncodersConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].EncoderConfig = GetConfigData(config);
                 break;
 
             case "ANALOG IN":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].AnalogInputsConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].AnalogInputConfig = GetConfigData(config);
                 break;
 
             case "PULSE WIDTH":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].PulseWidthsConfig = GetConfigData(config);
+                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].PulseWidthConfig = GetConfigData(config);
                 break;
         }
     }
 
-    private static InterfaceItEthernetBoardConfig GetConfigData(string[] config)
+    private static InterfaceItEthernetBoardConfig GetConfigData(IReadOnlyList<string> config)
     {
         return new InterfaceItEthernetBoardConfig
         {
@@ -327,42 +327,42 @@ public class InterfaceItEthernet(
     {
         try
         {
-            SendinterfaceItEthernetLedAllOff();
-            stream?.Write(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
-            client?.Close();
+            SetAllLedOff();
+            stream.Write(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
+            client.Close();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // ignored
         }
     }
 
-    private void SendinterfaceItEthernetLedAllOff()
+    private void SetAllLedOff()
     {
-        for (int i = InterfaceItEthernetInfo.Boards[0].LedsConfig.StartIndex; i <= InterfaceItEthernetInfo.Boards[0].LedsConfig.TotalCount; i++)
+        for (int i = InterfaceItEthernetInfo.Boards[0].LedConfig.StartIndex; i <= InterfaceItEthernetInfo.Boards[0].LedConfig.TotalCount; i++)
         {
             stream?.Write(Encoding.ASCII.GetBytes("B1:LED:" + i + ":" + 0 + "\r\n"));
         }
         //stream?.Write(Encoding.ASCII.GetBytes("B1:CLEAR" + "\r\n"));
     }
 
-    public void SendinterfaceItEthernetLed(int nLed, bool bOn)
+    public void SetLed(int nLed, bool bOn)
     {
-        SendinterfaceItEthernetLed<bool>(nLed, bOn);
+        SetLed<bool>(nLed, bOn);
     }
 
-    public void SendinterfaceItEthernetLed(int nLed, int bOn)
+    public void SetLed(int nLed, int bOn)
     {
-        SendinterfaceItEthernetLed<int>(nLed, bOn);
+        SetLed<int>(nLed, bOn);
     }
 
-    public void SendinterfaceItEthernetLed(int nLed, double bOn)
+    public void SetLed(int nLed, double bOn)
     {
-        SendinterfaceItEthernetLed<double>(nLed, bOn);
+        SetLed<double>(nLed, bOn);
     }
 
     bool _hasErrorBeenShown = hasErrorBeenShown;
-    private void SendinterfaceItEthernetLed<T>(int nLed, T bOn)
+    private void SetLed<T>(int nLed, T bOn)
     {
         if (nLed < 0)
         {
@@ -378,9 +378,9 @@ public class InterfaceItEthernet(
 
         try
         {
-            stream?.Write(Encoding.ASCII.GetBytes("B1:LED:" + nLed + ":" + Convert.ToUInt16(bOn) + "\r\n"));
+            stream.Write(Encoding.ASCII.GetBytes("B1:LED:" + nLed + ":" + Convert.ToUInt16(bOn) + "\r\n"));
         }
-        catch (Exception e)
+        catch (Exception)
         {
             Reconnect();
             if (!_hasErrorBeenShown)
@@ -397,7 +397,7 @@ public class InterfaceItEthernet(
         
         try
         {
-            client = new();
+            client = new TcpClient();
             client.Connect(HostIpAddress, TcpPort);
             stream = client.GetStream();
             _hasErrorBeenShown = false;
@@ -430,33 +430,33 @@ public readonly struct InterfaceItEthernetDiscovery
 
 public class InterfaceItEthernetInfo
 {
-    public string HostIpAddress { get; set; }
-    public string Id { get; set; }
-    public string Name { get; set; }
-    public string SerialNumber { get; set; }
-    public string Description { get; set; }
-    public string Copyright { get; set; }
-    public string Version { get; set; }
-    public string Firmware { get; set; }
+    public string? HostIpAddress { get; set; }
+    public string? Id { get; set; }
+    public string? Name { get; set; }
+    public string? SerialNumber { get; set; }
+    public string? Description { get; set; }
+    public string? Copyright { get; set; }
+    public string? Version { get; set; }
+    public string? Firmware { get; set; }
     public byte Location { get; set; }
     public byte Usage { get; set; }
-    public string HostName { get; set; }
-    public string Client { get; set; }
-    public List<InterfaceItEthernetBoardInfo> Boards { get; set; }
+    public string? HostName { get; set; }
+    public string? Client { get; set; }
+    public List<InterfaceItEthernetBoardInfo>? Boards { get; set; }
 }
 
 public class InterfaceItEthernetBoardInfo
 {
     public byte BoardNumber { get; set; }
-    public string Id { get; set; }
-    public string Description { get; set; }
-    public InterfaceItEthernetBoardConfig LedsConfig { get; set; }
-    public InterfaceItEthernetBoardConfig SwitchesConfig { get; set; }
-    public InterfaceItEthernetBoardConfig SevenSegmentsConfig { get; set; }
-    public InterfaceItEthernetBoardConfig DataLinesConfig { get; set; }
-    public InterfaceItEthernetBoardConfig EncodersConfig { get; set; }
-    public InterfaceItEthernetBoardConfig AnalogInputsConfig { get; set; }
-    public InterfaceItEthernetBoardConfig PulseWidthsConfig { get; set; }
+    public string? Id { get; set; }
+    public string? Description { get; set; }
+    public InterfaceItEthernetBoardConfig? LedConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? SwitchConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? SevenSegmentConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? DataLineConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? EncoderConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? AnalogInputConfig { get; set; }
+    public InterfaceItEthernetBoardConfig? PulseWidthConfig { get; set; }
 }
 
 public class InterfaceItEthernetBoardConfig
