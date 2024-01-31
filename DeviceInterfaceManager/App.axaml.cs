@@ -1,11 +1,17 @@
-﻿using Avalonia;
+﻿using System;
+using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using DeviceInterfaceManager.ViewModels;
 using DeviceInterfaceManager.Views;
+using HanumanInstitute.MvvmDialogs;
+using HanumanInstitute.MvvmDialogs.Avalonia;
 using HotAvalonia;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DeviceInterfaceManager;
 
@@ -15,6 +21,17 @@ public class App : Application
     {
         this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
+
+        Ioc.Default.ConfigureServices(new ServiceCollection()
+            .AddSingleton<IDialogService, DialogService>(provider => new DialogService(new DialogManager(new ViewLocator(), new DialogFactory().AddFluent()), provider.GetService))
+            .AddSingleton<MainWindow>()
+            .AddSingleton<MainWindowViewModel>()
+            .AddSingleton<HomeViewModel>()
+            .AddSingleton<ProfileCreatorViewModel>()
+            .AddSingleton<SettingsViewModel>()
+            .AddTransient<AskTextBoxViewModel>()
+            .AddSingleton<ObservableCollection<DeviceItem>>()
+            .BuildServiceProvider());
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -23,18 +40,16 @@ public class App : Application
         // Without this line you will get duplicate validations from both Avalonia and CT
         BindingPlugins.DataValidators.RemoveAt(0);
 
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel()
-            };
-        }
+        DialogService.Show(null, MainWindowViewModel);
+        GC.KeepAlive(typeof(DialogService));
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void TrayIconClicked(object? sender, System.EventArgs e)
+    public static MainWindowViewModel MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>()!;
+    private static IDialogService DialogService => Ioc.Default.GetService<IDialogService>()!;
+    
+    private void TrayIconClicked(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -42,7 +57,7 @@ public class App : Application
         }
     }
 
-    private void MenuItemExitClick(object? sender, System.EventArgs e)
+    private void MenuItemExitClick(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
