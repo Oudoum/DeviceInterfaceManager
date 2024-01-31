@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Devices;
+using DeviceInterfaceManager.Models.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
