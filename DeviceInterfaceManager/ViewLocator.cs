@@ -1,32 +1,21 @@
-using Avalonia.Controls;
-using Avalonia.Controls.Templates;
-using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using DeviceInterfaceManager.Devices;
+using DeviceInterfaceManager.ViewModels;
+using DeviceInterfaceManager.Views;
+using HanumanInstitute.MvvmDialogs.Avalonia;
 
 namespace DeviceInterfaceManager;
 
-public class ViewLocator : IDataTemplate
+public class ViewLocator : StrongViewLocator
 {
-    public Control Build(object? data)
+    public ViewLocator()
     {
-        if (data is null or Component)
-        {
-            return new TextBlock { Text = "data was null" };
-        }
-
-        string? name = data.GetType().FullName!.Replace("ViewModel", "View");
-        Type? type = Type.GetType(name);
-
-        if (type is not null)
-        {
-            return (Control)Activator.CreateInstance(type)!;
-        }
-        return new TextBlock { Text = "Not Found: " + name };
-    }
-
-    public bool Match(object? data)
-    {
-        return data is ObservableObject;
+        Register<AskTextBoxViewModel, AskTextBoxView>();
+        Register<DeviceViewModel, DeviceView>();
+        Register<HomeViewModel, HomeView>();
+        Register<InformationViewModel, InformationView>();
+        Register<InputTestViewModel, InputTestView>();
+        Register<MainWindowViewModel, MainWindow>();
+        Register<OutputTestViewModel, OutputTestView>();
+        Register<ProfileCreatorViewModel, ProfileCreatorView>();
+        Register<SettingsViewModel, SettingsView>();
     }
 }
