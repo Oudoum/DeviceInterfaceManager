@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Devices;
+namespace DeviceInterfaceManager.Models.Devices;
 
 public interface IOutput
 {
