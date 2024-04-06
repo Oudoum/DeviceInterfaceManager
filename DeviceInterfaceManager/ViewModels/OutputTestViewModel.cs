@@ -7,13 +7,12 @@ using Component = DeviceInterfaceManager.Models.Devices.Component;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class OutputTestViewModel(DeviceItem deviceItem) : ObservableObject
+public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
+    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+    
     [ObservableProperty]
-    private IInputOutputDevice _inputOutputDevice = deviceItem.InputOutputDevice;
-
-    [ObservableProperty]
-    private Component? _selectedDataline = deviceItem.InputOutputDevice.Dataline.Components.FirstOrDefault();
+    private Component? _selectedDataline = inputOutputDevice.Dataline.Components.FirstOrDefault();
 
     [RelayCommand]
     private async Task SetDataline(bool direction)
@@ -25,10 +24,10 @@ public partial class OutputTestViewModel(DeviceItem deviceItem) : ObservableObje
         
         await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position.ToString(), direction);
     }
-
+    
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SevenSegmentText))]
-    private Component? _selectedSevenSegment = deviceItem.InputOutputDevice.SevenSegment.Components.FirstOrDefault();
+    private Component? _selectedSevenSegment = inputOutputDevice.SevenSegment.Components.FirstOrDefault();
 
     partial void OnSelectedSevenSegmentChanged(Component? value)
     {
@@ -74,7 +73,7 @@ public partial class OutputTestViewModel(DeviceItem deviceItem) : ObservableObje
     {
         InputOutputDevice.SetSevenSegmentAsync(InputOutputDevice.SevenSegment.First.ToString(), new string(' ', InputOutputDevice.SevenSegment.Count));
     }
-
+    
     [RelayCommand]
     private async Task IsChecked(Component component)
     {
