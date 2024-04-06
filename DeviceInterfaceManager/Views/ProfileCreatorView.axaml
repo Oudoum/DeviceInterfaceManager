@@ -3,52 +3,416 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
-    
-    <StackPanel>
+
+    <Design.DataContext>
+        <vm:ProfileCreatorViewModel />
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*">
         
-    <TextBlock Text="Profile Creator" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    
-    <Button Content="LoadProfileAsync" Command="{Binding LoadProfileCommand}"/>
-    
-    <Button Content="ProfileNameSave" Command="{Binding ProfileNameSaveCommand}"/>
-    
-    <Button Content="SaveProfile" Command="{Binding SaveProfileCommand}"/>
-    
-    <Button Content="SaveProfile As" Command="{Binding SaveProfileAsCommand}"/>
-    
-    
-    <ui:TaskDialog Name="TaskDialog1"
-                   Title="FluentAvalonia"
-                   Header="Header Here"
-                   SubHeader="SubHeader"
-                   Content="This is some sample text, but you can put more advanced content here if you like"
-                   FooterVisibility="Always"
-                   IsFooterExpanded="False"
-                   ShowProgressBar="False">
-        <ui:TaskDialog.Commands>
-            <ui:TaskDialogCommand Text="Sample Command"
-                                  Description="This is a description of the Sample Command"
-                                  IsEnabled="True"
-                                  DialogResult="CommandResult"/>
-        </ui:TaskDialog.Commands>
+        <StackPanel>
 
-        <ui:TaskDialog.Buttons>
-            <ui:TaskDialogButton Text="OK" DialogResult="OK" />
-            <ui:TaskDialogButton Text="Cancel" DialogResult="Cancel" />
-        </ui:TaskDialog.Buttons>
+            <ui:CommandBar>
+                <ui:CommandBar.PrimaryCommands>
 
-        <ui:TaskDialog.Footer>
-            <CheckBox Content="Never show me this again" />
-        </ui:TaskDialog.Footer>
-    </ui:TaskDialog>
-    
-    </StackPanel>
-    
+                    <ui:CommandBarButton Label="Change" Command="{Binding ChangeDeviceCommand }">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource Devices}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+                    
+                    <ui:CommandBarButton Label="Load" Command="{Binding LoadProfileCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource FolderOpenOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
 
-    
-    
+                    <ui:CommandBarButton Label="Save" Command="{Binding SaveProfileCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource ContentSaveOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarButton Label="Save as" Command="{Binding SaveProfileAsCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource ContentSaveEditOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+                    
+                    <ui:CommandBarButton Label="Rename" Command="{Binding ChangeProfileNameCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource RenameOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarButton Label="Sort" Command="{Binding SortInputOutputCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource SortAlphabetical}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarButton Label="Clear" Command="{Binding ClearProfileCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarButton Label="{Binding IsStartedText}" Command="{Binding StartProfilesCommand}">
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{Binding IsStatedIcon}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarSeparator />
+
+                    <ui:CommandBarElementContainer Margin="10 10 0 0">
+                        <ComboBox ItemsSource="{Binding EventDataTypePreSelections}"
+                                  SelectedItem="{Binding EventDataTypePreSelection}" />
+                    </ui:CommandBarElementContainer>
+
+                </ui:CommandBar.PrimaryCommands>
+                <ui:CommandBar.SecondaryCommands>
+                    <ui:CommandBarSeparator />
+                    <!-- <ui:CommandBarButton IconSource="Cut" Label="Cut" /> -->
+                </ui:CommandBar.SecondaryCommands>
+            </ui:CommandBar>
+
+            <ui:CommandBar>
+                <ui:CommandBar.Styles>
+                    <Style Selector="TextBlock">
+                        <Setter Property="Margin" Value="10 0 10 0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </ui:CommandBar.Styles>
+                <ui:CommandBar.PrimaryCommands>
+                    
+                    <ui:CommandBarElementContainer>
+                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}"/>
+                    </ui:CommandBarElementContainer>
+                    
+                    <ui:CommandBarSeparator />
+                    
+                    <ui:CommandBarElementContainer>
+                            <TextBlock Text="{Binding ProfileName}"/>
+                    </ui:CommandBarElementContainer>
+
+                </ui:CommandBar.PrimaryCommands>
+            </ui:CommandBar>
+            
+        </StackPanel>
+
+        <TabControl Grid.Row="1">
+            <TabControl.Styles>
+                <Style Selector="DataGrid">
+                    <Setter Property="RowHeight" Value="50"/>
+                    <Setter Property="GridLinesVisibility" Value="All"/>
+                    <Setter Property="SelectionMode" Value="Extended"/>
+                    <Setter Property="BorderThickness" Value="5"/>
+                    <Setter Property="BorderBrush" Value="Gray"/>
+                </Style>
+                <Style Selector="ToggleSwitch">
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="OnContent" Value=""/>
+                    <Setter Property="OffContent" Value=""/>
+                    <Setter Property="Margin" Value="10 0 0 0"/>
+                </Style>
+                <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+                    <Setter Property="Background" Value="#36b336"/>
+                </Style>
+                <Style Selector="Button.b1">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="VerticalAlignment" Value="Stretch"/>
+                    <Setter Property="CornerRadius" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+                <Style Selector="Button.Add">
+                    <Setter Property="Content" Value="Add"/>
+                    <Setter Property="Margin" Value="0 0 0 10"/>
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="CornerRadius" Value="0"/>
+                </Style>
+                <Style Selector="Button.Edit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="TextBlock.Background" Value="SteelBlue" />
+                </Style>
+                <Style
+                    Selector="Button.Delete:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="TextBlock.Background" Value="Red" />
+                </Style>
+                <Style Selector="CheckBox">
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="IsHitTestVisible" Value="False"/>
+                    <Setter Property="IsTabStop" Value="False"/>
+                </Style>
+                <Style Selector="PathIcon">
+                    <Setter Property="Height" Value="30"/>
+                    <Setter Property="Width" Value="30"/>
+                </Style>
+            </TabControl.Styles>
+            
+            <TabItem Header="Input">
+                <TabItem.Content>
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
+                        <DataGrid
+                            ItemsSource="{Binding ProfileCreatorModel.InputCreators,
+                            FallbackValue={x:Null}}">
+                            <DataGrid.Styles>
+                                <Style Selector="DataGridCell.Tip" x:DataType="m:InputCreator">
+                                    <Setter Property="ToolTip.Tip"
+                                            Value="{Binding Input,
+                                            Converter={StaticResource NullableKeyValuePairConverter},
+                                            ConverterParameter='Key'}" />
+                                </Style>
+                            </DataGrid.Styles>
+                            <DataGrid.Columns>
+
+                                <DataGridTemplateColumn Header="Active" SortMemberPath="IsActive">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ToggleSwitch IsChecked="{Binding IsActive}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Edit">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                Classes="b1 Edit"
+                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).EditInputCommand,
+                                                FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource PencilOutline}" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Delete">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                Classes="b1 Delete"
+                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
+                                                FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource DeleteForeverOutline}" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Logic" SortMemberPath="Preconditions.Length">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Viewbox>
+                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}"/>
+                                            </Viewbox>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn
+                                    Header="Description"
+                                    SortMemberPath="Description"
+                                    Binding="{Binding Description}"
+                                    MaxWidth="500" />
+
+                                <DataGridTextColumn
+                                    Header="Input Type"
+                                    SortMemberPath="InputType"
+                                    Binding="{Binding InputType}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Input"
+                                    SortMemberPath="Input.Position"
+                                    Binding="{Binding Input.Position, FallbackValue=''}"
+                                    IsReadOnly="True"
+                                    CellStyleClasses="Tip" />
+
+                                <DataGridTextColumn
+                                    Header="Event Type"
+                                    SortMemberPath="EventType"
+                                    Binding="{Binding EventType}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="PMDG Event"
+                                    SortMemberPath="PmdgEvent"
+                                    Binding="{Binding PmdgEvent}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Event"
+                                    SortMemberPath="Event"
+                                    Binding="{Binding Event}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Mouse Press"
+                                    SortMemberPath="PmdgMousePress"
+                                    Binding="{Binding PmdgMousePress}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Mouse Release"
+                                    SortMemberPath="PmdgMouseRelease"
+                                    Binding="{Binding PmdgMouseRelease}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Data Press"
+                                    SortMemberPath="DataPress"
+                                    Binding="{Binding DataPress}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Data Release"
+                                    SortMemberPath="DataRelease"
+                                    Binding="{Binding DataRelease}"
+                                    IsReadOnly="True" />
+
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Grid.Row="1"
+                                Classes="Add"
+                                Command="{Binding AddInputCommand}" />
+
+                    </Grid>
+                </TabItem.Content>
+            </TabItem>
+
+            <TabItem Header="Output">
+                <TabItem.Content>
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
+                        <DataGrid
+                            ItemsSource="{Binding ProfileCreatorModel.OutputCreators,
+                            FallbackValue={x:Null}}">
+                            <DataGrid.Styles>
+                                <Style Selector="DataGridCell.Tip" x:DataType="m:OutputCreator">
+                                    <Setter Property="ToolTip.Tip"
+                                            Value="{Binding Path=Output, Converter={StaticResource NullableKeyValuePairConverter}}" />
+                                </Style>
+                            </DataGrid.Styles>
+                            <DataGrid.Columns>
+
+                                <DataGridTemplateColumn Header="Active" SortMemberPath="IsActive">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ToggleSwitch IsChecked="{Binding IsActive}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Edit">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                Classes="b1 Edit"
+                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).EditOutputCommand,
+                                                FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource PencilOutline}" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Delete">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button
+                                                Classes="b1 Delete"
+                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
+                                                FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource DeleteForeverOutline}" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Logic" SortMemberPath="Preconditions.Length">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Viewbox>
+                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}"/>
+                                            </Viewbox>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn
+                                    Header="Description"
+                                    SortMemberPath="Description" 
+                                    Binding="{Binding Description}"
+                                    MaxWidth="500"/>
+
+                                <DataGridTextColumn
+                                    Header="Output Type"
+                                    SortMemberPath="OutputType"
+                                    Binding="{Binding OutputType}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="Output"
+                                    SortMemberPath="Output.Position"
+                                    Binding="{Binding Output.Position, FallbackValue=''}"
+                                    IsReadOnly="True"
+                                    CellStyleClasses="Tip" />
+
+                                <DataGridTextColumn
+                                    Header="Data Type"
+                                    SortMemberPath="DataType"
+                                    Binding="{Binding DataType}"
+                                    IsReadOnly="True" />
+
+                                <DataGridTextColumn
+                                    Header="PMDG Data"
+                                    SortMemberPath="PmdgData"
+                                    Binding="{Binding PmdgData}"
+                                    IsReadOnly="True" />
+
+
+                                <DataGridTemplateColumn Header="Data" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0} {1}">
+                                                        <Binding Path="Data" />
+                                                        <Binding Path="Unit" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Grid.Row="1"
+                                Classes="Add"
+                                Command="{Binding AddOutputCommand}" />
+    </Grid>
+                </TabItem.Content>
+            </TabItem>
+        </TabControl>
+
+    </Grid>
+
+
 </UserControl>
