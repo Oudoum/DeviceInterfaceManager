@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeviceInterfaceManager.Models.Devices;
 
-public readonly struct ComponentInfo(int first, int last)
+public class ComponentInfo(int first, int last)
 {
     public int Count => Components.Count();
 
@@ -25,11 +25,11 @@ public readonly struct ComponentInfo(int first, int last)
         }
     }
     
-    public async Task PerformOperationOnAllComponents(Func<int, Task> operationOnElement)
+    public async Task PerformOperationOnAllComponents(Func<string?, Task> operationOnElement)
     {
         for (int i = First; i <= Last; i++)
         {
-            await operationOnElement(i);
+            await operationOnElement(i.ToString());
         }
     }
 }
