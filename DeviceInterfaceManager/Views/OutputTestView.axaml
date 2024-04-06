@@ -3,11 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:devices="clr-namespace:DeviceInterfaceManager.Models.Devices"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:CompileBindings="True"
              x:Class="DeviceInterfaceManager.Views.OutputTestView"
              x:DataType="vm:OutputTestViewModel">
 
@@ -28,7 +27,7 @@
 
             <StackPanel Orientation="Vertical" Spacing="25">
 
-                <Border Classes="b1">
+                <Border Classes="b1" Name="Border" IsVisible="{Binding !!InputOutputDevice.Dataline.Count}">
                     <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                             <PathIcon Data="{StaticResource LightningBolt}" />
@@ -41,7 +40,7 @@
                             Width="100"
                             SelectedItem="{Binding SelectedDataline}"
                             DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding InputOutputDevice.Dataline.Components }" />
+                            ItemsSource="{Binding InputOutputDevice.Dataline.Components}" />
                         <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
                             <Button Content="On" Command="{Binding SetDatalineCommand}">
                                 <Button.CommandParameter>
@@ -55,20 +54,9 @@
                             </Button>
                         </StackPanel>
                     </StackPanel>
-                    <i:Interaction.Behaviors>
-                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.Dataline.Count}"
-                                                Value="0">
-                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="False" />
-                        </ia:DataTriggerBehavior>
-                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.Dataline.Count}"
-                                                ComparisonCondition="GreaterThan"
-                                                Value="0">
-                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="True" />
-                        </ia:DataTriggerBehavior>
-                    </i:Interaction.Behaviors>
                 </Border>
 
-                <Border Classes="b1">
+                <Border Classes="b1" IsVisible="{Binding !!InputOutputDevice.SevenSegment.Count}">
                     <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                             <PathIcon Data="{StaticResource  Numeric7BoxOutline}" />
@@ -79,7 +67,7 @@
                             FontWeight="Bold"
                             HorizontalAlignment="Center"
                             Width="100"
-                            SelectedItem="{Binding SelectedSevenSegment, Mode=TwoWay}"
+                            SelectedItem="{Binding SelectedSevenSegment}"
                             DisplayMemberBinding="{Binding Position}"
                             ItemsSource="{Binding InputOutputDevice.SevenSegment.Components}" />
                         <TextBox
@@ -91,22 +79,11 @@
                             Text="{Binding SevenSegmentText}"
                             FontWeight="Bold" />
                     </StackPanel>
-                    <i:Interaction.Behaviors>
-                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.SevenSegment.Count}"
-                                                Value="0">
-                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="False" />
-                        </ia:DataTriggerBehavior>
-                        <ia:DataTriggerBehavior Binding="{Binding InputOutputDevice.SevenSegment.Count}"
-                                                ComparisonCondition="GreaterThan"
-                                                Value="0">
-                            <ia:ChangePropertyAction PropertyName="IsVisible" Value="True" />
-                        </ia:DataTriggerBehavior>
-                    </i:Interaction.Behaviors>
                 </Border>
 
             </StackPanel>
 
-            <Border Classes="b1" Grid.Column="1">
+            <Border Classes="b1" Grid.Column="1" IsVisible="{Binding !!InputOutputDevice.Led.Count}">
                 <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                         <PathIcon Data="{StaticResource LedOutline}" />
@@ -129,6 +106,7 @@
                     </StackPanel>
 
                     <DataGrid ItemsSource="{Binding InputOutputDevice.Led.Components}"
+                              IsVisible="{Binding !!InputOutputDevice.Led.Count}"
                               AutoGenerateColumns="False" MaxHeight="500" BorderBrush="DimGray" BorderThickness="3">
                         <DataGrid.Styles>
                             <Style Selector="DataGridCell Rectangle">
@@ -141,9 +119,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate DataType="devices:Component">
                                         <CheckBox
-                                            Command="{Binding Path=((vm:OutputTestViewModel)DataContext).IsCheckedCommand,
-                                            FallbackValue={x:Null},
-                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).IsCheckedCommand, FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}"
                                             IsChecked="{Binding IsSet}"
                                             HorizontalAlignment="Center"
