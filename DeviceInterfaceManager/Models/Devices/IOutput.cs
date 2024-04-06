@@ -8,9 +8,9 @@ public interface IOutput
     ComponentInfo Dataline { get; }
     ComponentInfo SevenSegment { get; }
     
-    Task SetLedAsync(string position, bool isEnabled);
+    Task SetLedAsync(string? position, bool isEnabled);
     
-    Task SetDatalineAsync(string position, bool isEnabled);
+    Task SetDatalineAsync(string? position, bool isEnabled);
     
-    Task SetSevenSegmentAsync(string position, string data);
+    Task SetSevenSegmentAsync(string? position, string data);
 }
