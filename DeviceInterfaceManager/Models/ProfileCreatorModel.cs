@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
 
 #pragma warning disable CS0657 // Not a valid attribute location for this declaration
@@ -19,8 +19,6 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Hid = "HID";
     public const string Arduino = "Arduino";
     public const string Sioc = "SIOC";
-
-    public static string[] Drivers => [FdsUsb, FdsEnet, CPflightUsb, CPflightEnet, Hid, Arduino, Sioc];
 
     //Data-/EventTypes
     public const string Pmdg737 = "PMDG737";
@@ -41,18 +39,16 @@ public partial class ProfileCreatorModel : ObservableObject
 
     public string? ProfileName { get; set; }
 
-    public string? Driver { get; set; }
-
     public string? DeviceName { get; set; }
 
     [ObservableProperty]
-    private ObservableCollection<InputCreator> _inputCreator = [];
+    private ObservableCollection<InputCreator> _inputCreators = [];
 
     [ObservableProperty]
-    private ObservableCollection<OutputCreator> _outputCreator = [];
+    private ObservableCollection<OutputCreator> _outputCreators = [];
 }
 
-public partial class InputCreator : ObservableObject
+public partial class InputCreator : ObservableObject, IInputCreator
 {
     [ObservableProperty]
     private Guid _id;
@@ -67,7 +63,7 @@ public partial class InputCreator : ObservableObject
     private string? _inputType;
 
     [ObservableProperty]
-    private KeyValuePair<string, string>? _input;
+    private Component? _input;
 
     [ObservableProperty]
     private string? _eventType;
@@ -82,10 +78,10 @@ public partial class InputCreator : ObservableObject
     private bool _onRelease;
 
     [ObservableProperty]
-    private KeyValuePair<string, uint>? _pmdgMousePress;
+    private Mouse? _pmdgMousePress;
 
     [ObservableProperty]
-    private KeyValuePair<string, uint>? _pmdgMouseRelease;
+    private Mouse? _pmdgMouseRelease;
 
     [ObservableProperty]
     private uint? _dataPress;
@@ -94,7 +90,7 @@ public partial class InputCreator : ObservableObject
     private uint? _dataRelease;
 
     [ObservableProperty]
-    private Precondition[] _preconditions = Array.Empty<Precondition>();
+    private Precondition[]? _preconditions;
 
     public InputCreator Clone()
     {
@@ -104,7 +100,7 @@ public partial class InputCreator : ObservableObject
     }
 }
 
-public partial class OutputCreator : ObservableObject
+public partial class OutputCreator : ObservableObject, IOutputCreator
 {
     [ObservableProperty]
     private Guid _id;
@@ -119,7 +115,7 @@ public partial class OutputCreator : ObservableObject
     private string? _outputType;
 
     [ObservableProperty]
-    private KeyValuePair<string, string>? _output;
+    private Component? _output;
 
     [ObservableProperty]
     private string? _dataType;
@@ -181,17 +177,17 @@ public partial class OutputCreator : ObservableObject
     private object? _outputValue;
 
     [ObservableProperty]
-    private Precondition[] _preconditions = Array.Empty<Precondition>();
+    private Precondition[]? _preconditions;
 
     public OutputCreator Clone()
     {
-        OutputCreator? clone = MemberwiseClone() as OutputCreator;
-        clone!.Id = Guid.NewGuid();
+        OutputCreator clone = MemberwiseClone() as OutputCreator ?? new OutputCreator();
+        clone.Id = Guid.NewGuid();
         return clone;
     }
 }
 
-public partial class Precondition : ObservableObject
+public partial class Precondition : ObservableObject, IPrecondition
 {
     [ObservableProperty]
     private bool _isActive;
