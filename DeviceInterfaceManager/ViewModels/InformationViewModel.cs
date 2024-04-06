@@ -3,28 +3,23 @@ using DeviceInterfaceManager.Models.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class InformationViewModel(DeviceItem deviceItem) : ObservableObject
+public class InformationViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    [ObservableProperty]
-    private IInputOutputDevice _inputOutputDevice = deviceItem.InputOutputDevice;
+    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
 
-    [ObservableProperty]
-    private string? _buttonInformation = $"{deviceItem.InputOutputDevice.Switch.Count} | " +
-                                         $"( {deviceItem.InputOutputDevice.Switch.First} - " +
-                                         $"{deviceItem.InputOutputDevice.Switch.Last} )";
+    public string ButtonInformation => $"{InputOutputDevice.Switch.Count} | " +
+                                       $"( {InputOutputDevice.Switch.First} - " +
+                                       $"{InputOutputDevice.Switch.Last} )";
 
-    [ObservableProperty]
-    private string? _ledInformation = $"{deviceItem.InputOutputDevice.Led.Count} | " +
-                                      $"( {deviceItem.InputOutputDevice.Led.First} - " +
-                                      $"{deviceItem.InputOutputDevice.Led.Last} )";
+    public string LedInformation => $"{InputOutputDevice.Led.Count} | " +
+                                    $"( {InputOutputDevice.Led.First} - " +
+                                    $"{InputOutputDevice.Led.Last} )";
 
-    [ObservableProperty]
-    private string? _datalineInformation = $"{deviceItem.InputOutputDevice.Dataline.Count} | " +
-                                           $"( {deviceItem.InputOutputDevice.Dataline.First} - " +
-                                           $"{deviceItem.InputOutputDevice.Dataline.Last} )";
+    public string DatalineInformation => $"{InputOutputDevice.Dataline.Count} | " +
+                                         $"( {InputOutputDevice.Dataline.First} - " +
+                                         $"{InputOutputDevice.Dataline.Last} )";
 
-    [ObservableProperty]
-    private string? _sevenSegmentInformation = $"{deviceItem.InputOutputDevice.SevenSegment.Count} | " +
-                                               $"( {deviceItem.InputOutputDevice.SevenSegment.First} - " +
-                                               $"{deviceItem.InputOutputDevice.SevenSegment.Last} )";
+    public string SevenSegmentInformation => $"{InputOutputDevice.SevenSegment.Count} | " +
+                                             $"( {InputOutputDevice.SevenSegment.First} - " +
+                                             $"{InputOutputDevice.SevenSegment.Last} )";
 }
