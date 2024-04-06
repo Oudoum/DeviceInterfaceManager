@@ -1,0 +1,210 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d"
+             d:DesignHeight="500"
+             x:Class="DeviceInterfaceManager.Views.PreconditionView"
+             x:DataType="vm:BaseCreatorViewModel">
+    
+    <Design.DataContext>
+        <vm:OutputCreatorViewModel />
+    </Design.DataContext>
+
+    <StackPanel Margin="20" MinWidth="400">
+        <ListBox Height="158"
+                 BorderBrush="DarkGray"
+                 BorderThickness="1"
+                 SelectedItem="{Binding SelectedPrecondition}"
+                 ItemsSource="{Binding Preconditions}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Spacing="10" Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsActive}" Padding="0"/>
+                        <TextBlock Classes.error="{Binding HasError}" 
+                                   Classes="noError"/>
+                        <TextBlock Text="{Binding Operator}" />
+                        <TextBlock Text="{Binding ComparisonValue}" />
+                        <Viewbox >
+                            <Canvas>
+                                <Path Classes="gateAnd"
+                                    Classes.gateOr="{Binding IsOrOperator}" />
+                            </Canvas>
+                        </Viewbox>
+                        <StackPanel.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="HorizontalAlignment" Value="Center"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </Style>
+                            <Style Selector="TextBlock.noError">
+                                <Setter Property="Text" Value="{Binding Description}"/>
+                            </Style>
+                            <Style Selector="TextBlock.error">
+                                <Setter Property="Text" Value="Missing"/>
+                                <Setter Property="Background" Value="Red"/>
+                            </Style>
+                        </StackPanel.Styles>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid ColumnDefinitions="* *"
+              Margin="0,20,0,20">
+            <Button Grid.Column="0"
+                    Command="{Binding AddPreconditionCommand}">
+                <Viewbox>
+                    <Canvas>
+                        <Path Data="{StaticResource PlusBox}" />
+                    </Canvas>
+                </Viewbox>
+            </Button>
+
+            <StackPanel Grid.Column="1"
+                        Spacing="25"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button IsVisible="{Binding SelectedPrecondition, Converter={x:Static ObjectConverters.IsNotNull}}" 
+                        Command="{Binding RemovePreconditionCommand}">
+                    <Viewbox>
+                        <Canvas>
+                            <Path Data="{StaticResource MinusBox}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button IsVisible="{Binding Preconditions, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Command="{Binding ClearPreconditionsCommand}">
+                    <Viewbox>
+                        <Canvas>
+                            <Path Data="{StaticResource PlaylistRemove}" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </StackPanel>
+
+        </Grid>
+
+        <StackPanel Spacing="20"
+            IsVisible="{Binding SelectedPrecondition, Converter={x:Static ObjectConverters.IsNotNull}}">
+
+            <!-- Output Entry -->
+            <Grid ColumnDefinitions="*,2*" >
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Output Entry" />
+                <ComboBox Grid.Column="1"
+                          HorizontalAlignment="Stretch"
+                          DisplayMemberBinding="{Binding Description}"
+                          SelectedItem="{Binding SelectedOutputCreator}"
+                          ItemsSource="{Binding OutputCreators}" />
+            </Grid>
+
+            <!-- Operator -->
+            <Grid ColumnDefinitions="*,2*">
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Operator" />
+                <ComboBox Grid.Column="1"
+                          HorizontalAlignment="Stretch"
+                          SelectedItem="{Binding SelectedPrecondition.Operator, FallbackValue=''}"
+                          ItemsSource="{Binding Operators}" />
+            </Grid>
+
+            <!-- Comparison Value -->
+            <Grid ColumnDefinitions="*,2*" >
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Comparison Value" />
+                <TextBox Grid.Column="1"
+                         Classes="clearButton"
+                         HorizontalAlignment="Stretch"
+                         Watermark="Comparison Value"
+                         Text="{Binding SelectedPrecondition.ComparisonValue, FallbackValue=''}" />
+            </Grid>
+
+            <!-- Logical Operator -->
+            <Grid ColumnDefinitions="* 2*" >
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Logical Operator" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20">
+                    <ToggleButton IsChecked="{Binding !SelectedPrecondition.IsOrOperator}"
+                                  CommandParameter="AND"
+                                  Command="{Binding ChangeLogicalOperatorCommand}">
+                        <Grid>
+                            <Viewbox>
+                                <Canvas>
+                                    <Path Classes="gateAnd toggleButtonChecked" />
+                                </Canvas>
+                            </Viewbox>
+                            <TextBlock Classes="toggleButtonChecked" Text="AND" />
+                        </Grid>
+                    </ToggleButton>
+                    <ToggleButton IsChecked="{Binding SelectedPrecondition.IsOrOperator, FallbackValue='False'}"
+                        CommandParameter="OR"
+                                  Command="{Binding ChangeLogicalOperatorCommand}">
+                        <Grid>
+                            <Viewbox>
+                                <Canvas>
+                                    <Path Classes="gateOr toggleButtonChecked" />
+                                </Canvas>
+                            </Viewbox>
+                            <TextBlock Classes="toggleButtonChecked" Text="OR" />
+                        </Grid>
+                    </ToggleButton>
+                    <StackPanel.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Foreground" Value="White" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Margin" Value=" 0 0 2 0" />
+                        </Style>
+                        <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+                            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForeground}" />
+                        </Style>
+                        <Style Selector="ToggleButton:checked /template/ ui|FABorder#Root">
+                            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackground}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrush}"/>
+                        </Style>
+                        <Style Selector="ToggleButton:checked Path.toggleButtonChecked">
+                            <Setter Property="Fill" Value="DodgerBlue"/>
+                        </Style>
+                        <Style Selector="ToggleButton:checked TextBlock.toggleButtonChecked">
+                            <Setter Property="Foreground" Value="DodgerBlue"/>
+                        </Style>
+                    </StackPanel.Styles>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <StackPanel.Styles>
+            <Style Selector="Button">
+                <Setter Property="Padding" Value="0" />
+            </Style>
+            <Style Selector="ToggleButton">
+                <Setter Property="Padding" Value="0" />
+            </Style>
+            <Style Selector="Viewbox">
+                <Setter Property="Width" Value="48" />
+                <Setter Property="Height" Value="48" />
+            </Style>
+            <Style Selector="Canvas">
+                <Setter Property="Width" Value="24" />
+                <Setter Property="Height" Value="24" />
+            </Style>
+            <Style Selector="Path">
+                <Setter Property="Fill" Value="White" />
+            </Style>
+            <Style Selector="Path.gateAnd">
+                <Setter Property="Data" Value="{StaticResource GateAnd}"/>
+            </Style>
+            <Style Selector="Path.gateOr">
+                <Setter Property="Data" Value="{StaticResource GateOr}"/>
+            </Style>
+        </StackPanel.Styles>
+    </StackPanel>
+</UserControl>
