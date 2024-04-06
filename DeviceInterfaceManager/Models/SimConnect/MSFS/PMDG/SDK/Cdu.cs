@@ -28,7 +28,7 @@ public static class Cdu
                 public char Symbol;
 
                 public Color Color; // any of CDU_COLOR_ defines
-                public Flag Flags;  // a combination of CDU_FLAG_ bits
+                public Flags Flags;  // a combination of CDU_FLAG_ bits
             }
         }
 
@@ -38,7 +38,7 @@ public static class Cdu
 
     public interface ICduScreen
     {
-        public Screen Screen { get; }
+        public Screen Screen { get; set; }
     }
 
     // CDU Screen Cell Colors
@@ -54,7 +54,7 @@ public static class Cdu
 
     // CDU Screen Cell flags
     [Flags]
-    public enum Flag : byte
+    public enum Flags : byte
     {
         SmallFont = 0x01, // small font, including that used for line headers 
         Reverse = 0x02,   // character background is highlighted in reverse video
