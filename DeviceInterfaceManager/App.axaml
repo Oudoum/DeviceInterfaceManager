@@ -6,28 +6,15 @@
              x:CompileBindings="True"
              RequestedThemeVariant="Dark">
 
-  <Application.DataTemplates>
-    <local:ViewLocator/>
-  </Application.DataTemplates>
-
-  <Application.Styles>
-    <sty:FluentAvaloniaTheme UseSystemFontOnWindows="True" PreferUserAccentColor="True" PreferSystemTheme="False"/>
-    <StyleInclude Source="avares://DeviceInterfaceManager/Assets/Icons.axaml"/>
-  </Application.Styles>
-
-  <TrayIcon.Icons>
-    <TrayIcons>
-      <TrayIcon Icon="/Assets/DIM.ico"
-                ToolTipText="Device Interface Manager"
-                Clicked="TrayIconClicked">
-        <TrayIcon.Menu>
-          <NativeMenu>
-            <NativeMenuItem Header="Exit"
-                            Click="MenuItemExitClick"/>
-          </NativeMenu>
-        </TrayIcon.Menu>
-      </TrayIcon>
-    </TrayIcons>
-  </TrayIcon.Icons>
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+    
+    <Application.Styles>
+        <sty:FluentAvaloniaTheme UseSystemFontOnWindows="True" PreferUserAccentColor="True" PreferSystemTheme="False" />
+        <StyleInclude Source="Assets/Icons.axaml" />
+        <StyleInclude Source="Styles/AutoCompleteBoxClearStyle.axaml"/>
+        <StyleInclude Source="Styles/ButtonClearStyle.axaml"/>
+    </Application.Styles>
 
 </Application>
