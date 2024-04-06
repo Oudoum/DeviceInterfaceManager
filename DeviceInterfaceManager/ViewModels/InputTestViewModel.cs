@@ -3,13 +3,7 @@ using DeviceInterfaceManager.Models.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class InputTestViewModel : ObservableObject
+public class InputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    public InputTestViewModel(DeviceItem deviceItem)
-    {
-        InputOutputDevice = deviceItem.InputOutputDevice;
-    }
-
-    [ObservableProperty]
-    private IInputOutputDevice _inputOutputDevice;
+    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
 }
