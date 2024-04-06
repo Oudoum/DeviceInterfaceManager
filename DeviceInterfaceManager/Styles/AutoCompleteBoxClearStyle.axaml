@@ -1,0 +1,29 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <AutoCompleteBox Classes="clearButton rightEdgeAlignedBottomPopup" Text="Test" Width="200" />
+        </Border>
+    </Design.PreviewWith>
+    
+    <Style Selector="AutoCompleteBox.clearButton /template/ TextBox#PART_TextBox[AcceptsReturn=False][IsReadOnly=False]:focus:not(TextBox:empty)">
+        <Setter Property="InnerRightContent">
+            <Template>
+                <Button Theme="{StaticResource TextBoxDeleteButtonStyle}"
+                        Command="{Binding $parent[TextBox].Clear}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{DynamicResource ControlCornerRadius}"
+                        Padding="{StaticResource HelperButtonThemePadding}"
+                        IsTabStop="False"
+                        Focusable="False"
+                        FontSize="{TemplateBinding FontSize}"
+                        Width="30"
+                        VerticalAlignment="Stretch" />
+            </Template>
+        </Setter>
+    </Style>
+
+    <Style Selector="AutoCompleteBox.rightEdgeAlignedBottomPopup /template/ Popup#PART_Popup">
+        <Setter Property="Placement" Value="RightEdgeAlignedBottom" />
+    </Style>
+</Styles>
