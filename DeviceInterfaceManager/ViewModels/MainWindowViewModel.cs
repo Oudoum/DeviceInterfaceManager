@@ -1,36 +1,32 @@
 ﻿using System.Collections.ObjectModel;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Controls.Templates;
-using Avalonia.Media;
-using Avalonia.Metadata;
+using System.Collections.Specialized;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DeviceInterfaceManager.Models.Devices;
 using FluentAvalonia.UI.Controls;
-using InterfaceItData = DeviceInterfaceManager.Models.Devices.interfaceIT.USB.InterfaceItData;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel,SettingsViewModel settingsViewModel, ObservableCollection<DeviceItem> deviceItems)
+    public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IInputOutputDevice> inputOutputDevices)
     {
         _homeViewModel = homeViewModel;
         _profileCreatorViewModel = profileCreatorViewModel;
         _settingsViewModel = settingsViewModel;
-        _deviceItems = deviceItems;
-        
-        if (Design.IsDesignMode)
-        {
-            DeviceItems.Add(new DeviceItem(new DeviceSerialBase()));
-            return;
-        }
-
-        ExitCleanup();
-
-        Startup();
+        InputOutputDevices = inputOutputDevices;
+        InputOutputDevices.CollectionChanged += InputOutputDevicesOnCollectionChanged;
     }
+
+#if DEBUG
+    public MainWindowViewModel()
+    {
+        _homeViewModel = new HomeViewModel();
+        _profileCreatorViewModel = new ProfileCreatorViewModel();
+        _settingsViewModel = new SettingsViewModel();
+        InputOutputDevices = [];
+    }
+#endif
     
     private readonly HomeViewModel _homeViewModel;
 
@@ -39,76 +35,64 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly SettingsViewModel _settingsViewModel;
 
     [ObservableProperty]
-    private ObservableCollection<DeviceItem> _deviceItems;
+    private ObservableCollection<IInputOutputDevice> _inputOutputDevices;
 
+    [ObservableProperty]
+    private ObservableCollection<DeviceViewModel> _deviceViewModels = [];
+    
     [ObservableProperty]
     private ObservableObject? _currentViewModel;
 
     [ObservableProperty]
     private object? _selectedItem;
-    
+
     partial void OnSelectedItemChanged(object? value)
     {
-        CurrentViewModel = value switch
+        switch (value)
         {
-            NavigationViewItem navigationViewItem => (navigationViewItem.Content as string) switch
-            {
-                "Home" => _homeViewModel,
-                "Profile Creator" => _profileCreatorViewModel,
-                "Settings" => _settingsViewModel,
-                _ => CurrentViewModel
-            },
-            DeviceItem categoryItem => categoryItem.DeviceViewModel,
-            _ => CurrentViewModel
-        };
-    }
-
-    private void Startup()
-    {
-        for (int i = 0; i < InterfaceItData.TotalControllers; i++)
-        {
-            InterfaceItData interfaceItData = new();
-            interfaceItData.ConnectAsync();
-            DeviceItems.Add(new DeviceItem(interfaceItData));
-        }
-    }
-
-    private void ExitCleanup()
-    {
-        InterfaceItData.OpenControllers();
-        if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.ShutdownRequested += (_, _) =>
-            {
-                foreach (DeviceItem deviceItem in DeviceItems)
+            case NavigationViewItem navigationViewItem:
+                CurrentViewModel = (navigationViewItem.Content as string) switch
                 {
-                    deviceItem.InputOutputDevice.Disconnect();
+                    "Home" => _homeViewModel,
+                    "Profile Creator" => _profileCreatorViewModel,
+                    "Settings" => _settingsViewModel,
+                    _ => CurrentViewModel
+                };
+                break;
+
+            case IInputOutputDevice inputOutputDevice:
+                DeviceViewModel? existingViewModel = DeviceViewModels.FirstOrDefault(vm => vm.InputOutputDevice.Equals(inputOutputDevice));
+                if (existingViewModel is null)
+                {
+                    DeviceViewModel newViewModel = new(inputOutputDevice);
+                    CurrentViewModel = newViewModel;
+                    DeviceViewModels.Add(newViewModel);
+                    break;
                 }
 
-                InterfaceItData.CloseControllers();
-            };
+                CurrentViewModel = existingViewModel;
+                break;
+
+            default:
+                CurrentViewModel = CurrentViewModel;
+                break;
         }
     }
-}
-
-public class DeviceItem(IInputOutputDevice inputOutputDevice)
-{
-    public IInputOutputDevice InputOutputDevice { get; } = inputOutputDevice;
-    public string? Name { get; } = inputOutputDevice.DeviceName;
-    public string? ToolTip { get; } = inputOutputDevice.SerialNumber;
-    public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource(inputOutputDevice is IDeviceSerial ? "UsbPort" : "Ethernet");
-
-    private DeviceViewModel? _deviceViewModel;
-    public DeviceViewModel DeviceViewModel => _deviceViewModel ??= new DeviceViewModel(this);
-}
-
-public class MenuItemTemplateSelector : DataTemplateSelector
-{
-    [Content]
-    public IDataTemplate? ItemTemplate { get; set; }
-
-    protected override IDataTemplate? SelectTemplateCore(object item)
+    
+    private void InputOutputDevicesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        return ItemTemplate;
+        if (e.Action is not (NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Reset) || e.OldItems is null)
+        {
+            return;
+        }
+
+        foreach (IInputOutputDevice inputOutputDevice in e.OldItems)
+        {
+            DeviceViewModel? viewModelToRemove = DeviceViewModels.FirstOrDefault(vm => vm.InputOutputDevice.Equals(inputOutputDevice));
+            if (viewModelToRemove is not null)
+            {
+                DeviceViewModels.Remove(viewModelToRemove);
+            }
+        }
     }
 }
