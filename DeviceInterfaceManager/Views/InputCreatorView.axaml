@@ -1,0 +1,237 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
+             xmlns:local="clr-namespace:DeviceInterfaceManager.Views"
+             mc:Ignorable="d"
+             d:DesignHeight="700"
+             x:Class="DeviceInterfaceManager.Views.InputCreatorView"
+             x:DataType="vm:InputCreatorViewModel">
+    
+    <Design.DataContext>
+        <vm:InputCreatorViewModel/>
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <converters:NullableConverter x:Key="NullableConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <TabControl>
+            <TabItem Header="Input">
+                <StackPanel Margin="20" Spacing="20">
+                    <StackPanel Spacing="10">
+                        <StackPanel Spacing="25" Orientation="Horizontal">
+                            <RadioButton Content="SimVar / L:Var"
+                                         IsChecked="{Binding IsMsfsSimConnect}" />
+                            <RadioButton Content="K:Event"
+                                         IsChecked="{Binding IsKEvent}" />
+                            <RadioButton Content="H:Event / RPN"
+                                         IsChecked="{Binding IsRpn}" />
+                        </StackPanel>
+                        <StackPanel Spacing="25" Orientation="Horizontal">
+                            <RadioButton Content="PMDG 737"
+                                         IsChecked="{Binding IsPmdg737}" />
+                            <RadioButton Content="PMDG 777"
+                                         IsEnabled="False"
+                                         IsChecked="" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Input Type -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Input Type" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding InputType}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="Stretch"
+                                  SelectedItem="{Binding InputType}"
+                                  ItemsSource="{Binding InputTypes}" />
+                    </Grid>
+
+                    <!-- Input -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Input" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Input.Position, FallbackValue=''}" />
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <ComboBox Name="InputComboBox"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Center"
+                                      DisplayMemberBinding="{Binding Position}"
+                                      SelectedItem="{Binding Input}"
+                                      ItemsSource="{Binding Components}" />
+                            <Button Content="?"
+                                    FontWeight="Bold"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding GetSwitchCommand}" />
+                            <Button Classes="clear"
+                                    Command="{Binding #InputComboBox.Clear}"
+                                    IsVisible="{Binding !!#InputComboBox.SelectedItem}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- PMDG Event -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding IsPmdg737}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="PMDG Event" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PmdgEvent}" />
+                        <AutoCompleteBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         HorizontalAlignment="Stretch"
+                                         Watermark="Search..."
+                                         SelectedItem="{Binding PmdgEvent}"
+                                         AsyncPopulator="{Binding AsyncPopulator}"
+                                         Text="{Binding SearchPmdgEvent}"
+                                         Classes="clearButton rightEdgeAlignedBottomPopup" />
+                    </Grid>
+
+                    <!-- MSFS Event -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding !IsPmdg737}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Event" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Event}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="SimVar/K:Event/H:Event/RPN"
+                                 Text="{Binding Event}" />
+                    </Grid>
+
+                    <!-- On Release -->
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsRpn}">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="OnRelease" />
+                        <CheckBox Grid.Column="1"
+                                  Margin="0 0 0 5"
+                                  IsChecked="{Binding OnRelease}" />
+                    </Grid>
+
+                    <!-- Mouse Press -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding IsPmdg737}"
+                          IsEnabled="{Binding !DataPress}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Mouse Press" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PmdgMousePress}" />
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      SelectedIndex="{Binding PmdgMousePressIndex}"
+                                      ItemsSource="{Binding PmdgMouseFlags}" />
+                            <Button Classes="clear"
+                                    Command="{Binding ClearPmdgMousePressCommand}"
+                                    IsVisible="{Binding !!PmdgMousePress}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Data Press -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding !IsRpn}"
+                          IsEnabled="{Binding !PmdgMousePress}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Data Press" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding DataPress}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="Number"
+                                 Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" />
+                    </Grid>
+                    
+                    <!-- Mouse Release -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding IsPmdg737}"
+                          IsEnabled="{Binding !DataRelease}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Mouse Release" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PmdgMouseRelease}" />
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      SelectedIndex="{Binding PmdgMouseReleaseIndex}"
+                                      ItemsSource="{Binding PmdgMouseFlags}" />
+                            <Button Classes="clear"
+                                    Command="{Binding ClearPmdgMouseReleaseCommand}"
+                                    IsVisible="{Binding !!PmdgMouseRelease}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Data Release -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding !IsRpn}"
+                          IsEnabled="{Binding !PmdgMouseRelease}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Data Release" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding DataRelease}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="Number"
+                                 Text="{Binding DataRelease, Converter={StaticResource NullableConverter}}" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+            
+            <TabItem Header="Precondition">
+                <local:PreconditionView />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
