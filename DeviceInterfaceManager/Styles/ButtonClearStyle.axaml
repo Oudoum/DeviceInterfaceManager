@@ -1,0 +1,24 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <Grid>
+                <ComboBox Name="Box" Width="200">
+                    <ComboBoxItem>Banana</ComboBoxItem>
+                </ComboBox>
+                <Button Classes="clear" Command="{Binding #Box.Clear}" IsVisible="{Binding !!#Box.SelectedItem}" />
+            </Grid>
+        </Border>
+    </Design.PreviewWith>
+
+    <Style Selector="Button.clear">
+        <Setter Property="Theme" Value="{StaticResource TextBoxDeleteButtonStyle}"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}"/>
+        <Setter Property="Padding" Value="{StaticResource HelperButtonThemePadding}"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Margin" Value="0 0 30 0"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Width" Value="30"/>
+    </Style>
+</Styles>
