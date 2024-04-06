@@ -4,17 +4,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+        xmlns:device="clr-namespace:DeviceInterfaceManager.Models.Devices"
         mc:Ignorable="d"
         x:Class="DeviceInterfaceManager.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="1440"
-        Height="900"
-        MinWidth="640"
-        MinHeight="480"
+        Width="1800"
+        Height="1000"
+        MinWidth="800"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen"
         Title="">
+    
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
 
     <Grid>
-
+        
         <ui:NavigationView AlwaysShowHeader="False"
                            IsSettingsVisible="False"
                            SelectedItem="{Binding SelectedItem}"
@@ -38,16 +44,16 @@
                         <ui:PathIconSource Data="{StaticResource Devices}" />
                     </ui:NavigationViewItem.IconSource>
                     <ui:NavigationViewItem.InfoBadge>
-                        <ui:InfoBadge Value="{Binding DeviceItems.Count}" />
+                        <ui:InfoBadge Value="{Binding InputOutputDevices.Count}" />
                     </ui:NavigationViewItem.InfoBadge>
                     <ui:NavigationViewItem.MenuItemsSource>
-                        <Binding Path="DeviceItems" />
+                        <Binding Path="InputOutputDevices" />
                     </ui:NavigationViewItem.MenuItemsSource>
                     <ui:NavigationViewItem.DataTemplates>
-                        <DataTemplate DataType="{x:Type vm:DeviceItem}">
+                        <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding ToolTip}" />
-                                <TextBlock FontSize="14" Text="{Binding Name}" />
+                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding SerialNumber}" />
+                                <TextBlock FontSize="14" Text="{Binding DeviceName}" />
                             </StackPanel>
                         </DataTemplate>
                     </ui:NavigationViewItem.DataTemplates>
