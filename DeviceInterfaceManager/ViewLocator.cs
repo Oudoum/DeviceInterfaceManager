@@ -9,6 +9,7 @@ public class ViewLocator : StrongViewLocator
     public ViewLocator()
     {
         Register<AskTextBoxViewModel, AskTextBoxView>();
+        Register<AskComboBoxViewModel, AskComboBoxView>();
         Register<DeviceViewModel, DeviceView>();
         Register<HomeViewModel, HomeView>();
         Register<InformationViewModel, InformationView>();
@@ -17,5 +18,7 @@ public class ViewLocator : StrongViewLocator
         Register<OutputTestViewModel, OutputTestView>();
         Register<ProfileCreatorViewModel, ProfileCreatorView>();
         Register<SettingsViewModel, SettingsView>();
+        Register<InputCreatorViewModel, InputCreatorView>();
+        Register<OutputCreatorViewModel, OutputCreatorView>();
     }
 }
