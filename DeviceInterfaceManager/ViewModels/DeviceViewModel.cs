@@ -1,24 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using DeviceInterfaceManager.Models.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class DeviceViewModel(DeviceItem deviceItem) : ObservableObject
+public class DeviceViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    [ObservableProperty]
-    private InformationViewModel _informationViewModel = new(deviceItem);
+    public IInputOutputDevice InputOutputDevice  => inputOutputDevice;
+    
+    public InformationViewModel InformationViewModel { get; } = new(inputOutputDevice);
 
-    [ObservableProperty]
-    private InputTestViewModel _inputTestViewModel = new(deviceItem);
+    public InputTestViewModel InputTestViewModel { get; } = new(inputOutputDevice);
 
-    [ObservableProperty]
-    private OutputTestViewModel _outputTestViewModel = new(deviceItem);
+    public OutputTestViewModel OutputTestViewModel { get; } = new(inputOutputDevice);
 
-    [ObservableProperty]
-    private bool _isHomeSelected = true;
+    public bool IsHomeSelected { get; set; } = true;
 
-    [ObservableProperty]
-    private bool _isInputTestSelected;
+    public bool IsInputTestSelected { get; set; }
 
-    [ObservableProperty]
-    private bool _isOutputTestSelected;
+    public bool IsOutputTestSelected { get; set; }
 }
