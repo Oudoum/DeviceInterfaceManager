@@ -1,46 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 
 public partial class InterfaceItData : IDeviceSerial
 {
-    public ComponentInfo Switch { get; private set; }
+    public ComponentInfo Switch { get; private set; } = null!;
     public event EventHandler<InputChangedEventArgs>? InputChanged;
-    public ComponentInfo Led { get; private set; }
-    public ComponentInfo Dataline { get; private set; }
-    public ComponentInfo SevenSegment { get; private set; }
+    public ComponentInfo Led { get; private set; } = null!;
+    public ComponentInfo Dataline { get; private set; } = null!;
+    public ComponentInfo SevenSegment { get; private set; } = null!;
 
-    public Task SetLedAsync(string position, bool isEnabled)
+    public Task SetLedAsync(string? position, bool isEnabled)
     {
-        interfaceIT_LED_Set(_session, Convert.ToInt32(position), isEnabled);
+        CheckError(interfaceIT_LED_Set(_session, Convert.ToInt32(position), isEnabled));
         return Task.CompletedTask;
     }
 
-    public Task SetDatalineAsync(string position, bool isEnabled)
+    public Task SetDatalineAsync(string? position, bool isEnabled)
     {
-        interfaceIT_Dataline_Set(_session, Convert.ToInt32(position), isEnabled);
+        CheckError(interfaceIT_Dataline_Set(_session, Convert.ToInt32(position), isEnabled));
         return Task.CompletedTask;
     }
 
-    public Task SetSevenSegmentAsync(string position, string data)
+    public Task SetSevenSegmentAsync(string? position, string data)
     {
-        interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position));
+        CheckError(interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position)));
         return Task.CompletedTask;
     }
-
+    
     public string? DeviceName { get; private set; }
     public string? SerialNumber { get; private set; }
+    public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("UsbPort");
 
     public Task<ConnectionStatus> ConnectAsync()
     {
+        if (_totalControllers == -1)
+        {
+            return Task.FromResult(ConnectionStatus.NotConnected);
+        }
+        
         foreach (string device in interfaceIT_GetDeviceList())
         {
-            if (ErrorCodes.ControllerAlreadyBound == interfaceIT_Bind(device, ref _session))
+            if (!_isOpen)
+            {
+                _isOpen = true;
+            }
+            
+            if (ErrorCode.ControllerAlreadyBound == interfaceIT_Bind(device, ref _session))
             {
                 continue;
             }
@@ -49,7 +64,7 @@ public partial class InterfaceItData : IDeviceSerial
             InterfaceItBoardId boardId = GetInterfaceItBoardId(boardInfo.BoardType);
             if (boardId is InterfaceItBoardId.FDS_CONTROLLER_MCP or InterfaceItBoardId.FDS_737_PMX_MCP or InterfaceItBoardId.JetMAX_737_RADIO)
             {
-                interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64);
+                CheckError(interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64));
             }
 
             SerialNumber = device;
@@ -61,7 +76,8 @@ public partial class InterfaceItData : IDeviceSerial
             SevenSegment = new ComponentInfo(boardInfo.SevenSegmentFirst, boardInfo.SevenSegmentLast);
 
             EnableDeviceFeatures();
-            interfaceIT_Switch_Enable_Callback(_session, true, _keyNotifyCallback = KeyPressedProc);
+            _keyNotifyCallback = KeyPressedProc;
+            CheckError(interfaceIT_Switch_Enable_Callback(_session, true, _keyNotifyCallback));
 
             return Task.FromResult(ConnectionStatus.Connected);
         }
@@ -69,11 +85,25 @@ public partial class InterfaceItData : IDeviceSerial
         return Task.FromResult(ConnectionStatus.NotConnected);
     }
 
+    private static bool _isOpen;
+    private static int _disconnects;
+
     public void Disconnect()
     {
-        interfaceIT_Switch_Enable_Callback(_session, false, _keyNotifyCallback = null);
+        CheckError(interfaceIT_Switch_Enable_Callback(_session, false, _keyNotifyCallback = null));
         DisableDeviceFeatures();
-        interfaceIT_UnBind(_session);
+        CheckError(interfaceIT_UnBind(_session));
+        _disconnects++;
+
+        if (_disconnects != TotalControllers && _totalControllers != -1)
+        {
+            return;
+        }
+
+        CheckError(interfaceIT_CloseControllers());
+        _isOpen = false;
+        _disconnects = 0;
+        _totalControllers = -1;
     }
 
     private KeyNotifyCallback? _keyNotifyCallback;
@@ -86,34 +116,146 @@ public partial class InterfaceItData : IDeviceSerial
     }
 
     //
-    public static void OpenControllers()
-    {
-        interfaceIT_OpenControllers();
-    }
-
-    public static void CloseControllers()
-    {
-        interfaceIT_CloseControllers();
-    }
-
     public static int TotalControllers => interfaceIT_GetTotalControllers();
-
-    public static string ApiVersion => interfaceIT_GetAPIVersion();
-
-    private static bool _isLoggingEnabled;
-
-    public static bool IsLoggingEnabled
-    {
-        get => _isLoggingEnabled;
-        set => interfaceIT_EnableLogging(_isLoggingEnabled = value);
-    }
 
     private Features _features;
     private uint _session;
 
+    private static void CheckError(ErrorCode errorCode)
+    {
+        if (errorCode != ErrorCode.Ok)
+        {
+            //Log
+        }
+    }
+
     // API
     private delegate void KeyNotifyCallback(uint session, int key, uint direction);
 
+    //Main Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_OpenControllers();
+
+    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial ErrorCode interfaceIT_GetDeviceList(byte[]? buffer, ref uint bufferSize, string? boardType);
+
+    private static IEnumerable<string> interfaceIT_GetDeviceList()
+    {
+        uint bufferSize = 0;
+        CheckError(interfaceIT_GetDeviceList(null, ref bufferSize, null));
+        byte[] deviceList = new byte[bufferSize];
+        CheckError(interfaceIT_GetDeviceList(deviceList, ref bufferSize, null));
+        return Encoding.UTF8.GetString(deviceList).TrimEnd('\0').Split('\0').AsEnumerable();
+    }
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_CloseControllers();
+
+
+    //Controller Functions
+    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial ErrorCode interfaceIT_Bind(string controller, ref uint session);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_UnBind(uint session);
+
+    [DllImport("interfaceITAPI x64.dll")]
+    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "<Pending>")]
+    private static extern ErrorCode interfaceIT_GetBoardInfo(uint session, out BoardInfo boardInfo);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_SetBoardOptions(uint session, uint options);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_GetTotalControllers(ref int controllerCount);
+
+
+    private static int _totalControllers = -1;
+    
+    private static int interfaceIT_GetTotalControllers()
+    {
+        CheckError(interfaceIT_OpenControllers());
+        CheckError(interfaceIT_GetTotalControllers(ref _totalControllers));
+        return _totalControllers;
+    }
+
+
+    //LED Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_LED_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCodes interfaceIT_LED_Test(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_LED_Set(uint session, int led, [MarshalAs(UnmanagedType.Bool)] bool on);
+
+
+    //Switch Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Switch_Enable_Callback(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable, KeyNotifyCallback? keyNotifyCallback);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Switch_Enable_Poll(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCode interfaceIT_Switch_Get_Item(uint session, out int key, out int direction);
+    //
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCode interfaceIT_Switch_Get_State(uint session, out int key, out int state); //Not tested
+
+
+    //7 Segment Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_7Segment_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial ErrorCode interfaceIT_7Segment_Display(uint session, string? data, int start);
+
+
+    //Dataline Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Dataline_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Dataline_Set(uint session, int dataline, [MarshalAs(UnmanagedType.Bool)] bool on);
+
+
+    //Brightness Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Brightness_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Brightness_Set(uint session, int brightness);
+
+
+    //Analog Input Functions
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Analog_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCodes interfaceIT_Analog_GetValue(uint session, int reserved, out int pos);
+    //
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCodes interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
+    //
+    // //Misc Functions
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCodes interfaceIT_GetAPIVersion(byte[]? buffer, ref uint bufferSize);
+    //
+    //
+    // private static string interfaceIT_GetAPIVersion()
+    // {
+    //     uint bufferSize = 0;
+    //     interfaceIT_GetAPIVersion(null, ref bufferSize);
+    //     byte[] apiVersion = new byte[bufferSize];
+    //     interfaceIT_GetAPIVersion(apiVersion, ref bufferSize);
+    //     return Encoding.UTF8.GetString(apiVersion);
+    // }
+    //
+    // [LibraryImport("interfaceITAPI x64.dll")]
+    // private static partial ErrorCodes interfaceIT_EnableLogging([MarshalAs(UnmanagedType.Bool)] bool enable);
+    
     private enum SwitchDirection : byte
     {
         Unknown = 0xFF,
@@ -130,7 +272,7 @@ public partial class InterfaceItData : IDeviceSerial
         Reserved3 = 0x4
     }
 
-    private enum ErrorCodes : short
+    private enum ErrorCode : short
     {
         Ok = 0,
         ControllersOpenFailed = -1,
@@ -226,153 +368,31 @@ public partial class InterfaceItData : IDeviceSerial
     }
 #pragma warning restore CS0649 // Field is never assigned to, and will always have its default value
 
-    //Main Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_OpenControllers();
-
-    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial ErrorCodes interfaceIT_GetDeviceList(byte[]? buffer, ref uint bufferSize, string? boardType);
-
-    private static IEnumerable<string> interfaceIT_GetDeviceList()
-    {
-        uint bufferSize = 0;
-        interfaceIT_GetDeviceList(null, ref bufferSize, null);
-        byte[] deviceList = new byte[bufferSize];
-        interfaceIT_GetDeviceList(deviceList, ref bufferSize, null);
-        return Encoding.UTF8.GetString(deviceList).TrimEnd('\0').Split('\0');
-    }
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_CloseControllers();
-
-
-    //Controller Functions
-    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial ErrorCodes interfaceIT_Bind(string controller, ref uint session);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_UnBind(uint session);
-
-    [DllImport("interfaceITAPI x64.dll")]
-    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "<Pending>")]
-    private static extern ErrorCodes interfaceIT_GetBoardInfo(uint session, out BoardInfo boardInfo);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_SetBoardOptions(uint session, uint options);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_GetTotalControllers(ref int controllerCount);
-
-    private static int interfaceIT_GetTotalControllers()
-    {
-        int controllerCount = -1;
-        interfaceIT_GetTotalControllers(ref controllerCount);
-        return controllerCount;
-    }
-
-
-    //LED Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_LED_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_LED_Test(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_LED_Set(uint session, int led, [MarshalAs(UnmanagedType.Bool)] bool on);
-
-
-    //Switch Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Switch_Enable_Callback(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable, KeyNotifyCallback? keyNotifyCallback);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Switch_Enable_Poll(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Switch_Get_Item(uint session, out int key, out int direction);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Switch_Get_State(uint session, out int key, out int state); //Not tested
-
-
-    //7 Segment Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_7Segment_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial ErrorCodes interfaceIT_7Segment_Display(uint session, string? data, int start);
-
-
-    //Dataline Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Dataline_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Dataline_Set(uint session, int dataline, [MarshalAs(UnmanagedType.Bool)] bool on);
-
-
-    //Brightness Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Brightness_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Brightness_Set(uint session, int brightness);
-
-
-    //Analog Input Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Analog_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Analog_GetValue(uint session, int reserved, out int pos);
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
-
-    //Misc Functions
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_GetAPIVersion(byte[]? buffer, ref uint bufferSize);
-
-
-    private static string interfaceIT_GetAPIVersion()
-    {
-        uint bufferSize = 0;
-        interfaceIT_GetAPIVersion(null, ref bufferSize);
-        byte[] apiVersion = new byte[bufferSize];
-        interfaceIT_GetAPIVersion(apiVersion, ref bufferSize);
-        return Encoding.UTF8.GetString(apiVersion);
-    }
-
-    [LibraryImport("interfaceITAPI x64.dll")]
-    private static partial ErrorCodes interfaceIT_EnableLogging([MarshalAs(UnmanagedType.Bool)] bool enable);
-
-
     private void EnableDeviceFeatures()
     {
         if (HasFeature(Features.SpecialAnalogInput) || HasFeature(Features.SpecialAnalog16Input))
         {
-            interfaceIT_Analog_Enable(_session, true);
+            CheckError(interfaceIT_Analog_Enable(_session, true));
         }
 
         if (HasFeature(Features.SpecialBrightness))
         {
-            interfaceIT_Brightness_Enable(_session, true);
+            CheckError(interfaceIT_Brightness_Enable(_session, true));
         }
 
         if (HasFeature(Features.OutputDataLine))
         {
-            interfaceIT_Dataline_Enable(_session, true);
+            CheckError(interfaceIT_Dataline_Enable(_session, true));
         }
 
         if (HasFeature(Features.Output7Segment))
         {
-            interfaceIT_7Segment_Enable(_session, true);
+            CheckError(interfaceIT_7Segment_Enable(_session, true));
         }
 
         if (HasFeature(Features.OutputLed))
         {
-            interfaceIT_LED_Enable(_session, true);
+            CheckError(interfaceIT_LED_Enable(_session, true));
         }
     }
 
@@ -382,46 +402,46 @@ public partial class InterfaceItData : IDeviceSerial
         {
             for (int i = Led.First; i <= Led.Last; i++)
             {
-                interfaceIT_LED_Set(_session, i, false);
+                CheckError(interfaceIT_LED_Set(_session, i, false));
             }
 
-            interfaceIT_LED_Enable(_session, false);
+            CheckError(interfaceIT_LED_Enable(_session, false));
         }
 
         if (HasFeature(Features.InputSwitches))
         {
-            interfaceIT_Switch_Enable_Poll(_session, false);
+            CheckError(interfaceIT_Switch_Enable_Poll(_session, false));
         }
 
         if (HasFeature(Features.Output7Segment))
         {
             for (int i = SevenSegment.First; i <= SevenSegment.Last; i++)
             {
-                interfaceIT_7Segment_Display(_session, null, i);
+                CheckError(interfaceIT_7Segment_Display(_session, null, i));
             }
 
-            interfaceIT_7Segment_Enable(_session, false);
+            CheckError(interfaceIT_7Segment_Enable(_session, false));
         }
 
         if (HasFeature(Features.OutputDataLine))
         {
             for (int i = Dataline.First; i <= Dataline.Last; i++)
             {
-                interfaceIT_Dataline_Set(_session, i, false);
+                CheckError(interfaceIT_Dataline_Set(_session, i, false));
             }
-            
-            interfaceIT_Dataline_Enable(_session, false);
+
+            CheckError(interfaceIT_Dataline_Enable(_session, false));
         }
 
         if (HasFeature(Features.SpecialBrightness))
         {
-            interfaceIT_Brightness_Set(_session, 0);
-            interfaceIT_Brightness_Enable(_session, false);
+            CheckError(interfaceIT_Brightness_Set(_session, 0));
+            CheckError(interfaceIT_Brightness_Enable(_session, false));
         }
 
         if (HasFeature(Features.SpecialAnalogInput) || HasFeature(Features.SpecialAnalog16Input))
         {
-            interfaceIT_Analog_Enable(_session, false);
+            CheckError(interfaceIT_Analog_Enable(_session, false));
         }
     }
 
@@ -430,18 +450,23 @@ public partial class InterfaceItData : IDeviceSerial
         return (_features & feature) != 0;
     }
 
-    private static ushort GetProduct(ushort hexCode)
-    {
-        return (ushort)((hexCode & 0xFF00) >> 8);
-    }
-
-    private static ushort GetModel(ushort hexCode)
-    {
-        return (ushort)((hexCode & 0xFF) >> 0);
-    }
+    // private static ushort GetProduct(ushort hexCode)
+    // {
+    //     return (ushort)((hexCode & 0xFF00) >> 8);
+    // }
+    //
+    // private static ushort GetModel(ushort hexCode)
+    // {
+    //     return (ushort)((hexCode & 0xFF) >> 0);
+    // }
 
     private static InterfaceItBoardId GetInterfaceItBoardId(string boardType)
     {
+        if (string.IsNullOrEmpty(boardType))
+        {
+            return 0;
+        }
+
         return (InterfaceItBoardId)Convert.ToUInt16(boardType, 16);
     }
 }
