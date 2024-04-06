@@ -1,0 +1,421 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:model="clr-namespace:DeviceInterfaceManager.Models"
+             xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
+             xmlns:local="clr-namespace:DeviceInterfaceManager.Views"
+             xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d"
+             d:DesignHeight="700"
+             x:Class="DeviceInterfaceManager.Views.OutputCreatorView"
+             x:DataType="vm:OutputCreatorViewModel">
+    
+    <Design.DataContext>
+        <vm:OutputCreatorViewModel/>
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <converters:StringToBooleanConverter x:Key="StringToBooleanConverter" />
+        <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
+        <converters:DoubleToNullableByteConverter x:Key="DoubleToNullableByteConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <TabControl>
+            <TabItem Header="Output">
+                <StackPanel Margin="20" Spacing="25">
+                    <StackPanel Spacing="25" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <RadioButton Name="MsfsRadioButton"
+                                     Content="SimVar / L:Var"
+                                     IsChecked="{Binding DataType,
+                                     Converter={StaticResource StringToBooleanConverter},
+                                     ConverterParameter={x:Static model:ProfileCreatorModel.MsfsSimConnect}}" />
+                        <RadioButton Name="Pmdg737RadioButton"
+                                     Content="PMDG 737"
+                                     IsChecked="{Binding DataType,
+                                     Converter={StaticResource StringToBooleanConverter},
+                                     ConverterParameter={x:Static model:ProfileCreatorModel.Pmdg737}}" />
+                    </StackPanel>
+
+                    <!-- Output Type -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Output Type" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding OutputType}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="Stretch"
+                                  SelectedItem="{Binding OutputType}"
+                                  ItemsSource="{Binding OutputTypes}" />
+                    </Grid>
+
+                    <!-- Output -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Output" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Output.Position, FallbackValue=''}" />
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <ComboBox Name="OutputComboBox"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedItem="{Binding Output}"
+                                      ItemsSource="{Binding Components}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Name="PositionTextBlock" Text="{Binding Position}"
+                                                   Background="Transparent">
+                                            <i:Interaction.Behaviors>
+                                                <ia:EventTriggerBehavior EventName="PointerEntered">
+                                                    <ia:InvokeCommandAction
+                                                        Command="{Binding  $parent[ComboBox].((vm:OutputCreatorViewModel)DataContext).PointerEnteredComboBoxCommand,
+                                                    FallbackValue={x:Null}}"
+                                                        CommandParameter="{Binding #PositionTextBlock.Text }" />
+                                                </ia:EventTriggerBehavior>
+                                                <ia:EventTriggerBehavior EventName="PointerExited">
+                                                    <ia:InvokeCommandAction
+                                                        Command="{Binding $parent[ComboBox].((vm:OutputCreatorViewModel)DataContext).PointerExitedComboBoxCommand,
+                                                    FallbackValue={x:Null}}"
+                                                        CommandParameter="{Binding #PositionTextBlock.Text}" />
+                                                </ia:EventTriggerBehavior>
+                                            </i:Interaction.Behaviors>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Classes="clear"
+                                    Command="{Binding #OutputComboBox.Clear}"
+                                    IsVisible="{Binding !!#OutputComboBox.SelectedItem}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- PMDG Data -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding #Pmdg737RadioButton.IsChecked}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="PMDG Data" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PmdgData}" />
+                        <AutoCompleteBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         HorizontalAlignment="Stretch"
+                                         Watermark="Search..."
+                                         SelectedItem="{Binding PmdgData}"
+                                         AsyncPopulator="{Binding AsyncPopulator}"
+                                         Text="{Binding SearchPmdgData}"
+                                         Classes="clearButton rightEdgeAlignedBottomPopup" />
+                    </Grid>
+
+                    <!-- PMDG Array Index -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding #Pmdg737RadioButton.IsChecked}"
+                          IsEnabled="{Binding PmdgDataArrayIndex, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="PMDG Array Index" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PmdgDataArrayIndex}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="Stretch"
+                                  SelectedItem="{Binding PmdgDataArrayIndex}"
+                                  ItemsSource="{Binding PmdgDataArrayIndices}" />
+                    </Grid>
+
+                    <!-- MSFS Data -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding #MsfsRadioButton.IsChecked}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Data" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Data}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="SimVar / L:Var"
+                                 Text="{Binding Data}" />
+                    </Grid>
+
+                    <!-- MSFS Unit -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding #MsfsRadioButton.IsChecked}">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Unit" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Unit}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="Unit"
+                                 Text="{Binding Unit}" />
+                    </Grid>
+
+                    <!-- Invert -->
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsComparisonEnabled}">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Invert" />
+                        <CheckBox Grid.Column="1"
+                                  Margin="0 0 0 5"
+                                  IsChecked="{Binding IsInverted}" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Comparison"
+                     IsVisible="{Binding !IsDisplay}">
+                <StackPanel Margin="20" Spacing="25" Width="400">
+                    <!-- Operator -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Operator" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding Operator}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  FontWeight="Bold"
+                                  FontSize="20"
+                                  HorizontalAlignment="Stretch"
+                                  SelectedItem="{Binding Operator}"
+                                  ItemsSource="{Binding Operators}" />
+                    </Grid>
+
+                    <!-- Comparison Value -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Comparison Value" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding ComparisonValue}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="Comparison Value"
+                                 Text="{Binding ComparisonValue}" />
+                    </Grid>
+
+                    <!-- True Value -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*" IsEnabled="False">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="True Value" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding TrueValue}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="True Value"
+                                 Text="{Binding TrueValue}" />
+                    </Grid>
+
+                    <!-- False Value -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*" IsEnabled="False">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="False Value" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding FalseValue}" />
+                        <TextBox Grid.Row="1"
+                                 Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="False Value"
+                                 Text="{Binding FalseValue}" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Display"
+                     IsVisible="{Binding IsDisplay}">
+                <StackPanel Margin="20" Spacing="25" Width="400">
+
+                    <!-- Left Padding -->
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Left Padding" />
+                        <CheckBox Grid.Column="1"
+                                  Margin="0 0 0 5"
+                                  IsChecked="{Binding IsPadded}" />
+                    </Grid>
+
+                    <!-- Padding Character -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Padding Character" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding PaddingCharacterPair,
+                                   Converter={StaticResource NullableKeyValuePairConverter},
+                                   ConverterParameter='Key'}" />
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  HorizontalAlignment="Stretch"
+                                  DisplayMemberBinding="{Binding 
+                                  Converter={StaticResource NullableKeyValuePairConverter},
+                                  ConverterParameter='Key'}"
+                                  SelectedItem="{Binding PaddingCharacterPair}"
+                                  ItemsSource="{Binding PaddingCharacters}" />
+                    </Grid>
+
+                    <!-- Digit Count -->
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Digit Count" />
+                        <ComboBox Grid.Column="1"
+                                  HorizontalAlignment="Stretch"
+                                  SelectedItem="{Binding DigitCount}"
+                                  ItemsSource="{Binding DigitCounts}" />
+                    </Grid>
+
+                    <!-- Digit & Decimal Point -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                          IsVisible="{Binding DigitCount, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Top"
+                                   Margin="0 7 0 0"
+                                   Text="Digit" />
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Margin="0 10 0 0"
+                                   Text="Decimal Point" />
+                        <ItemsControl Grid.Row="0"
+                                      Grid.Column="1"
+                                      Grid.RowSpan="2"
+                                      ItemsSource="{Binding Digits}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="15" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding IsDigitChecked}" />
+                                        <TextBlock Text="{Binding Digit}" HorizontalAlignment="Center" />
+                                        <CheckBox IsChecked="{Binding IsDecimalPointChecked}" />
+                                        <StackPanel.Styles>
+                                            <Style Selector="Grid">
+                                                <Setter Property="Width" Value="20" />
+                                            </Style>
+                                        </StackPanel.Styles>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <!-- Substring Start -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Substring Start" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding SubstringStart}" />
+                        <ui:NumberBox Grid.Row="1"
+                                      Grid.Column="1"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Number 0 - 255"
+                                      Minimum="0"
+                                      Maximum="255"
+                                      SpinButtonPlacementMode="Inline"
+                                      Value="{Binding SubstringStart,
+                                      Converter={StaticResource DoubleToNullableByteConverter}}" />
+                    </Grid>
+
+                    <!-- Substring End -->
+                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Substring End" />
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   Margin="0 0 0 5"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding SubstringEnd}" />
+                        <ui:NumberBox Grid.Row="1"
+                                      Grid.Column="1"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Number 0 - 255"
+                                      Minimum="0"
+                                      Maximum="255"
+                                      SpinButtonPlacementMode="Inline"
+                                      Value="{Binding SubstringEnd,
+                                      Converter={StaticResource DoubleToNullableByteConverter}}" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Precondition">
+                <local:PreconditionView />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
