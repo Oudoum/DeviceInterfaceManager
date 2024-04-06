@@ -19,7 +19,7 @@ public class InterfaceItEthernet(
 {
     private string HostIpAddress { get; set; } = iPAddress;
     private int TcpPort { get; set; } = 10346;
-    private InterfaceItEthernetInfo InterfaceItEthernetInfo { get; set; } = interfaceItEthernetInfo;
+    private InterfaceItEthernetInfo? InterfaceItEthernetInfo { get; set; } = interfaceItEthernetInfo;
     public bool IsPolling { get; set; }
 
     public static async Task<InterfaceItEthernetDiscovery?> ReceiveControllerDiscoveryDataAsync()
@@ -102,9 +102,9 @@ public class InterfaceItEthernet(
         return false;
     }
 
-    public async Task<InterfaceItEthernetInfo> GetInterfaceItEthernetDataAsync(Action<int, uint> interfaceItKeyAction, CancellationToken cancellationToken)
+    public async Task<InterfaceItEthernetInfo?> GetInterfaceItEthernetDataAsync(Action<int, uint> interfaceItKeyAction, CancellationToken cancellationToken)
     {
-        TaskCompletionSource<InterfaceItEthernetInfo> tcs = new();
+        TaskCompletionSource<InterfaceItEthernetInfo?> tcs = new();
         _ = Task.Run(async () =>
         {
             StringBuilder sb = new();
@@ -204,7 +204,7 @@ public class InterfaceItEthernet(
         {
             return false;
         }
-        KeyValuePair<int, uint> keyValuePair = _polling.Pop();
+        var keyValuePair = _polling.Pop();
         ledNumber = keyValuePair.Key;
         direction = keyValuePair.Value;
         return true;
@@ -213,7 +213,7 @@ public class InterfaceItEthernet(
     private void GetInterfaceItEthernetInfoData(string ethernetData)
     {
         int index = ethernetData.IndexOf('=');
-        if (index < 0)
+        if (index < 0 || InterfaceItEthernetInfo is null)
         {
             return;
         }
@@ -281,6 +281,12 @@ public class InterfaceItEthernet(
     {
         string[] config = value.Split(":");
         int boardNumberMinusOne = Convert.ToInt32(config[0]) -1;
+
+        if (InterfaceItEthernetInfo?.Boards is null)
+        {
+            return;
+        }
+        
         switch (config[1])
         {
             case "LED":
@@ -339,7 +345,13 @@ public class InterfaceItEthernet(
 
     private void SetAllLedOff()
     {
-        for (int i = InterfaceItEthernetInfo.Boards[0].LedConfig.StartIndex; i <= InterfaceItEthernetInfo.Boards[0].LedConfig.TotalCount; i++)
+        InterfaceItEthernetBoardConfig? interfaceItEthernetBoardConfig = InterfaceItEthernetInfo?.Boards?[0].LedConfig;
+        if (interfaceItEthernetBoardConfig is null)
+        {
+            return;
+        }
+
+        for (int i = interfaceItEthernetBoardConfig.StartIndex; i <= interfaceItEthernetBoardConfig.TotalCount; i++)
         {
             stream?.Write(Encoding.ASCII.GetBytes("B1:LED:" + i + ":" + 0 + "\r\n"));
         }
@@ -461,7 +473,7 @@ public class InterfaceItEthernetBoardInfo
 
 public class InterfaceItEthernetBoardConfig
 {
-    public int StartIndex { get; set; }
-    public int StopIndex { get; set; }
-    public int TotalCount { get; set; }
+    public int StartIndex { get; init; }
+    public int StopIndex { get; init; }
+    public int TotalCount { get; init; }
 }
