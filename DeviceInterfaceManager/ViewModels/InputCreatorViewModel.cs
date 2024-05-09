@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 using HanumanInstitute.MvvmDialogs;
 
 namespace DeviceInterfaceManager.ViewModels;
@@ -21,21 +19,12 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     {
         _inputCreator = inputCreator;
         InputType = inputCreator.InputType;
-        Input = inputCreator.Input;
+        Components = GetComponents(InputType);
+        Input = Components.FirstOrDefault(x => x?.Position == inputCreator.Input?.Position);
         EventType = inputCreator.EventType;
         PmdgEvent = inputCreator.PmdgEvent;
         PmdgMousePress = inputCreator.PmdgMousePress;
-        if (PmdgMousePress is null)
-        {
-            PmdgMousePressIndex = -1;
-        }
-
         PmdgMouseRelease = inputCreator.PmdgMouseRelease;
-        if (PmdgMouseRelease is null)
-        {
-            PmdgMouseReleaseIndex = -1;
-        }
-
         Event = inputCreator.Event;
         OnRelease = inputCreator.OnRelease;
         DataPress = inputCreator.DataPress;
@@ -61,6 +50,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                 InputType = ProfileCreatorModel.Switch,
                 Input = new Component(1)
             };
+        Components = new List<Component?>();
     }
     #endif
 
@@ -97,9 +87,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     [ObservableProperty]
     private string? _inputType;
 
-    partial void OnInputTypeChanged(string? value)
+    private IEnumerable<Component?> GetComponents(string? value)
     {
-        Components = value switch
+        return value switch
         {
             ProfileCreatorModel.Switch => InputOutputDevice.Switch.Components,
             _ => Components
@@ -109,7 +99,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     public static string[] InputTypes => [ProfileCreatorModel.Switch];
 
     [ObservableProperty]
-    private IEnumerable<Component?>? _components;
+    private IEnumerable<Component?> _components;
 
     [ObservableProperty]
     private Component? _input;
@@ -237,69 +227,29 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         }
     }
 
-    public static Func<string?, CancellationToken, Task<IEnumerable<object>>?> AsyncPopulator => (input, token) => input != null ? SearchPmdgEventAsync(input) : null;
-
-    private static async Task<IEnumerable<object>> SearchPmdgEventAsync(string input)
-    {
-        return await Task.Run(() =>
-        {
-            return string.IsNullOrEmpty(input)
-                ? Enum.GetNames(typeof(B737.Event))
-                : Enum.GetNames(typeof(B737.Event)).Where(name => name.ToString().Contains(input, StringComparison.OrdinalIgnoreCase));
-        });
-    }
-
-    public static string[] PmdgMouseFlags => ["LeftSingle", "LeftRelease", "RightSingle", "RightRelease", "WheelUp", "WheelDown"];
+    public static IEnumerable<string?> PmdgEventEnumerable => Enum.GetNames(typeof(B737.Event));
+    
+    public static Mouse[] PmdgMouseFlags =>
+    [
+        Mouse.LeftSingle,
+        Mouse.LeftRelease,
+        Mouse.RightSingle,
+        Mouse.RightRelease,
+        Mouse.WheelUp,
+        Mouse.WheelDown
+    ];
 
     [ObservableProperty]
     private Mouse? _pmdgMousePress;
 
-    [ObservableProperty]
-    private int _pmdgMousePressIndex;
-
-    partial void OnPmdgMousePressIndexChanged(int value)
-    {
-       PmdgMousePress = PmdgMouseIndexChanged(value);
-    }
-
-    private static Mouse? PmdgMouseIndexChanged(int value)
-    {
-        return value switch
-        {
-            0 => Mouse.LeftSingle,
-            1 => Mouse.LeftRelease,
-            2 => Mouse.RightSingle,
-            3 => Mouse.RightRelease,
-            4 => Mouse.WheelUp,
-            5 => Mouse.WheelDown,
-            _ => null
-        };
-    }
-
     [RelayCommand]
-    private void ClearPmdgMousePress()
-    {
-        PmdgMousePress = null;
-        PmdgMousePressIndex = -1;
-    }
+    private void ClearPmdgMousePress() => PmdgMousePress = null;
 
     [ObservableProperty]
     private Mouse? _pmdgMouseRelease;
 
-    [ObservableProperty]
-    private int _pmdgMouseReleaseIndex = -1;
-
-    partial void OnPmdgMouseReleaseIndexChanged(int value)
-    {
-       PmdgMouseRelease = PmdgMouseIndexChanged(value);
-    }
-
     [RelayCommand]
-    private void ClearPmdgMouseRelease()
-    {
-        PmdgMouseRelease = null;
-        PmdgMouseReleaseIndex = -1;
-    }
+    private void ClearPmdgMouseRelease() => PmdgMouseRelease = null;
 
     [ObservableProperty]
     private string? _event;
@@ -316,6 +266,6 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     [RelayCommand]
     private void GetSwitch()
     {
-        Input = Components?.FirstOrDefault(i => i != null && i.Position == _currentPosition);
+        Input = Components.FirstOrDefault(i => i?.Position == _currentPosition);
     }
 }
