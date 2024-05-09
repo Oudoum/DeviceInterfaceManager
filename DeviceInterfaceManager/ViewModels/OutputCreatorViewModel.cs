@@ -1,16 +1,14 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -23,7 +21,8 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     {
         _outputCreator = outputCreator;
         OutputType = outputCreator.OutputType;
-        Output = outputCreator.Output;
+        Components = GetComponents(OutputType);
+        Output = Components.FirstOrDefault(x => x?.Position == outputCreator.Output?.Position);
         DataType = outputCreator.DataType;
         PmdgData = outputCreator.PmdgData;
         PmdgDataArrayIndex = outputCreator.PmdgDataArrayIndex;
@@ -55,6 +54,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             OutputType = ProfileCreatorModel.Led,
             Output = new Component(1),
         };
+        Components = new List<Component>();
         Digits = CreateDigits(3, 1, 1);
     }
     #endif
@@ -94,7 +94,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         }
 
         _outputCreator.DigitCheckedSum = DigitCheckedSum;
-        _outputCreator.DecimalPointCheckedSum = DigitCheckedSum;
+        _outputCreator.DecimalPointCheckedSum = DecimalPointCheckedSum;
     }
 
     [ObservableProperty]
@@ -106,17 +106,16 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         switch (value)
         {
             case ProfileCreatorModel.Led:
-                Components = InputOutputDevice.Led.Components;
+                Components = GetComponents(value);
                 break;
 
             case ProfileCreatorModel.Dataline:
-                Components = InputOutputDevice.Dataline.Components;
+                Components = GetComponents(value);
                 break;
 
             case ProfileCreatorModel.SevenSegment:
-                Components = InputOutputDevice.SevenSegment.Components;
+                Components = GetComponents(value);
                 IsDisplay = true;
-
                 IsPadded = false;
                 IsInverted = false;
                 SwitchDataType();
@@ -130,6 +129,17 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         SubstringStart = null;
         SubstringEnd = null;
     }
+    
+    private IEnumerable<Component?> GetComponents(string? value)
+    {
+        return value switch
+        {
+            ProfileCreatorModel.Led => InputOutputDevice.Led.Components,
+            ProfileCreatorModel.Dataline => InputOutputDevice.Dataline.Components,
+            ProfileCreatorModel.SevenSegment => InputOutputDevice.SevenSegment.Components,
+            _ => Components
+        };
+    }
 
     [ObservableProperty]
     private bool _isDisplay;
@@ -137,7 +147,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     public static string[] OutputTypes => [ProfileCreatorModel.Led, ProfileCreatorModel.Dataline, ProfileCreatorModel.SevenSegment];
 
     [ObservableProperty]
-    private IEnumerable<Component?>? _components;
+    private IEnumerable<Component?> _components;
 
     [ObservableProperty]
     private Component? _output;
@@ -159,27 +169,67 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 break;
         }
     }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsComparisonEnabled))]
+    
     private string? _dataType;
 
-    partial void OnDataTypeChanged(string? value)
+    public string? DataType
     {
-        switch (value)
+        get => _dataType;
+        set
         {
-            case ProfileCreatorModel.MsfsSimConnect:
-                SearchPmdgData = null;
-                PmdgData = null;
-                break;
+            IsMsfsSimConnect = value switch
+            {
+                ProfileCreatorModel.MsfsSimConnect => true,
+                ProfileCreatorModel.Pmdg737 => false,
+                _ => IsMsfsSimConnect
+            };
 
-            case ProfileCreatorModel.Pmdg737:
-                Data = null;
-                Unit = null;
-                break;
+            switch (value)
+            {
+                case ProfileCreatorModel.MsfsSimConnect:
+                    IsMsfsSimConnect = true;
+                    break;
+                    
+                    case ProfileCreatorModel.Pmdg737:
+                    IsPmdg737 = true;
+                    break;
+            }
+
+            _dataType = value;
+            SwitchDataType();
         }
+    }
+    
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsComparisonEnabled))]
+    private bool _isMsfsSimConnect;
+    
+    partial void OnIsMsfsSimConnectChanged(bool value)
+    {
+        if (!value)
+        {
+            return;
+        }
+        
+        DataType = ProfileCreatorModel.MsfsSimConnect;
+        IsPmdg737 = false;
+        SearchPmdgData = null;
+        PmdgData = null;
+    }
+    
+    [ObservableProperty]
+    private bool _isPmdg737;
 
-        SwitchDataType();
+    partial void OnIsPmdg737Changed(bool value)
+    {
+        if (!value)
+        {
+            return;
+        }
+        
+        DataType = ProfileCreatorModel.Pmdg737;
+        IsMsfsSimConnect = false;
+        Data = null;
+        Unit = null;
     }
 
     [ObservableProperty]
@@ -204,26 +254,16 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [ObservableProperty]
     private string? _searchPmdgData;
 
-    public static Func<string?, CancellationToken, Task<IEnumerable<object>>?> AsyncPopulator => (input, token) => input != null ? SearchPmdgDataAsync(input) : null;
-
-    private static async Task<IEnumerable<object>> SearchPmdgDataAsync(string input)
-    {
-        return await Task.Run(() =>
-        {
-            return string.IsNullOrEmpty(input)
-                ? typeof(B737.Data).GetFields().Select(field => field.Name).Take(typeof(B737.Data).GetFields().Length - 1)
-                : typeof(B737.Data).GetFields().Select(field => field.Name).Where(name => name.Contains(input, StringComparison.OrdinalIgnoreCase)).Take(typeof(B737.Data).GetFields().Length - 1);
-        });
-    }
+    public static IEnumerable<string?> PmdgDataEnumerable => typeof(B737.Data).GetFields().Select(field => field.Name);
 
     [ObservableProperty]
     private int? _pmdgDataArrayIndex;
 
     public int?[] PmdgDataArrayIndices => (string.IsNullOrEmpty(PmdgData)
-        ? Array.Empty<int?>()
+        ? []
         : typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute && attribute.Value != UnmanagedType.ByValTStr && attribute.SizeConst is var size
             ? new int?[size].Select((_, i) => i).Cast<int?>().ToArray()
-            : null) ?? Array.Empty<int?>();
+            : null) ?? [];
 
     public bool IsComparisonEnabled => (!string.IsNullOrEmpty(PmdgData) && (typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
                                                                         && DataType == ProfileCreatorModel.Pmdg737 && !IsDisplay)
@@ -231,6 +271,9 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
     [ObservableProperty]
     private char? _operator;
+
+    [RelayCommand]
+    private void ClearOperator() => Operator = null;
 
     private string? _comparisonValue;
 
