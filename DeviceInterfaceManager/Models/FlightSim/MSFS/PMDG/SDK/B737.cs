@@ -3,14 +3,15 @@
 //  PMDG 737 NG3 external connection SDK
 //  Copyright (c) 2022 Precision Manuals Development Group
 //
-//  Converted from unmanaged to managed language type by Oudoum
+//  Converted from unmanaged to managed code by Oudoum
 // 
 //------------------------------------------------------------------------------
 
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
-namespace DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 public static class B737
 {
@@ -18,6 +19,14 @@ public static class B737
     public const string ControlName = "PMDG_NG3_Control";
     public const string Cdu0Name = "PMDG_NG3_CDU_0";
     public const string Cdu1Name = "PMDG_NG3_CDU_1";
+    
+    public enum ClientDataId
+    {
+        Data = 0x4E473331,
+        Control = 0x4E473333,
+        Cdu0 = 0x4E473335,
+        Cdu1 = 0x4E473336
+    }
     
     public enum DefineId
     {
@@ -27,12 +36,75 @@ public static class B737
         Cdu1 = 0x4E473339
     }
 
-    public enum ClientDataId
+    public static void SetMcp(ref StringBuilder value, string name)
     {
-        Data = 0x4E473331,
-        Control = 0x4E473333,
-        Cdu0 = 0x4E473335,
-        Cdu1 = 0x4E473336
+        switch (name)
+        {
+            case "MCP_Altitude" when value[0] != '0':
+                value.Insert(0, " ", 5 - value.Length);
+                return;
+
+            case "MCP_Altitude" when value[0] == '0':
+                value.Insert(0, " 000");
+                return;
+
+            case "MCP_VertSpeed" when value[0] == '0' || value.ToString() == "-16960":
+                value.Clear();
+                value.Append(' ', 5);
+                return;
+
+            case "FMC_LandingAltitude" when value.ToString() == "-32767":
+                value.Clear();
+                value.Append(' ', 5);
+                return;
+
+            case "ADF_StandbyFrequency":
+                value.Insert(value.Length - 1, ".");
+                value.Insert(0, " ", 6 - value.Length);
+                return;
+        }
+
+        if (name != "MCP_VertSpeed" || !int.TryParse(value.ToString(), out int intValue))
+        {
+            return;
+        }
+
+        switch (intValue)
+        {
+            case < 0:
+                value.Clear();
+                value.Append('-');
+                value.Append($"{intValue.ToString("D3").TrimStart('-'),4}");
+                break;
+
+            case > 0:
+                value.Clear();
+                value.Append('+');
+                value.Append($"{intValue.ToString("D3"),4}");
+                break;
+        }
+    }
+
+    public static void SetIrsDisplay(ref StringBuilder value, string name)
+    {
+        switch (name)
+        {
+            case "IRS_DisplayLeft" when value.Length > 0 && value[0] == 'w':
+                value[0] = '8';
+                break;
+
+            case "IRS_DisplayLeft":
+                value.Append(' ', 6 - value.Length);
+                break;
+
+            case "IRS_DisplayRight" when value.Length > 0 && value[0] == 'n':
+                value[0] = '8';
+                break;
+
+            case "IRS_DisplayRight":
+                value.Append(' ', 7 - value.Length);
+                break;
+        }
     }
     
     // NOTE - add these lines to the 737NG3_Options.ini file: 
@@ -545,9 +617,9 @@ public static class B737
 
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
-    public struct Cdu : Models.SimConnect.MSFS.PMDG.SDK.Cdu.ICduScreen
+    public struct Cdu : FlightSim.MSFS.PMDG.SDK.Cdu.ICduScreen
     {
-        public Models.SimConnect.MSFS.PMDG.SDK.Cdu.Screen Screen { get; set; }
+        public FlightSim.MSFS.PMDG.SDK.Cdu.Screen Screen { get; set; }
     }
 
     // Audio control panel selected receiver flags.
