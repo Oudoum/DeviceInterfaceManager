@@ -1,19 +1,18 @@
 name: Deploy to GitHub Releases
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'     
+        required: true
+
 jobs:
   deploy-to-github-releases:
     runs-on: windows-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Get Version from Project File
-        id: get-version
-        shell: bash
-        run: echo "version=$(grep -oE '<Version>[^<]+' DeviceInterfaceManager/DeviceInterfaceManager.csproj | sed 's/<Version>//')" >> $GITHUB_OUTPUT
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -24,5 +23,5 @@ jobs:
         run: |
           dotnet tool install -g vpk
           vpk download github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager
-          vpk pack --packId DeviceInterfaceManager --packVersion ${{ steps.get-version.outputs.version }} --packDir publish --packTitle "Device Interface Manager"
-          vpk upload github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager --publish --releaseName "DeviceInterfaceManager ${{ steps.get-version.outputs.version }}" --tag v${{ steps.get-version.outputs.version }}
+          vpk pack --packId DeviceInterfaceManager --packVersion ${{ github.event.inputs.version }} --packDir publish --packTitle "Device Interface Manager"
+          vpk upload github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager --publish --releaseName "DeviceInterfaceManager ${{ github.event.inputs.version }}" --tag v${{ github.event.inputs.version }}
