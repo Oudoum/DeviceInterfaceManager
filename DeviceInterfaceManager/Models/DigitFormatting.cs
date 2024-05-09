@@ -16,7 +16,7 @@ public class DigitFormatting
 
     private bool CheckSum(byte? checkedSum)
     {
-        return checkedSum != null && (checkedSum & (1 << (Digit - 1))) != 0;
+        return checkedSum is not null && (checkedSum & (1 << (Digit - 1))) != 0;
     }
 
     public int Digit { get; }
