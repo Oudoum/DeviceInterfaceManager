@@ -95,11 +95,9 @@
                 <StackPanel>
                     <ToggleSwitch Content="Autohide to tray on startup"
                                   IsChecked="{Binding Settings.AutoHide}"
-                                  Command="{Binding ToggleAutoHideCommand}"
                                   ToolTip.Tip="Software will start directly into the tray and all assigned profiles will start automatically." />
                     <ToggleSwitch Content="Hide to tray if minimized"
                                   IsChecked="{Binding Settings.MinimizedHide}"
-                                  Command="{Binding ToggleMinimizedHideCommand}"
                                   ToolTip.Tip="Software will minimize to tray." />
                     <ToggleSwitch Content="P3Dv4/v5/v6"
                                   IsEnabled="False"
