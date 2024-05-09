@@ -2,10 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:idd="clr-namespace:Avalonia.Xaml.Interactions.DragAndDrop;assembly=Avalonia.Xaml.Interactions.DragAndDrop"
+             xmlns:b="using:DeviceInterfaceManager.Behaviors"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
+             xmlns:styles="clr-namespace:DeviceInterfaceManager.Styles"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
@@ -16,11 +20,13 @@
 
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
+        <b:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
+        <b:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
-        
-        <StackPanel>
+
+        <StackPanel Grid.Row="0">
 
             <ui:CommandBar>
                 <ui:CommandBar.PrimaryCommands>
@@ -30,7 +36,7 @@
                             <ui:PathIconSource Data="{StaticResource Devices}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
-                    
+
                     <ui:CommandBarButton Label="Load" Command="{Binding LoadProfileCommand}">
                         <ui:CommandBarButton.IconSource>
                             <ui:PathIconSource Data="{StaticResource FolderOpenOutline}" />
@@ -48,17 +54,35 @@
                             <ui:PathIconSource Data="{StaticResource ContentSaveEditOutline}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
-                    
+
                     <ui:CommandBarButton Label="Rename" Command="{Binding ChangeProfileNameCommand}">
                         <ui:CommandBarButton.IconSource>
                             <ui:PathIconSource Data="{StaticResource RenameOutline}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
 
-                    <ui:CommandBarButton Label="Sort" Command="{Binding SortInputOutputCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource SortAlphabetical}" />
-                        </ui:CommandBarButton.IconSource>
+                    <ui:CommandBarButton Label="Sort"
+                                         Command="{Binding SortInputOutputCommand}"
+                                         Classes.null="{Binding IsSortedAscending, Converter={x:Static ObjectConverters.IsNull}}"
+                                         Classes.ascending="{Binding IsSortedAscending}"
+                                         Classes.descending="{Binding !IsSortedAscending}">
+                        <ui:CommandBarButton.Styles>
+                            <Style Selector="ui|CommandBarButton.ascending">
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalAscending}"/>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ui|CommandBarButton.descending">
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalDescending}"/>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ui|CommandBarButton.null">
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabetical}"/>
+                                </Setter>
+                            </Style>
+                        </ui:CommandBarButton.Styles>
                     </ui:CommandBarButton>
 
                     <ui:CommandBarButton Label="Clear" Command="{Binding ClearProfileCommand}">
@@ -67,12 +91,39 @@
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
 
-                    <ui:CommandBarButton Label="{Binding IsStartedText}" Command="{Binding StartProfilesCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{Binding IsStatedIcon}" />
-                        </ui:CommandBarButton.IconSource>
+                    <ui:CommandBarButton Classes.start="{Binding !IsStarted}"
+                                         Classes.stop="{Binding IsStarted}"
+                                         Classes.running="{Binding StartProfilesCommand.IsRunning}">
+                        <ui:CommandBarButton.Styles>
+                            <Style Selector="ui|CommandBarButton.start">
+                                <Setter Property="Label" Value="Start"/>
+                                <Setter Property="Command" Value="{Binding StartProfilesCommand}"/>
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource Play}"/>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ui|CommandBarButton.stop">
+                                <Setter Property="Label" Value="Stop"/>
+                                <Setter Property="Command" Value="{Binding StartProfilesCommand}"/>
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource Stop}"/>
+                                </Setter>
+                            </Style>
+                            <Style Selector="ui|CommandBarButton.running">
+                                <Setter Property="Label" Value="Cancel"/>
+                                <Setter Property="Command" Value="{Binding StartProfilesCancelCommand}"/>
+                                <Setter Property="IconSource">
+                                    <ui:PathIconSource Data="{StaticResource Cancel}"/>
+                                </Setter>
+                            </Style>
+                        </ui:CommandBarButton.Styles>
                     </ui:CommandBarButton>
-
+                    
+                    <ui:CommandBarElementContainer Margin="0 15 10 0">
+                        <styles:ProgressRing IsActive="{Binding StartProfilesCommand.IsRunning}"
+                                             VerticalAlignment="Top"/>
+                    </ui:CommandBarElementContainer>
+                    
                     <ui:CommandBarSeparator />
 
                     <ui:CommandBarElementContainer Margin="10 10 0 0">
@@ -90,56 +141,131 @@
             <ui:CommandBar>
                 <ui:CommandBar.Styles>
                     <Style Selector="TextBlock">
-                        <Setter Property="Margin" Value="10 0 10 0"/>
-                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="Margin" Value="10 0 10 0" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
                     </Style>
                 </ui:CommandBar.Styles>
                 <ui:CommandBar.PrimaryCommands>
-                    
+
                     <ui:CommandBarElementContainer>
-                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}"/>
+                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}" />
                     </ui:CommandBarElementContainer>
-                    
+
                     <ui:CommandBarSeparator />
-                    
+
                     <ui:CommandBarElementContainer>
-                            <TextBlock Text="{Binding ProfileName}"/>
+                        <TextBlock Text="{Binding ProfileName}" />
                     </ui:CommandBarElementContainer>
 
                 </ui:CommandBar.PrimaryCommands>
             </ui:CommandBar>
-            
+
+            <ui:InfoBar IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay}"
+                        Severity="{Binding InfoBarSeverity}"
+                        Message="{Binding InfoBarMessage}" />
         </StackPanel>
 
         <TabControl Grid.Row="1">
             <TabControl.Styles>
                 <Style Selector="DataGrid">
-                    <Setter Property="RowHeight" Value="50"/>
-                    <Setter Property="GridLinesVisibility" Value="All"/>
-                    <Setter Property="SelectionMode" Value="Extended"/>
-                    <Setter Property="BorderThickness" Value="5"/>
-                    <Setter Property="BorderBrush" Value="Gray"/>
+                    <Setter Property="RowHeight" Value="50" />
+                    <Setter Property="RowHeaderWidth" Value="24" />
+                    <Setter Property="GridLinesVisibility" Value="All" />
+                    <Setter Property="SelectionMode" Value="Extended" />
+                    <Setter Property="BorderThickness" Value="5" />
+                    <Setter Property="BorderBrush" Value="Gray" />
+                    <Setter Property="HeadersVisibility" Value="All" />
                 </Style>
+                <!-- DataGrid DragAndDrop -->
+                <Style Selector="DataGrid DataGridRow.DraggingUp">
+                    <Setter Property="AdornerLayer.Adorner">
+                        <Template>
+                            <Border BorderThickness="0 2 0 0" BorderBrush="{DynamicResource SystemAccentColor}" />
+                        </Template>
+                    </Setter>
+                </Style>
+                <Style Selector="DataGrid DataGridRow.DraggingDown">
+                    <Setter Property="AdornerLayer.Adorner">
+                        <Template>
+                            <Border BorderThickness="0 0 0 2" BorderBrush="{DynamicResource SystemAccentColor}" />
+                        </Template>
+                    </Setter>
+                </Style>
+                <Style Selector="DataGrid DataGridRowHeader">
+                    <Setter Property="AreSeparatorsVisible" Value="True"/>
+                    <Setter Property="(i:Interaction.Behaviors)">
+                        <i:BehaviorCollectionTemplate>
+                            <i:BehaviorCollection>
+                                <b:ContextDragWithDirectionBehavior HorizontalDragThreshold="3"
+                                                                    VerticalDragThreshold="3" />
+                            </i:BehaviorCollection>
+                        </i:BehaviorCollectionTemplate>
+                    </Setter>
+                    <Setter Property="ContextFlyout">
+                        <ui:FAMenuFlyout Placement="Bottom" ShowMode="TransientWithDismissOnPointerMoveAway">
+                            <ui:MenuFlyoutItem Text="Activate"
+                                               Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).ActivateInputOutputCreatorCommand,
+                                               FallbackValue={x:Null}}"
+                                               CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
+                                <ui:MenuFlyoutItem.IconSource>
+                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOutline}"/>
+                                </ui:MenuFlyoutItem.IconSource>
+                            </ui:MenuFlyoutItem>
+                            <ui:MenuFlyoutItem Text="Deactivate"
+                                               Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeactivateInputOutputCreatorCommand,
+                                               FallbackValue={x:Null}}"
+                                               CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
+                                <ui:MenuFlyoutItem.IconSource>
+                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOffOutline}"/>
+                                </ui:MenuFlyoutItem.IconSource>
+                            </ui:MenuFlyoutItem>
+                            <ui:MenuFlyoutItem Text="Duplicate"
+                                               Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DuplicateInputOutputCreatorRowCommand,
+                                               FallbackValue={x:Null}}"
+                                               CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
+                                <ui:MenuFlyoutItem.IconSource>
+                                    <ui:PathIconSource Data="{StaticResource ContentDuplicate}"/>
+                                </ui:MenuFlyoutItem.IconSource>
+                            </ui:MenuFlyoutItem>
+                            <ui:MenuFlyoutItem Text="Delete"
+                                               Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
+                                               FallbackValue={x:Null}}"
+                                               CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
+                                <ui:MenuFlyoutItem.IconSource>
+                                    <ui:PathIconSource Data="{StaticResource TrashCanOutline}"/>
+                                </ui:MenuFlyoutItem.IconSource>
+                            </ui:MenuFlyoutItem>
+                        </ui:FAMenuFlyout>
+                    </Setter>
+                    <Setter Property="Content">
+                        <Template>
+                            <Viewbox>
+                                <PathIcon Data="{StaticResource Drag}" />
+                            </Viewbox>
+                        </Template>
+                    </Setter>
+                </Style>
+
                 <Style Selector="ToggleSwitch">
-                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                    <Setter Property="OnContent" Value=""/>
-                    <Setter Property="OffContent" Value=""/>
-                    <Setter Property="Margin" Value="10 0 0 0"/>
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="OnContent" Value="" />
+                    <Setter Property="OffContent" Value="" />
+                    <Setter Property="Margin" Value="10 0 0 0" />
                 </Style>
                 <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
-                    <Setter Property="Background" Value="#36b336"/>
+                    <Setter Property="Background" Value="LimeGreen" />
                 </Style>
                 <Style Selector="Button.b1">
-                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                    <Setter Property="VerticalAlignment" Value="Stretch"/>
-                    <Setter Property="CornerRadius" Value="0"/>
-                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="VerticalAlignment" Value="Stretch" />
+                    <Setter Property="CornerRadius" Value="0" />
+                    <Setter Property="Background" Value="Transparent" />
                 </Style>
                 <Style Selector="Button.Add">
-                    <Setter Property="Content" Value="Add"/>
-                    <Setter Property="Margin" Value="0 0 0 10"/>
-                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                    <Setter Property="CornerRadius" Value="0"/>
+                    <Setter Property="Content" Value="Add" />
+                    <Setter Property="Margin" Value="0 0 0 10" />
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="CornerRadius" Value="0" />
                 </Style>
                 <Style Selector="Button.Edit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                     <Setter Property="TextBlock.Background" Value="SteelBlue" />
@@ -149,17 +275,17 @@
                     <Setter Property="TextBlock.Background" Value="Red" />
                 </Style>
                 <Style Selector="CheckBox">
-                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                    <Setter Property="Padding" Value="0"/>
-                    <Setter Property="IsHitTestVisible" Value="False"/>
-                    <Setter Property="IsTabStop" Value="False"/>
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="IsHitTestVisible" Value="False" />
+                    <Setter Property="IsTabStop" Value="False" />
                 </Style>
                 <Style Selector="PathIcon">
-                    <Setter Property="Height" Value="30"/>
-                    <Setter Property="Width" Value="30"/>
+                    <Setter Property="Height" Value="30" />
+                    <Setter Property="Width" Value="30" />
                 </Style>
             </TabControl.Styles>
-            
+
             <TabItem Header="Input">
                 <TabItem.Content>
                     <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
@@ -173,13 +299,23 @@
                                             Converter={StaticResource NullableKeyValuePairConverter},
                                             ConverterParameter='Key'}" />
                                 </Style>
+                                <Style Selector="DataGrid">
+                                    <Setter Property="(i:Interaction.Behaviors)">
+                                        <i:BehaviorCollectionTemplate>
+                                            <i:BehaviorCollection>
+                                                <idd:ContextDropBehavior
+                                                    Handler="{StaticResource InputCreatorDataGridDropHandler}" />
+                                            </i:BehaviorCollection>
+                                        </i:BehaviorCollectionTemplate>
+                                    </Setter>
+                                </Style>
                             </DataGrid.Styles>
                             <DataGrid.Columns>
 
                                 <DataGridTemplateColumn Header="Active" SortMemberPath="IsActive">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ToggleSwitch IsChecked="{Binding IsActive}"/>
+                                            <ToggleSwitch IsChecked="{Binding IsActive}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -216,7 +352,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Viewbox>
-                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}"/>
+                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}" />
                                             </Viewbox>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -305,6 +441,16 @@
                                     <Setter Property="ToolTip.Tip"
                                             Value="{Binding Path=Output, Converter={StaticResource NullableKeyValuePairConverter}}" />
                                 </Style>
+                                <Style Selector="DataGrid">
+                                    <Setter Property="(i:Interaction.Behaviors)">
+                                        <i:BehaviorCollectionTemplate>
+                                            <i:BehaviorCollection>
+                                                <idd:ContextDropBehavior
+                                                    Handler="{StaticResource OutputCreatorDataGridDropHandler}" />
+                                            </i:BehaviorCollection>
+                                        </i:BehaviorCollectionTemplate>
+                                    </Setter>
+                                </Style>
                             </DataGrid.Styles>
                             <DataGrid.Columns>
 
@@ -348,7 +494,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Viewbox>
-                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}"/>
+                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}" />
                                             </Viewbox>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -356,9 +502,9 @@
 
                                 <DataGridTextColumn
                                     Header="Description"
-                                    SortMemberPath="Description" 
+                                    SortMemberPath="Description"
                                     Binding="{Binding Description}"
-                                    MaxWidth="500"/>
+                                    MaxWidth="500" />
 
                                 <DataGridTextColumn
                                     Header="Output Type"
@@ -379,17 +525,27 @@
                                     Binding="{Binding DataType}"
                                     IsReadOnly="True" />
 
-                                <DataGridTextColumn
-                                    Header="PMDG Data"
-                                    SortMemberPath="PmdgData"
-                                    Binding="{Binding PmdgData}"
-                                    IsReadOnly="True" />
-
-
-                                <DataGridTemplateColumn Header="Data" IsReadOnly="True">
+                                <DataGridTemplateColumn Header="PMDG Data" IsReadOnly="True" SortMemberPath="PmdgData">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock>
+                                            <TextBlock Margin="12" VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}{1}">
+                                                        <Binding Path="PmdgData" />
+                                                        <Binding Path="PmdgDataArrayIndex"
+                                                                 StringFormat="{}[{0}]"
+                                                                 TargetNullValue="" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Data" IsReadOnly="True" SortMemberPath="Data">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0} {1}">
                                                         <Binding Path="Data" />
@@ -407,11 +563,10 @@
                         <Button Grid.Row="1"
                                 Classes="Add"
                                 Command="{Binding AddOutputCommand}" />
-    </Grid>
+                    </Grid>
                 </TabItem.Content>
             </TabItem>
         </TabControl>
-
     </Grid>
 
 
