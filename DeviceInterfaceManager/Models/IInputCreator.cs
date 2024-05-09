@@ -1,5 +1,5 @@
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 namespace DeviceInterfaceManager.Models;
 
