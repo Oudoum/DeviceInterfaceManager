@@ -15,14 +15,6 @@
   
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-    <Content Include="..\..\..\..\..\..\Program Files\TEKWorx Limited\interfaceIT API x64\interfaceITAPI x64.dll">
-      <Link>interfaceITAPI x64.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="G:\MSFS SDK\SimConnect SDK\lib\SimConnect.dll">
-      <Link>SimConnect.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="dim-event-module\manifest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -33,6 +25,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="dim-event-module\ContentInfo\dim-event-module\Thumbnail.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="interfaceITAPI x64.dll" />
+    <Content Include="interfaceITAPI x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Remove="SimConnect.dll" />
+    <Content Include="SimConnect.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
