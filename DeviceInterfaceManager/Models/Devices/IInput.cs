@@ -11,6 +11,6 @@ public interface IInput
 
 public class InputChangedEventArgs(int position, bool isPressed) : EventArgs
 {
-    public int Position = position;
-    public bool IsPressed = isPressed;
+    public readonly int Position = position;
+    public readonly bool IsPressed = isPressed;
 }
