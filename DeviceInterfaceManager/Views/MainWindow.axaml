@@ -51,7 +51,7 @@
                     </ui:NavigationViewItem.MenuItemsSource>
                     <ui:NavigationViewItem.DataTemplates>
                         <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="10" PointerPressed="InputElement_OnPointerPressed">
                                 <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding SerialNumber}" />
                                 <TextBlock FontSize="14" Text="{Binding DeviceName}" />
                             </StackPanel>
