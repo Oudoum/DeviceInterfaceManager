@@ -9,6 +9,10 @@
              x:CompileBindings="True"
              x:Class="DeviceInterfaceManager.Views.OutputTestView"
              x:DataType="vm:OutputTestViewModel">
+    
+    <Design.DataContext>
+        <vm:OutputTestViewModel/>
+    </Design.DataContext>
 
     <Viewbox>
 
@@ -20,6 +24,18 @@
                     <Setter Property="CornerRadius" Value="15" />
                     <Setter Property="HorizontalAlignment" Value="Center" />
                 </Style>
+                <Style Selector="ComboBox">
+                    <Setter Property="FontSize" Value="18"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="Width" Value="100"/>
+                </Style>
+                <Style Selector="ComboBox /template/ ItemsPresenter#PART_ItemsPresenter">
+                    <Setter Property="Width" Value="100"/>
+                </Style>
+                <Style Selector="TextBlock.tb1">
+                    <Setter Property="FontSize" Value="22"/>
+                </Style>
                 <Style Selector="PathIcon">
                     <Setter Property="Margin" Value="0 4 0 0" />
                 </Style>
@@ -27,17 +43,18 @@
 
             <StackPanel Orientation="Vertical" Spacing="25">
 
-                <Border Classes="b1" Name="Border" IsVisible="{Binding !!InputOutputDevice.Dataline.Count}">
-                    <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <Border Classes="b1"
+                        IsVisible="{Binding !!InputOutputDevice.Dataline.Count}">
+                    <StackPanel Orientation="Vertical"
+                                Spacing="25"
+                                Margin="25">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="10">
                             <PathIcon Data="{StaticResource LightningBolt}" />
-                            <TextBlock Text="Dataline" FontSize="22" />
+                            <TextBlock Classes="tb1" Text="Dataline" />
                         </StackPanel>
                         <ComboBox
-                            FontSize="18"
-                            FontWeight="Bold"
-                            HorizontalAlignment="Center"
-                            Width="100"
                             SelectedItem="{Binding SelectedDataline}"
                             DisplayMemberBinding="{Binding Position}"
                             ItemsSource="{Binding InputOutputDevice.Dataline.Components}" />
@@ -56,17 +73,18 @@
                     </StackPanel>
                 </Border>
 
-                <Border Classes="b1" IsVisible="{Binding !!InputOutputDevice.SevenSegment.Count}">
-                    <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                <Border Classes="b1"
+                        IsVisible="{Binding !!InputOutputDevice.SevenSegment.Count}">
+                    <StackPanel Orientation="Vertical"
+                                Spacing="25"
+                                Margin="25">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="10">
                             <PathIcon Data="{StaticResource  Numeric7BoxOutline}" />
-                            <TextBlock Text="7 Segment" FontSize="22" />
+                            <TextBlock Classes="tb1" Text="7 Segment" />
                         </StackPanel>
                         <ComboBox
-                            FontSize="18"
-                            FontWeight="Bold"
-                            HorizontalAlignment="Center"
-                            Width="100"
                             SelectedItem="{Binding SelectedSevenSegment}"
                             DisplayMemberBinding="{Binding Position}"
                             ItemsSource="{Binding InputOutputDevice.SevenSegment.Components}" />
@@ -83,21 +101,31 @@
 
             </StackPanel>
 
-            <Border Classes="b1" Grid.Column="1" IsVisible="{Binding !!InputOutputDevice.Led.Count}">
-                <StackPanel Orientation="Vertical" Spacing="25" Margin="25">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+            <Border Classes="b1"
+                    Grid.Column="1"
+                    IsVisible="{Binding !!InputOutputDevice.Led.Count}">
+                <StackPanel Orientation="Vertical"
+                            Spacing="25"
+                            Margin="25">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="10">
                         <PathIcon Data="{StaticResource LedOutline}" />
-                        <TextBlock Text="LED" FontSize="22" />
+                        <TextBlock Classes="tb1" Text="LED" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
-                        <Button Content="All On" Command="{Binding SetAllLedCommand}"
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="15"
+                                HorizontalAlignment="Center">
+                        <Button Content="All On"
+                                Command="{Binding SetAllLedCommand}"
                                 HorizontalAlignment="Stretch">
                             <Button.CommandParameter>
                                 <sys:Boolean>True</sys:Boolean>
                             </Button.CommandParameter>
                         </Button>
-                        <Button Content="All Off" Command="{Binding SetAllLedCommand}"
+                        <Button Content="All Off"
+                                Command="{Binding SetAllLedCommand}"
                                 HorizontalAlignment="Stretch">
                             <Button.CommandParameter>
                                 <sys:Boolean>False</sys:Boolean>
@@ -107,19 +135,26 @@
 
                     <DataGrid ItemsSource="{Binding InputOutputDevice.Led.Components}"
                               IsVisible="{Binding !!InputOutputDevice.Led.Count}"
-                              AutoGenerateColumns="False" MaxHeight="500" BorderBrush="DimGray" BorderThickness="3">
+                              AutoGenerateColumns="False"
+                              GridLinesVisibility="All"
+                              MaxHeight="500"
+                              BorderBrush="DimGray"
+                              BorderThickness="3">
                         <DataGrid.Styles>
                             <Style Selector="DataGridCell Rectangle">
                                 <Setter Property="IsVisible" Value="False" />
                             </Style>
                         </DataGrid.Styles>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Position" Binding="{ReflectionBinding Position}" />
-                            <DataGridTemplateColumn Header="On/Off" SortMemberPath="IsSet">
+                            <DataGridTextColumn Header="Position"
+                                                Binding="{ReflectionBinding Position}" />
+                            <DataGridTemplateColumn Header="On/Off"
+                                                    SortMemberPath="IsSet">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate DataType="devices:Component">
                                         <CheckBox
-                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).IsCheckedCommand, FallbackValue={x:Null}}"
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).IsCheckedCommand,
+                                            FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}"
                                             IsChecked="{Binding IsSet}"
                                             HorizontalAlignment="Center"
