@@ -3,14 +3,31 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:device="clr-namespace:DeviceInterfaceManager.Models.Devices"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeviceInterfaceManager.Views.HomeView"
-             x:DataType="vm:HomeViewModel">
-  
-  <Design.DataContext>
-    <vm:HomeViewModel />
-  </Design.DataContext>
+             x:DataType="vm:HomeViewModel"
+             IsEnabled="False">
 
-  <TextBlock Text="Home" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-  
+    <Design.DataContext>
+        <vm:HomeViewModel />
+    </Design.DataContext>
+    <Grid>
+        <StackPanel>
+            <Button Content="Start Test"
+                    Command="{Binding StartProfileCommand}" />
+            <Button x:Name="MyButton" DragDrop.AllowDrop="True" Height="50" Width="300">
+                <Button.DataTemplates>
+                    <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding SerialNumber}" />
+                            <TextBlock FontSize="14" Text="{Binding DeviceName}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Button.DataTemplates>
+            </Button>
+            
+        </StackPanel>
+    </Grid>
+
 </UserControl>
