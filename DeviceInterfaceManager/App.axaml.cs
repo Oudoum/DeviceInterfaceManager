@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,25 +10,30 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.ViewModels;
 using DeviceInterfaceManager.Views;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using WritableJsonConfiguration;
+using Velopack;
 
 namespace DeviceInterfaceManager;
 
 public class App : Application
 {
+    public static readonly string UserDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDomain.CurrentDomain.FriendlyName);
+    
+    public static readonly string ProfilesPath = Path.Combine(UserDataPath, "Profiles");
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
 
+        Directory.CreateDirectory(ProfilesPath);
+
         Ioc.Default.ConfigureServices(new ServiceCollection()
             .AddSingleton<IDialogService, DialogService>(provider => new DialogService(new DialogManager(new ViewLocator(), new DialogFactory().AddFluent()), provider.GetService))
-            .AddSingleton<IConfiguration>(WritableJsonConfigurationFabric.Create("settings.json"))
             .AddSingleton<MainWindow>()
             .AddSingleton<MainWindowViewModel>()
             .AddSingleton<HomeViewModel>()
@@ -35,6 +42,7 @@ public class App : Application
             .AddTransient<AskTextBoxViewModel>()
             .AddTransient<AskComboBoxViewModel>()
             .AddSingleton<ObservableCollection<IInputOutputDevice>>()
+            .AddSingleton<SimConnectClient>()
             .BuildServiceProvider());
     }
 
@@ -44,37 +52,52 @@ public class App : Application
         // Without this line you will get duplicate validations from both Avalonia and CT
         BindingPlugins.DataValidators.RemoveAt(0);
         GC.KeepAlive(typeof(DialogService));
-        
-        DialogService.Show(null, MainWindowViewModel);
 
         CreateTrayIcon();
         
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop)
+        switch (ApplicationLifetime)
         {
-            desktop.ShutdownRequested += (_, _) =>
+            case IClassicDesktopStyleApplicationLifetime desktop:
             {
-                foreach (IInputOutputDevice item in InputOutputDevices)
+                DialogService.Show(null, MainWindowViewModel);
+            
+                desktop.ShutdownRequested += (_, _) =>
                 {
-                    item.Disconnect();
-                }
-            };
-            
-            desktop.MainWindow.PositionChanged += (sender, args) =>
-            {
-                if (SettingsViewModel.Settings.MinimizedHide && desktop.MainWindow.WindowState == WindowState.Minimized)
+                    foreach (IInputOutputDevice item in InputOutputDevices)
+                    {
+                        item.Disconnect();
+                    }
+                };
+
+                if (desktop.MainWindow is not null)
                 {
-                    HideWindow(desktop.MainWindow);
+                    desktop.MainWindow.PositionChanged += (sender, args) =>
+                    {
+                        if (SettingsViewModel.Settings.MinimizedHide && desktop.MainWindow.WindowState == WindowState.Minimized)
+                        {
+                            HideWindow(desktop.MainWindow);
+                        }
+                    };
+            
+                    if (SettingsViewModel.Settings.MinimizedHide)
+                    {
+                    }
+            
+                    if (SettingsViewModel.Settings.AutoHide)
+                    {
+                        HideWindow(desktop.MainWindow);
+                    }
                 }
-            };
-            
-            if (SettingsViewModel.Settings.MinimizedHide)
-            {
+
+                break;
             }
-            
-            if (SettingsViewModel.Settings.AutoHide)
-            {
-                HideWindow(desktop.MainWindow);
-            }
+
+            case ISingleViewApplicationLifetime:
+                // singleViewPlatform.MainView = new MainView
+                // {
+                //     DataContext = new MainViewModel()
+                // };
+                break;
         }
 
         if (!Design.IsDesignMode)
@@ -83,6 +106,33 @@ public class App : Application
         }
         
         base.OnFrameworkInitializationCompleted();
+
+        await UpdateMyApp();
+    }
+    
+    private static async Task UpdateMyApp()
+    {
+        UpdateManager mgr = new("https://the.place/you-host/updates");
+        
+        UpdateInfo? newVersion = null;
+
+        try
+        {
+            newVersion = await mgr.CheckForUpdatesAsync();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        if (newVersion is null)
+        {
+            return;
+        }
+        
+        await mgr.DownloadUpdatesAsync(newVersion);
+        
+        mgr.ApplyUpdatesAndRestart(newVersion);
     }
 
     private void HideWindow(Window mainWindow)
@@ -116,6 +166,7 @@ public class App : Application
         {
             ToolTipText = "Device Interface Manager",
             Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://DeviceInterfaceManager/Assets/DIM.ico"))),
+            IsVisible = false,
             Menu = menu
         };
 
