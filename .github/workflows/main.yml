@@ -24,4 +24,4 @@ jobs:
           dotnet tool install -g vpk
           vpk download github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager
           vpk pack --packId DeviceInterfaceManager --packTitle "Device Interface Manager" --packVersion ${{ github.event.inputs.version }} --packDir publish --framework net8.0-x64-desktop
-          vpk upload github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager --publish --releaseName "DeviceInterfaceManager ${{ github.event.inputs.version }}" --tag v${{ github.event.inputs.version }}
+          vpk upload github --repoUrl https://github.com/Oudoum/DeviceInterfaceManager --publish --releaseName "DeviceInterfaceManager ${{ github.event.inputs.version }}" --tag v${{ github.event.inputs.version }} --token ${{ secrets.GITHUB_TOKEN }}
