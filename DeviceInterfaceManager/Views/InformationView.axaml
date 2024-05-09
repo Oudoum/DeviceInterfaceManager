@@ -25,6 +25,7 @@
                 </Style>
                 <Style Selector="TextBlock">
                     <Setter Property="FontSize" Value="32" />
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
                 </Style>
                 <Style Selector="PathIcon">
                     <Setter Property="Margin" Value="0 4 0 0" />
@@ -38,7 +39,7 @@
                         <TextBlock Text="Device" />
                     </StackPanel>
                     <TextBlock Text="{Binding InputOutputDevice.DeviceName}"
-                               ToolTip.Tip="{Binding InputOutputDevice.SerialNumber}" />
+                               ToolTip.Tip="{Binding InputOutputDevice.SerialNumber}"/>
                 </StackPanel>
             </Border>
 
@@ -48,7 +49,15 @@
                         <PathIcon Data="{StaticResource ElectricSwitch}" />
                         <TextBlock Text="Switch" />
                     </StackPanel>
-                    <TextBlock Text="{Binding ButtonInformation}" />
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                <Binding Path="InputOutputDevice.Switch.Count" />
+                                <Binding Path="InputOutputDevice.Switch.First" />
+                                <Binding Path="InputOutputDevice.Switch.Last" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
@@ -58,7 +67,15 @@
                         <PathIcon Data="{StaticResource LedOutline}" />
                         <TextBlock Text="LED" />
                     </StackPanel>
-                    <TextBlock Text="{Binding LedInformation}" />
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                <Binding Path="InputOutputDevice.Led.Count" />
+                                <Binding Path="InputOutputDevice.Led.First" />
+                                <Binding Path="InputOutputDevice.Led.Last" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
@@ -68,7 +85,15 @@
                         <PathIcon Data="{StaticResource LightningBolt}" />
                         <TextBlock Text="Dataline" />
                     </StackPanel>
-                    <TextBlock Text="{Binding DatalineInformation}" />
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                <Binding Path="InputOutputDevice.Dataline.Count" />
+                                <Binding Path="InputOutputDevice.Dataline.First" />
+                                <Binding Path="InputOutputDevice.Dataline.Last" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
@@ -78,7 +103,15 @@
                         <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
                         <TextBlock Text="7 Segment" />
                     </StackPanel>
-                    <TextBlock Text="{Binding SevenSegmentInformation}" />
+                    <TextBlock>
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                <Binding Path="InputOutputDevice.SevenSegment.Count" />
+                                <Binding Path="InputOutputDevice.SevenSegment.First" />
+                                <Binding Path="InputOutputDevice.SevenSegment.Last" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
