@@ -41,35 +41,22 @@
                     </StackPanel>
 
                     <!-- Input Type -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Input Type" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding InputType}" />
-                        <ComboBox Grid.Row="1"
-                                  Grid.Column="1"
+                        <ComboBox Grid.Column="1"
                                   HorizontalAlignment="Stretch"
                                   SelectedItem="{Binding InputType}"
                                   ItemsSource="{Binding InputTypes}" />
                     </Grid>
 
                     <!-- Input -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Input" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Input.Position, FallbackValue=''}" />
-                        <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid Grid.Column="1">
                             <ComboBox Name="InputComboBox"
                                       HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center"
@@ -82,46 +69,42 @@
                                     Command="{Binding GetSwitchCommand}" />
                             <Button Classes="clear"
                                     Command="{Binding #InputComboBox.Clear}"
-                                    IsVisible="{Binding !!#InputComboBox.SelectedItem}" />
+                                    IsVisible="{Binding #InputComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- PMDG Event -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding IsPmdg737}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="PMDG Event" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PmdgEvent}" />
-                        <AutoCompleteBox Grid.Row="1"
-                                         Grid.Column="1"
+                        <AutoCompleteBox Grid.Column="1"
                                          HorizontalAlignment="Stretch"
                                          Watermark="Search..."
+                                         FilterMode="ContainsOrdinal"
                                          SelectedItem="{Binding PmdgEvent}"
-                                         AsyncPopulator="{Binding AsyncPopulator}"
+                                         ItemsSource="{Binding PmdgEventEnumerable}"
                                          Text="{Binding SearchPmdgEvent}"
-                                         Classes="clearButton rightEdgeAlignedBottomPopup" />
+                                         Classes="clearButton rightEdgeAlignedBottomPopup"
+                                         Classes.selected="{Binding PmdgEvent, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <AutoCompleteBox.Styles>
+                                <Style Selector="AutoCompleteBox.selected">
+                                    <Style Selector="^ /template/ TextBox#PART_TextBox">
+                                        <Setter Property="Foreground" Value="LimeGreen"/>
+                                    </Style>
+                                </Style>
+                            </AutoCompleteBox.Styles>
+                        </AutoCompleteBox>
                     </Grid>
 
                     <!-- MSFS Event -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding !IsPmdg737}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Event" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Event}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="SimVar/K:Event/H:Event/RPN"
@@ -140,43 +123,30 @@
                     </Grid>
 
                     <!-- Mouse Press -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding IsPmdg737}"
-                          IsEnabled="{Binding !DataPress}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                          IsEnabled="{Binding DataPress, Converter={x:Static ObjectConverters.IsNull}}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Mouse Press" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PmdgMousePress}" />
-                        <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid Grid.Column="1">
                             <ComboBox HorizontalAlignment="Stretch"
-                                      SelectedIndex="{Binding PmdgMousePressIndex}"
+                                      SelectedItem="{Binding PmdgMousePress}"
                                       ItemsSource="{Binding PmdgMouseFlags}" />
                             <Button Classes="clear"
                                     Command="{Binding ClearPmdgMousePressCommand}"
-                                    IsVisible="{Binding !!PmdgMousePress}" />
+                                    IsVisible="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- Data Press -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding !IsRpn}"
-                          IsEnabled="{Binding !PmdgMousePress}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                          IsEnabled="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNull}}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Press" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding DataPress}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="Number"
@@ -184,43 +154,30 @@
                     </Grid>
                     
                     <!-- Mouse Release -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding IsPmdg737}"
-                          IsEnabled="{Binding !DataRelease}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                          IsEnabled="{Binding DataRelease, Converter={x:Static ObjectConverters.IsNull}}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Mouse Release" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PmdgMouseRelease}" />
-                        <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid Grid.Column="1">
                             <ComboBox HorizontalAlignment="Stretch"
-                                      SelectedIndex="{Binding PmdgMouseReleaseIndex}"
+                                      SelectedItem="{Binding PmdgMouseRelease}"
                                       ItemsSource="{Binding PmdgMouseFlags}" />
                             <Button Classes="clear"
                                     Command="{Binding ClearPmdgMouseReleaseCommand}"
-                                    IsVisible="{Binding !!PmdgMouseRelease}" />
+                                    IsVisible="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- Data Release -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
+                    <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding !IsRpn}"
-                          IsEnabled="{Binding !PmdgMouseRelease}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                          IsEnabled="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNull}}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding DataRelease}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="Number"
