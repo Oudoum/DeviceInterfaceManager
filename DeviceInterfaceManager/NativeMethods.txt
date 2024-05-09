@@ -1,0 +1,3 @@
+GetWindowLongPtr
+SetWindowLongPtr
+CallWindowProc
