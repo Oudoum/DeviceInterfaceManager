@@ -9,6 +9,13 @@ namespace DeviceInterfaceManager.ViewModels;
 
 public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
+    #if DEBUG
+    public OutputTestViewModel() : this(new DeviceSerialBase())
+    {
+        
+    }
+    #endif
+    
     public IInputOutputDevice InputOutputDevice => inputOutputDevice;
     
     [ObservableProperty]
