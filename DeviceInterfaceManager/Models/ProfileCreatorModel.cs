@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.SimConnect.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 #pragma warning disable CS0657 // Not a valid attribute location for this declaration
 
@@ -48,7 +48,7 @@ public partial class ProfileCreatorModel : ObservableObject
     private ObservableCollection<OutputCreator> _outputCreators = [];
 }
 
-public partial class InputCreator : ObservableObject, IInputCreator
+public partial class InputCreator : ObservableObject, IInputCreator, IActive
 {
     [ObservableProperty]
     private Guid _id;
@@ -100,7 +100,7 @@ public partial class InputCreator : ObservableObject, IInputCreator
     }
 }
 
-public partial class OutputCreator : ObservableObject, IOutputCreator
+public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
 {
     [ObservableProperty]
     private Guid _id;
