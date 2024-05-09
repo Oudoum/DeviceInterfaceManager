@@ -9,12 +9,13 @@
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
-    
+
     <Application.Styles>
         <sty:FluentAvaloniaTheme UseSystemFontOnWindows="True" PreferUserAccentColor="True" PreferSystemTheme="False" />
         <StyleInclude Source="Assets/Icons.axaml" />
-        <StyleInclude Source="Styles/AutoCompleteBoxClearStyle.axaml"/>
-        <StyleInclude Source="Styles/ButtonClearStyle.axaml"/>
+        <StyleInclude Source="Styles/AutoCompleteBoxClearStyle.axaml" />
+        <StyleInclude Source="Styles/ButtonClearStyle.axaml" />
+        <StyleInclude Source="Styles/ProgressRing.axaml" />
     </Application.Styles>
 
 </Application>
