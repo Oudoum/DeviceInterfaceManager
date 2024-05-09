@@ -6,26 +6,42 @@
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.InputTestView"
              x:DataType="vm:InputTestViewModel">
+    
+    <Design.DataContext>
+        <vm:InputTestViewModel/>
+    </Design.DataContext>
 
     <Grid Margin="25">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding InputOutputDevice.Switch.Components}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" ItemHeight="80" ItemWidth="130" />
+                        <WrapPanel Orientation="Horizontal"
+                                   ItemHeight="80"
+                                   ItemWidth="130" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="120">
+                        <Grid HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Width="120">
                             <ToggleSwitch FontSize="22"
                                           FontWeight="Bold"
                                           Margin="15 5 15 5"
                                           IsChecked="{Binding IsSet}"
                                           OnContent="{Binding Position}"
                                           OffContent="{Binding Position}">
+                                <ToggleSwitch.Styles>
+                                    <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+                                        <Setter Property="Background" Value="LimeGreen"/>
+                                    </Style>
+                                </ToggleSwitch.Styles>
                             </ToggleSwitch>
-                            <Border BorderBrush="DimGray" BorderThickness="3" CornerRadius="5" Background="Transparent"/>
+                            <Border BorderBrush="DimGray"
+                                    BorderThickness="3"
+                                    CornerRadius="5"
+                                    Background="Transparent"/>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
