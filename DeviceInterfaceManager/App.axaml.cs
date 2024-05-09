@@ -17,6 +17,7 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Velopack;
+using Velopack.Sources;
 
 namespace DeviceInterfaceManager;
 
@@ -112,7 +113,7 @@ public class App : Application
     
     private static async Task UpdateMyApp()
     {
-        UpdateManager mgr = new("https://the.place/you-host/updates");
+        UpdateManager mgr = new(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
         
         UpdateInfo? newVersion = null;
 
