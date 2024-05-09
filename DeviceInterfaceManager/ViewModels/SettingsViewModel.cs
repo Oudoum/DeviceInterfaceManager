@@ -1,53 +1,25 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
-using Microsoft.Extensions.Configuration;
-using WritableJsonConfiguration;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class SettingsViewModel : ObservableObject
+public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices) : ObservableObject
 {
-    private readonly ObservableCollection<IInputOutputDevice> _inputOutputDevices;
-
-    private readonly IConfiguration _configuration;
-    
-    public SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, IConfiguration configuration)
-    {
-        _inputOutputDevices = inputOutputDevices;
-        _configuration = configuration;
-        Settings = configuration.Get<Settings>() ?? new Settings(); 
-    }
     
 #if DEBUG
-    public SettingsViewModel()
+    public SettingsViewModel() : this([])
     {
-        _inputOutputDevices = new ObservableCollection<IInputOutputDevice>();
-        _configuration = WritableJsonConfigurationFabric.Create("settings.json");
         Settings = new Settings();
     }
 #endif
 
-    public Settings Settings { get; }
-
-    private void UpdateAppSettings(string name)
-    {
-        PropertyInfo? propertyInfo = Settings.GetType().GetProperty(name);
-
-        if (propertyInfo is null)
-        {
-            return;
-        }
-
-        object? propertyValue = propertyInfo.GetValue(Settings);
-        _configuration.Set(name, propertyValue);
-    }
+    public Settings Settings { get; } = Settings.CreateSettings();
 
     public async Task Startup()
     {
@@ -70,19 +42,11 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleAutoHide() => UpdateAppSettings(nameof(Settings.AutoHide));
-    
-    [RelayCommand]
-    private void ToggleMinimizedHide() => UpdateAppSettings(nameof(Settings.MinimizedHide));
-
-    [RelayCommand]
     private async Task ToggleFdsUsbAsync()
     {
-        UpdateAppSettings(nameof(Settings.FdsUsb));
-        
         if (!Settings.FdsUsb)
         {
-            foreach (IInputOutputDevice inputOutputDevice in _inputOutputDevices.ToArray())
+            foreach (IInputOutputDevice inputOutputDevice in inputOutputDevices.ToArray())
             {
                 if (inputOutputDevice is not InterfaceItData)
                 {
@@ -90,7 +54,7 @@ public partial class SettingsViewModel : ObservableObject
                 }
         
                 inputOutputDevice.Disconnect();
-                _inputOutputDevices.Remove(inputOutputDevice);
+                inputOutputDevices.Remove(inputOutputDevice);
             }
             
             return;
@@ -100,7 +64,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             InterfaceItData interfaceItData = new();
             await interfaceItData.ConnectAsync();
-            _inputOutputDevices.Add(interfaceItData);
+            inputOutputDevices.Add(interfaceItData);
         }
     }
 }
