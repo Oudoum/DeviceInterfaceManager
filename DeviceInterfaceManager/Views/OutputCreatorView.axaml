@@ -5,12 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
-             xmlns:model="clr-namespace:DeviceInterfaceManager.Models"
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:local="clr-namespace:DeviceInterfaceManager.Views"
              xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              mc:Ignorable="d"
              d:DesignHeight="700"
+             d:DesignWidth="500"
              x:Class="DeviceInterfaceManager.Views.OutputCreatorView"
              x:DataType="vm:OutputCreatorViewModel">
     
@@ -19,7 +19,6 @@
     </Design.DataContext>
 
     <UserControl.Resources>
-        <converters:StringToBooleanConverter x:Key="StringToBooleanConverter" />
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
         <converters:DoubleToNullableByteConverter x:Key="DoubleToNullableByteConverter" />
     </UserControl.Resources>
@@ -29,48 +28,29 @@
             <TabItem Header="Output">
                 <StackPanel Margin="20" Spacing="25">
                     <StackPanel Spacing="25" Orientation="Horizontal" HorizontalAlignment="Center">
-                        <RadioButton Name="MsfsRadioButton"
-                                     Content="SimVar / L:Var"
-                                     IsChecked="{Binding DataType,
-                                     Converter={StaticResource StringToBooleanConverter},
-                                     ConverterParameter={x:Static model:ProfileCreatorModel.MsfsSimConnect}}" />
-                        <RadioButton Name="Pmdg737RadioButton"
-                                     Content="PMDG 737"
-                                     IsChecked="{Binding DataType,
-                                     Converter={StaticResource StringToBooleanConverter},
-                                     ConverterParameter={x:Static model:ProfileCreatorModel.Pmdg737}}" />
+                        <RadioButton Content="SimVar / L:Var"
+                                     IsChecked="{Binding IsMsfsSimConnect}" />
+                        <RadioButton Content="PMDG 737"
+                                     IsChecked="{Binding IsPmdg737}" />
                     </StackPanel>
 
                     <!-- Output Type -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Output Type" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding OutputType}" />
-                        <ComboBox Grid.Row="1"
-                                  Grid.Column="1"
+                        <ComboBox Grid.Column="1"
                                   HorizontalAlignment="Stretch"
                                   SelectedItem="{Binding OutputType}"
                                   ItemsSource="{Binding OutputTypes}" />
                     </Grid>
 
                     <!-- Output -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Output" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Output.Position, FallbackValue=''}" />
-                        <Grid Grid.Row="1" Grid.Column="1">
+                        <Grid Grid.Column="1">
                             <ComboBox Name="OutputComboBox"
                                       HorizontalAlignment="Stretch"
                                       SelectedItem="{Binding Output}"
@@ -99,66 +79,55 @@
                             </ComboBox>
                             <Button Classes="clear"
                                     Command="{Binding #OutputComboBox.Clear}"
-                                    IsVisible="{Binding !!#OutputComboBox.SelectedItem}" />
+                                    IsVisible="{Binding #OutputComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- PMDG Data -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
-                          IsVisible="{Binding #Pmdg737RadioButton.IsChecked}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsPmdg737}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="PMDG Data" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PmdgData}" />
-                        <AutoCompleteBox Grid.Row="1"
-                                         Grid.Column="1"
+                        <AutoCompleteBox Grid.Column="1"
                                          HorizontalAlignment="Stretch"
                                          Watermark="Search..."
+                                         FilterMode="ContainsOrdinal"
                                          SelectedItem="{Binding PmdgData}"
-                                         AsyncPopulator="{Binding AsyncPopulator}"
+                                         ItemsSource="{Binding PmdgDataEnumerable}"
                                          Text="{Binding SearchPmdgData}"
-                                         Classes="clearButton rightEdgeAlignedBottomPopup" />
+                                         Classes="clearButton rightEdgeAlignedBottomPopup" 
+                                         Classes.selected="{Binding PmdgData, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <AutoCompleteBox.Styles>
+                                <Style Selector="AutoCompleteBox.selected">
+                                    <Style Selector="^ /template/ TextBox#PART_TextBox">
+                                        <Setter Property="Foreground" Value="LimeGreen"/>
+                                    </Style>
+                                </Style>
+                            </AutoCompleteBox.Styles>
+                        </AutoCompleteBox>
                     </Grid>
 
                     <!-- PMDG Array Index -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
-                          IsVisible="{Binding #Pmdg737RadioButton.IsChecked}"
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsPmdg737}"
                           IsEnabled="{Binding PmdgDataArrayIndex, Converter={x:Static ObjectConverters.IsNotNull}}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
-                                   Text="PMDG Array Index" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PmdgDataArrayIndex}" />
-                        <ComboBox Grid.Row="1"
-                                  Grid.Column="1"
+                                   Text="PMDG Index" />
+                        <ComboBox Grid.Column="1"
                                   HorizontalAlignment="Stretch"
                                   SelectedItem="{Binding PmdgDataArrayIndex}"
                                   ItemsSource="{Binding PmdgDataArrayIndices}" />
                     </Grid>
 
                     <!-- MSFS Data -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
-                          IsVisible="{Binding #MsfsRadioButton.IsChecked}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsMsfsSimConnect}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Data}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="SimVar / L:Var"
@@ -166,19 +135,12 @@
                     </Grid>
 
                     <!-- MSFS Unit -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*"
-                          IsVisible="{Binding #MsfsRadioButton.IsChecked}">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*"
+                          IsVisible="{Binding IsMsfsSimConnect}">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Unit" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Unit}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="Unit"
@@ -202,38 +164,26 @@
                      IsVisible="{Binding !IsDisplay}">
                 <StackPanel Margin="20" Spacing="25" Width="400">
                     <!-- Operator -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Operator" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding Operator}" />
-                        <ComboBox Grid.Row="1"
-                                  Grid.Column="1"
-                                  FontWeight="Bold"
-                                  FontSize="20"
-                                  HorizontalAlignment="Stretch"
-                                  SelectedItem="{Binding Operator}"
-                                  ItemsSource="{Binding Operators}" />
+                        <Grid Grid.Column="1">
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      SelectedItem="{Binding Operator}"
+                                      ItemsSource="{Binding Operators}" />
+                            <Button Classes="clear"
+                                    Command="{Binding ClearOperatorCommand}"
+                                    IsVisible="{Binding Operator, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </Grid>
                     </Grid>
 
                     <!-- Comparison Value -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Comparison Value" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding ComparisonValue}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="Comparison Value"
@@ -241,18 +191,11 @@
                     </Grid>
 
                     <!-- True Value -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*" IsEnabled="False">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*" IsEnabled="False">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="True Value" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding TrueValue}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="True Value"
@@ -260,18 +203,11 @@
                     </Grid>
 
                     <!-- False Value -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*" IsEnabled="False">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*" IsEnabled="False">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="False Value" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding FalseValue}" />
-                        <TextBox Grid.Row="1"
-                                 Grid.Column="1"
+                        <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  Watermark="False Value"
@@ -295,20 +231,11 @@
                     </Grid>
 
                     <!-- Padding Character -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Padding Character" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding PaddingCharacterPair,
-                                   Converter={StaticResource NullableKeyValuePairConverter},
-                                   ConverterParameter='Key'}" />
-                        <ComboBox Grid.Row="1"
-                                  Grid.Column="1"
+                        <ComboBox Grid.Column="1"
                                   HorizontalAlignment="Stretch"
                                   DisplayMemberBinding="{Binding 
                                   Converter={StaticResource NullableKeyValuePairConverter},
@@ -368,18 +295,11 @@
                     </Grid>
 
                     <!-- Substring Start -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Substring Start" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding SubstringStart}" />
-                        <ui:NumberBox Grid.Row="1"
-                                      Grid.Column="1"
+                        <ui:NumberBox Grid.Column="1"
                                       HorizontalAlignment="Stretch"
                                       PlaceholderText="Number 0 - 255"
                                       Minimum="0"
@@ -390,18 +310,11 @@
                     </Grid>
 
                     <!-- Substring End -->
-                    <Grid ColumnDefinitions="*,2*" RowDefinitions="*,*">
-                        <TextBlock Grid.Row="1"
-                                   Grid.Column="0"
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Substring End" />
-                        <TextBlock Grid.Row="0"
-                                   Grid.Column="1"
-                                   Margin="0 0 0 5"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding SubstringEnd}" />
-                        <ui:NumberBox Grid.Row="1"
-                                      Grid.Column="1"
+                        <ui:NumberBox Grid.Column="1"
                                       HorizontalAlignment="Stretch"
                                       PlaceholderText="Number 0 - 255"
                                       Minimum="0"
