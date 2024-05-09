@@ -6,15 +6,16 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Models.FlightSim;
+using DeviceInterfaceManager.Models.FlightSim.MSFS;
+using FluentAvalonia.Core;
 using FluentAvalonia.UI.Controls;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia.Fluent;
@@ -28,14 +29,17 @@ public partial class ProfileCreatorViewModel : ObservableObject
 {
     private readonly ObservableCollection<IInputOutputDevice> _inputOutputDevices;
 
+    private readonly SimConnectClient _simConnectClient;
+
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private ProfileCreatorModel? _profileCreatorModel;
 
-    public ProfileCreatorViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, IDialogService dialogService)
+    public ProfileCreatorViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SimConnectClient simConnectClient, IDialogService dialogService)
     {
         _inputOutputDevices = inputOutputDevices;
+        _simConnectClient = simConnectClient;
         _dialogService = dialogService;
     }
 
@@ -76,6 +80,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         };
         AddInput();
         AddOutput();
+        _simConnectClient = new SimConnectClient();
     }
 #endif
 
@@ -101,8 +106,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SaveProfileCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveProfileAsCommand))]
     [NotifyCanExecuteChangedFor(nameof(ChangeProfileNameCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SortInputOutputCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ClearProfileCommand))]
     [NotifyCanExecuteChangedFor(nameof(AddInputCommand))]
     [NotifyCanExecuteChangedFor(nameof(AddOutputCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartProfilesCommand))]
     private IInputOutputDevice? _inputOutputDevice;
 
     partial void OnInputOutputDeviceChanged(IInputOutputDevice? value)
@@ -111,10 +119,24 @@ public partial class ProfileCreatorViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string? _errorText;
+    private bool _infoBarIsOpen;
 
-    private string OldFilePath => Path.Combine("Profiles", "Creator", _previousProfileName + ".json");
-    private string NewFilePath => Path.Combine("Profiles", "Creator", ProfileName + ".json");
+    [ObservableProperty]
+    private string? _infoBarMessage;
+
+    [ObservableProperty]
+    private InfoBarSeverity _infoBarSeverity;
+
+    private void SetInfoBar(string? message, InfoBarSeverity severity)
+    {
+        InfoBarMessage = message;
+        InfoBarSeverity = severity;
+        InfoBarIsOpen = true;
+    }
+
+
+    private string OldFilePath => Path.Combine(App.ProfilesPath, _previousProfileName + ".json");
+    private string NewFilePath => Path.Combine(App.ProfilesPath, ProfileName + ".json");
 
     private readonly JsonSerializerOptions _serializerOptions = new()
     {
@@ -145,6 +167,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         if (result == ContentDialogResult.Primary && inputOutputDevice is not null)
         {
             InputOutputDevice = inputOutputDevice;
+            ProfileCreatorModel!.DeviceName = InputOutputDevice.DeviceName;
             await ChangeProfileNameAsync();
             //Add logic for converting
         }
@@ -161,7 +184,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 {
                     Title = "Select a profile",
                     AllowMultiple = false,
-                    SuggestedStartLocation = new DesktopDialogStorageFolder(Path.Combine(Environment.CurrentDirectory, Path.GetDirectoryName(NewFilePath) ?? string.Empty)),
+                    SuggestedStartLocation = new DesktopDialogStorageFolder(App.ProfilesPath),
                     Filters = [new FileFilter("Json", "*json")]
                 });
 
@@ -182,7 +205,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 InputOutputDevice = _inputOutputDevices.FirstOrDefault(device => device.DeviceName == profileCreatorModel.DeviceName);
                 if (InputOutputDevice is null)
                 {
-                    ErrorText = profileCreatorModel.ProfileName + " could not be loaded, because no controller for this profile was found";
+                    SetInfoBar(profileCreatorModel.ProfileName + " could not be loaded, because no controller for this profile was found.", InfoBarSeverity.Warning);
                     return;
                 }
 
@@ -190,13 +213,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 {
                     ProfileCreatorModel = profileCreatorModel;
                     _previousProfileName = ProfileName;
-
-                    ErrorText = ProfileName + " successfully loaded";
+                    
+                    SetInfoBar(ProfileName + " successfully loaded.", InfoBarSeverity.Success);
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                ErrorText = ex.Message;
+                SetInfoBar(e.Message, InfoBarSeverity.Error);
             }
         }
     }
@@ -208,6 +231,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return false;
         }
 
+        if (ProfileCreatorModel.DeviceName is null)
+        {
+            return true;
+        }
+        
         TaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new TaskDialogSettings
@@ -233,11 +261,12 @@ public partial class ProfileCreatorViewModel : ObservableObject
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(NewFilePath) ?? string.Empty);
             await File.WriteAllTextAsync(NewFilePath, JsonSerializer.Serialize(ProfileCreatorModel, _serializerOptions));
-            ErrorText = ProfileName + " successfully saved";
+            
+            SetInfoBar(ProfileName + " successfully saved.", InfoBarSeverity.Success);
         }
         catch (Exception e)
         {
-            ErrorText = e.Message;
+            SetInfoBar(e.Message, InfoBarSeverity.Error);
         }
     }
 
@@ -296,11 +325,12 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     string text = await File.ReadAllTextAsync(NewFilePath);
                     text = text.Replace(_previousProfileName, ProfileName);
                     await File.WriteAllTextAsync(NewFilePath, text);
-                    ErrorText = _previousProfileName + " successfully renamed to " + ProfileName;
+                    
+                    SetInfoBar($"{_previousProfileName} successfully renamed to {ProfileName}.", InfoBarSeverity.Success);
                 }
                 catch (Exception e)
                 {
-                    ErrorText = e.Message;
+                    SetInfoBar(e.Message, InfoBarSeverity.Error);
                 }
             }
 
@@ -312,7 +342,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [ObservableProperty]
     private bool? _isSortedAscending;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private void SortInputOutput()
     {
         if (ProfileCreatorModel is null)
@@ -320,27 +350,32 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return;
         }
 
-        IsSortedAscending ??= false;
         var sortedInputList = ProfileCreatorModel.InputCreators.ToList();
-        sortedInputList.Sort((x, y) => IsSortedAscending.Value ? Comparer<Component?>.Default.Compare(y.Input, x.Input) : Comparer<Component?>.Default.Compare(x.Input, y.Input));
-        for (int i = 0; i < sortedInputList.Count; i++)
-        {
-            ProfileCreatorModel.InputCreators.Move(ProfileCreatorModel.InputCreators.IndexOf(sortedInputList[i]), i);
-        }
-
         var sortedOutputList = ProfileCreatorModel.OutputCreators.ToList();
-        sortedOutputList.Sort((x, y) => IsSortedAscending.Value ? Comparer<Component?>.Default.Compare(y.Output, x.Output) : Comparer<Component?>.Default.Compare(x.Output, y.Output));
-        for (int i = 0; i < sortedOutputList.Count; i++)
+        
+        switch (IsSortedAscending)
         {
-            ProfileCreatorModel.OutputCreators.Move(ProfileCreatorModel.OutputCreators.IndexOf(sortedOutputList[i]), i);
-        }
+            case false or null:
+                IsSortedAscending = true;
+                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(y.Input?.Position, x.Input?.Position));
+                sortedOutputList.Sort((x, y) => Comparer<int?>.Default.Compare(y.Output?.Position, x.Output?.Position));
+                break;
 
-        IsSortedAscending = !IsSortedAscending;
-        ErrorText = ProfileName + " successfully sorted";
+            case true:
+                IsSortedAscending = false;
+                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(x.Input?.Position, y.Input?.Position));
+                sortedOutputList.Sort((x, y) => Comparer<int?>.Default.Compare(x.Output?.Position, y.Output?.Position));
+                break;
+        }
+        
+        ProfileCreatorModel.InputCreators = new ObservableCollection<InputCreator>(sortedInputList);
+        ProfileCreatorModel.OutputCreators = new ObservableCollection<OutputCreator>(sortedOutputList);
+        
+        SetInfoBar(ProfileName + " successfully sorted.", InfoBarSeverity.Success);
     }
 
     //Button 7
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private async Task ClearProfileAsync()
     {
         TaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
@@ -419,7 +454,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
                         {
                             if (!isShown)
                             {
-                                if (!await ShowConfirmationDialogAsync("input rows"))
+                                string rowType = "input rows";
+                                if (selectedItems.Count() == 1)
+                                {
+                                    rowType = "input row";
+                                }
+                                
+                                if (!await ShowConfirmationDialogAsync(rowType))
                                 {
                                     return;
                                 }
@@ -434,7 +475,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
                         {
                             if (!isShown)
                             {
-                                if (!await ShowConfirmationDialogAsync("output rows"))
+                                string rowType = "output rows";
+                                if (selectedItems.Count() == 1)
+                                {
+                                    rowType = "output row";
+                                }
+                                
+                                if (!await ShowConfirmationDialogAsync(rowType))
                                 {
                                     return;
                                 }
@@ -453,50 +500,45 @@ public partial class ProfileCreatorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void DuplicateInputOutputCreatorRow(object creator)
+    private void DuplicateInputOutputCreatorRow(IList inputOutputCreators)
     {
-        ActivateDeactivateAllOrCloneInputOutputCreator(null, creator);
-    }
-
-    [RelayCommand]
-    private void ActivateAllInputOutputCreator(object creator)
-    {
-        ActivateDeactivateAllOrCloneInputOutputCreator(true, creator);
-    }
-
-    [RelayCommand]
-    private void DeactivateAllInputOutputCreator(object creator)
-    {
-        ActivateDeactivateAllOrCloneInputOutputCreator(false, creator);
-    }
-
-    private void ActivateDeactivateAllOrCloneInputOutputCreator(bool? isActive, object creator)
-    {
-        if (ProfileCreatorModel is null || creator is not IList selectedItems)
+        if (ProfileCreatorModel is null)
         {
             return;
         }
-
-        foreach (object? item in selectedItems.Cast<object>().ToList())
+        
+        foreach (object inputOutputCreator in inputOutputCreators)
         {
-            switch (item)
+            switch (inputOutputCreator)
             {
-                case InputCreator input when isActive is null:
-                    ProfileCreatorModel.InputCreators.Add(input.Clone());
-                    continue;
-
-                case InputCreator input:
-                    input.IsActive = isActive.Value;
+                case InputCreator inputCreator:
+                    ProfileCreatorModel.InputCreators.Add(inputCreator.Clone());
                     break;
 
-                case OutputCreator output when isActive is null:
-                    ProfileCreatorModel.OutputCreators.Add(output.Clone());
-                    continue;
-
-                case OutputCreator output:
-                    output.IsActive = isActive.Value;
+                case OutputCreator outputCreator:
+                    ProfileCreatorModel.OutputCreators.Add(outputCreator.Clone());
                     break;
             }
+        }
+    }
+    
+    [RelayCommand]
+    private static void ActivateInputOutputCreator(IList list)
+    {
+        ToggleInputOutputCreator(list, true);
+    }
+
+    [RelayCommand]
+    private static void DeactivateInputOutputCreator(IList list)
+    {
+        ToggleInputOutputCreator(list, false);
+    }
+
+    private static void ToggleInputOutputCreator(IEnumerable list, bool isActive)
+    {
+        foreach (IActive item in list)
+        {
+            item.IsActive = isActive;
         }
     }
 
@@ -573,72 +615,37 @@ public partial class ProfileCreatorViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsStartedText))]
-    [NotifyPropertyChangedFor(nameof(IsStatedIcon))]
     private bool _isStarted;
 
-    public string IsStartedText => IsStarted ? "Stop" : "Start";
+    private Profile? _profile;
 
-    public Geometry? IsStatedIcon => (Geometry?)Application.Current!.FindResource(IsStarted ? "Stop" : "Play");
-
-    [RelayCommand]
-    private async Task StartProfilesAsync()
+    [RelayCommand(CanExecute = nameof(CanEditProfile), IncludeCancelCommand = true)]
+    private async Task StartProfilesAsync(CancellationToken token)
     {
-        // switch (Driver)
-        // {
-        //     case ProfileCreatorModel.FdsUsb when !IsStarted:
-        //         // await Profiles.Instance.StartAsync(ProfileCreatorModel, deviceList.FirstOrDefault(k => k.SerialNumber == Device.Value));
-        //         break;
-        //
-        //     default:
-        //         // Profiles.Instance.Stop();
-        //         break;
-        // }
-        await Task.Delay(TimeSpan.Zero);
+        if (ProfileCreatorModel is null || InputOutputDevice is null)
+        {
+            return;
+        }
 
         IsStarted = !IsStarted;
         if (!IsStarted)
         {
-            ErrorText = ProfileCreatorModel?.ProfileName + " stopped";
+            _simConnectClient.Disconnect();
+            _profile?.Dispose();
+            SetInfoBar(ProfileCreatorModel?.ProfileName + " stopped.", InfoBarSeverity.Informational);
             return;
         }
 
-        ErrorText = ProfileCreatorModel?.ProfileName + " started";
-    }
+        await _simConnectClient.ConnectAsync(token);
 
-    // public void DragOver(IDropInfo dropInfo)
-    // {
-    //     if ((dropInfo.Data is not InputCreator || dropInfo.TargetItem is not InputCreator) && (dropInfo.Data is not OutputCreator || dropInfo.TargetItem is not OutputCreator))
-    //     {
-    //         return;
-    //     }
-    //
-    //     dropInfo.DropTargetAdorner = DropTargetAdorners.Insert;
-    //     dropInfo.Effects = System.Windows.DragDropEffects.Move;
-    // }
-    //
-    // public void Drop(IDropInfo dropInfo)
-    // {
-    //     if (dropInfo.Data is InputCreator)
-    //     {
-    //         InputCreator item = (InputCreator)dropInfo.Data;
-    //         _ = ProfileCreatorModel.InputCreator.Remove(item);
-    //         if (dropInfo.InsertIndex >= 0 && dropInfo.InsertIndex <= ProfileCreatorModel.InputCreator.Count)
-    //         {
-    //             ProfileCreatorModel.InputCreator.Insert(dropInfo.InsertIndex, item);
-    //             return;
-    //         }
-    //         ProfileCreatorModel.InputCreator.Add(item);
-    //     }
-    //     else if (dropInfo.Data is OutputCreator item)
-    //     {
-    //         _ = ProfileCreatorModel.OutputCreator.Remove(item);
-    //         if (dropInfo.InsertIndex >= 0 && dropInfo.InsertIndex <= ProfileCreatorModel.OutputCreator.Count)
-    //         {
-    //             ProfileCreatorModel.OutputCreator.Insert(dropInfo.InsertIndex, item);
-    //             return;
-    //         }
-    //         ProfileCreatorModel.OutputCreator.Add(item);
-    //     }
-    // }
+        if (!token.IsCancellationRequested)
+        {
+            _simConnectClient.Helper?.Init(ProfileCreatorModel);
+            _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
+            SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
+            return;
+        }
+
+        IsStarted = !IsStarted;
+    }
 }
