@@ -27,6 +27,8 @@ public interface IOutputCreator
     public string? Unit { get; set; }
 
     public bool IsInverted { get; set; }
+    
+    public string? NumericFormat { get; set; }
 
     public bool? IsPadded { get; set; }
 
