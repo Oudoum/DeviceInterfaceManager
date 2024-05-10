@@ -33,6 +33,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         Data = outputCreator.Data;
         Unit = outputCreator.Unit;
         IsInverted = outputCreator.IsInverted;
+        NumericFormat = outputCreator.NumericFormat;
         IsPadded = outputCreator.IsPadded;
         PaddingCharacter = outputCreator.PaddingCharacter;
         Digits = CreateDigits(outputCreator.DigitCount, outputCreator.DigitCheckedSum, outputCreator.DecimalPointCheckedSum);
@@ -73,6 +74,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         _outputCreator.Data = Data;
         _outputCreator.Unit = Unit;
         _outputCreator.IsInverted = IsInverted;
+        _outputCreator.NumericFormat = NumericFormat;
         _outputCreator.IsPadded = IsPadded;
         _outputCreator.PaddingCharacter = PaddingCharacter;
         _outputCreator.DigitCount = DigitCount;
@@ -123,6 +125,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         }
 
         IsDisplay = false;
+        NumericFormat = null;
         IsPadded = null;
         PaddingCharacterPair = null;
         DigitCount = null;
@@ -304,6 +307,9 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     private bool _isInverted;
 
     [ObservableProperty]
+    private string? _numericFormat;
+
+    [ObservableProperty]
     private bool? _isPadded;
 
     public static Dictionary<string, char?> PaddingCharacters => new() { ["Zero"] = '0', ["Space"] = ' ' };
@@ -325,11 +331,17 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             OnPropertyChanged();
         }
     }
+    
+    [RelayCommand]
+    private void ClearPaddingCharacter() => PaddingCharacterPair = null;
 
     [ObservableProperty]
     private char? _paddingCharacter;
 
     public byte[] DigitCounts { get; } = [1, 2, 3, 4, 5, 6, 7, 8];
+    
+    [RelayCommand]
+    private void ClearDigitCount() => DigitCount = null;
 
     [ObservableProperty]
     private byte? _digitCount;
