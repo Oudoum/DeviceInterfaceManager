@@ -93,16 +93,23 @@
             <!-- Software Settings -->
             <Border BorderBrush="CornflowerBlue">
                 <StackPanel>
-                    <ToggleSwitch Content="Autohide to tray on startup"
+                    <ToggleSwitch Content="Always on top"
+                                  IsChecked="{Binding Settings.AlwaysOnTop}"
+                                  ToolTip.Tip="The window will always stay on top." />
+                    <ToggleSwitch Content="Autohide on startup"
                                   IsChecked="{Binding Settings.AutoHide}"
-                                  ToolTip.Tip="Software will start directly into the tray and all assigned profiles will start automatically." />
-                    <ToggleSwitch Content="Hide to tray if minimized"
+                                  ToolTip.Tip="The window starts directly into the tray and all assigned profiles start automatically." />
+                    <ToggleSwitch Content="Minimize to tray"
                                   IsChecked="{Binding Settings.MinimizedHide}"
-                                  ToolTip.Tip="Software will minimize to tray." />
-                    <ToggleSwitch Content="P3Dv4/v5/v6"
-                                  IsEnabled="False"
-                                  IsChecked="{Binding Settings.IsP3D}"
-                                  ToolTip.Tip="Software will use Prepar3D." />
+                                  ToolTip.Tip="The application moves to tray if minimized." />
+                    <Grid>
+                        <ToggleSwitch Content="Automatically check for updates"
+                                      IsChecked="{Binding Settings.CheckForUpdates}"
+                                      ToolTip.Tip="The application checks for updates while starting." />
+                        <Button Margin="90 20 0 0"
+                                Content="Check for updates"
+                                Command="{Binding CheckForUpdatesCommand}"/>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -113,7 +120,12 @@
                         HorizontalAlignment="Center"
                         Foreground="White"
                         FontSize="22"
-                        Text="SimConnect:" />
+                        Text="SimConnect" />
+                    <ToggleSwitch HorizontalAlignment="Center"
+                                  Content="P3Dv4/v5/v6"
+                                  IsEnabled="False"
+                                  IsChecked="{Binding Settings.IsP3D}"
+                                  ToolTip.Tip="The application uses Prepar3D instead of MSFS2020." />
                     <TextBox
                         Text=""
                         Width="180" />
