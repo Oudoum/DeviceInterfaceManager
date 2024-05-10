@@ -74,7 +74,9 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     Preconditions = [new Precondition()],
                     Description = "Description",
                     OutputType = ProfileCreatorModel.Led,
-                    Output = new Component(1)
+                    Output = new Component(1),
+                    FlightSimValue = 1234,
+                    OutputValue = 4321
                 }
             ]
         };
@@ -86,21 +88,21 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     private string? _previousProfileName;
 
-    public string? ProfileName
-    {
-        get => ProfileCreatorModel?.ProfileName;
-        set
-        {
-            if (ProfileCreatorModel is null)
-            {
-                return;
-            }
-
-            _previousProfileName = ProfileCreatorModel.ProfileName;
-            ProfileCreatorModel.ProfileName = value;
-            OnPropertyChanged();
-        }
-    }
+    // public string? ProfileName
+    // {
+    //     get => ProfileCreatorModel?.ProfileName;
+    //     set
+    //     {
+    //         if (ProfileCreatorModel is null)
+    //         {
+    //             return;
+    //         }
+    //
+    //         _previousProfileName = ProfileCreatorModel.ProfileName;
+    //         ProfileCreatorModel.ProfileName = value;
+    //         OnPropertyChanged();
+    //     }
+    // }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveProfileCommand))]
@@ -136,7 +138,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
 
     private string OldFilePath => Path.Combine(App.ProfilesPath, _previousProfileName + ".json");
-    private string NewFilePath => Path.Combine(App.ProfilesPath, ProfileName + ".json");
+    private string NewFilePath => Path.Combine(App.ProfilesPath, ProfileCreatorModel?.ProfileName + ".json");
 
     private readonly JsonSerializerOptions _serializerOptions = new()
     {
@@ -212,9 +214,9 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 if (await OverwriteCheck())
                 {
                     ProfileCreatorModel = profileCreatorModel;
-                    _previousProfileName = ProfileName;
+                    _previousProfileName = ProfileCreatorModel.ProfileName;
                     
-                    SetInfoBar(ProfileName + " successfully loaded.", InfoBarSeverity.Success);
+                    SetInfoBar(_previousProfileName + " successfully loaded.", InfoBarSeverity.Success);
                 }
             }
             catch (Exception e)
@@ -262,7 +264,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
             _ = Directory.CreateDirectory(Path.GetDirectoryName(NewFilePath) ?? string.Empty);
             await File.WriteAllTextAsync(NewFilePath, JsonSerializer.Serialize(ProfileCreatorModel, _serializerOptions));
             
-            SetInfoBar(ProfileName + " successfully saved.", InfoBarSeverity.Success);
+            SetInfoBar(ProfileCreatorModel?.ProfileName + " successfully saved.", InfoBarSeverity.Success);
         }
         catch (Exception e)
         {
@@ -274,11 +276,16 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private async Task SaveProfileAsAsync()
     {
+        if (ProfileCreatorModel is null)
+        {
+            return;
+        }
+        
         string? profileName = await RenameProfileAsync();
         if (!string.IsNullOrEmpty(profileName))
         {
-            _previousProfileName = ProfileName;
-            ProfileName = profileName;
+            _previousProfileName = ProfileCreatorModel.ProfileName;
+            ProfileCreatorModel.ProfileName = profileName;
             await SaveProfile();
         }
     }
@@ -312,10 +319,15 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private async Task ChangeProfileNameAsync()
     {
+        if (ProfileCreatorModel is null)
+        {
+            return;
+        }
+        
         string? profileName = await RenameProfileAsync();
         if (!string.IsNullOrEmpty(profileName))
         {
-            ProfileName = profileName;
+            ProfileCreatorModel.ProfileName = profileName;
 
             if (!string.IsNullOrEmpty(_previousProfileName))
             {
@@ -323,10 +335,10 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 {
                     File.Move(OldFilePath, NewFilePath);
                     string text = await File.ReadAllTextAsync(NewFilePath);
-                    text = text.Replace(_previousProfileName, ProfileName);
+                    text = text.Replace(_previousProfileName, profileName);
                     await File.WriteAllTextAsync(NewFilePath, text);
                     
-                    SetInfoBar($"{_previousProfileName} successfully renamed to {ProfileName}.", InfoBarSeverity.Success);
+                    SetInfoBar($"{_previousProfileName} successfully renamed to {profileName}.", InfoBarSeverity.Success);
                 }
                 catch (Exception e)
                 {
@@ -334,7 +346,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 }
             }
 
-            _previousProfileName = ProfileName;
+            _previousProfileName = profileName;
         }
     }
 
@@ -371,7 +383,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         ProfileCreatorModel.InputCreators = new ObservableCollection<InputCreator>(sortedInputList);
         ProfileCreatorModel.OutputCreators = new ObservableCollection<OutputCreator>(sortedOutputList);
         
-        SetInfoBar(ProfileName + " successfully sorted.", InfoBarSeverity.Success);
+        SetInfoBar(ProfileCreatorModel.ProfileName + " successfully sorted.", InfoBarSeverity.Success);
     }
 
     //Button 7
