@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
+using Velopack;
+using Velopack.Sources;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -23,9 +25,34 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
     public async Task Startup()
     {
+        if (Settings.CheckForUpdates)
+        {
+           await CheckForUpdatesAsync();
+        }
+        
         if (Settings.FdsUsb)
         {
           await ToggleFdsUsbAsync();
+        }
+    }
+
+    [RelayCommand]
+    private static async Task CheckForUpdatesAsync()
+    {
+        UpdateManager updateManager = new(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
+        
+        if (updateManager.IsInstalled)
+        {
+            UpdateInfo? newVersion = await updateManager.CheckForUpdatesAsync();
+            
+            if (newVersion is null)
+            {
+                return;
+            }
+            
+            await updateManager.DownloadUpdatesAsync(newVersion);
+        
+            updateManager.ApplyUpdatesAndRestart(newVersion);
         }
     }
 
