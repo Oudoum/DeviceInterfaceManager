@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -16,8 +15,6 @@ using DeviceInterfaceManager.Views;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
-using Velopack;
-using Velopack.Sources;
 
 namespace DeviceInterfaceManager;
 
@@ -92,13 +89,6 @@ public class App : Application
 
                 break;
             }
-
-            case ISingleViewApplicationLifetime:
-                // singleViewPlatform.MainView = new MainView
-                // {
-                //     DataContext = new MainViewModel()
-                // };
-                break;
         }
 
         if (!Design.IsDesignMode)
@@ -107,33 +97,6 @@ public class App : Application
         }
         
         base.OnFrameworkInitializationCompleted();
-
-        await UpdateMyApp();
-    }
-    
-    private static async Task UpdateMyApp()
-    {
-        UpdateManager mgr = new(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
-        
-        UpdateInfo? newVersion = null;
-
-        try
-        {
-            newVersion = await mgr.CheckForUpdatesAsync();
-        }
-        catch
-        {
-            // ignored
-        }
-
-        if (newVersion is null)
-        {
-            return;
-        }
-        
-        await mgr.DownloadUpdatesAsync(newVersion);
-        
-        mgr.ApplyUpdatesAndRestart(newVersion);
     }
 
     private void HideWindow(Window mainWindow)
