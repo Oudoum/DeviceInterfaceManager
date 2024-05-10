@@ -6,7 +6,8 @@
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:local="clr-namespace:DeviceInterfaceManager.Views"
              mc:Ignorable="d"
-             d:DesignHeight="700"
+             d:DesignHeight="{StaticResource ContentDialogMaxHeight}"
+             Width="{StaticResource ContentDialogMaxWidth}"
              x:Class="DeviceInterfaceManager.Views.InputCreatorView"
              x:DataType="vm:InputCreatorViewModel">
     
@@ -107,6 +108,7 @@
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
+                                 TextWrapping="WrapWithOverflow"
                                  Watermark="SimVar/K:Event/H:Event/RPN"
                                  Text="{Binding Event}" />
                     </Grid>
