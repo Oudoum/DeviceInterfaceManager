@@ -37,7 +37,8 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string SevenSegment = "7 Segment";
     public const string Dataline = "Dataline";
 
-    public string? ProfileName { get; set; }
+    [ObservableProperty]
+    private string? _profileName;
 
     public string? DeviceName { get; set; }
 
@@ -146,6 +147,9 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
 
     [ObservableProperty]
     private bool _isInverted;
+
+    [ObservableProperty]
+    private string? _numericFormat;
 
     [ObservableProperty]
     private bool? _isPadded;
