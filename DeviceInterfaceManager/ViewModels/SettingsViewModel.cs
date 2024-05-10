@@ -25,9 +25,13 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
     public async Task Startup()
     {
+        UpdateManager updateManager = CreateUpdateManager();
+        
+        CurrentVersion = updateManager.CurrentVersion?.ToFullString();
+        
         if (Settings.CheckForUpdates)
         {
-           await CheckForUpdatesAsync();
+           await CheckForUpdatesAsync(updateManager);
         }
         
         if (Settings.FdsUsb)
@@ -39,13 +43,16 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     [ObservableProperty]
     private string? _currentVersion;
 
-    [RelayCommand]
-    private async Task CheckForUpdatesAsync()
+    private static UpdateManager CreateUpdateManager()
     {
-        UpdateManager updateManager = new(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
+        return new UpdateManager(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
+    }
 
-        CurrentVersion = updateManager.CurrentVersion?.ToFullString();
-        
+    [RelayCommand]
+    private static async Task CheckForUpdatesAsync(UpdateManager? updateManager)
+    {
+        updateManager ??= CreateUpdateManager();
+
         if (updateManager.IsInstalled)
         {
             UpdateInfo? newVersion = await updateManager.CheckForUpdatesAsync();
