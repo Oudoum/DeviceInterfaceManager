@@ -94,12 +94,8 @@ public class Profile : IDisposable
                 SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, simVar.Data));
                 break;
 
-            case ProfileCreatorModel.SevenSegment when Math.Abs(simVar.Data - Math.Truncate(simVar.Data)) < Tolerance && outputCreator.ComparisonValue is null:
-                SetStringValue(simVar.Data.ToString(".0", CultureInfo.InvariantCulture), simVar.Name, outputCreator);
-                break;
-
             case ProfileCreatorModel.SevenSegment when outputCreator.ComparisonValue is null:
-                SetStringValue(simVar.Data.ToString(CultureInfo.InvariantCulture), simVar.Name, outputCreator);
+                SetStringValue(simVar.Data.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), simVar.Name, outputCreator);
                 break;
 
             case ProfileCreatorModel.SevenSegment:
@@ -122,7 +118,7 @@ public class Profile : IDisposable
                 case ProfileCreatorModel.MsfsSimConnect:
                     if (precondition.Data is not null)
                     {
-                        ProfileEntryIteration(precondition, new SimConnectClient.SimVar(precondition.Data, (double)precondition.FlightSimValue!));
+                        ProfileEntryIteration(precondition, new SimConnectClient.SimVar(precondition.Data, Convert.ToDouble(precondition.FlightSimValue!)));
                     }
 
                     break;
@@ -315,7 +311,7 @@ public class Profile : IDisposable
         StringBuilder sb = new(value);
         if (outputCreator.DigitCount is not null)
         {
-            _ = sb.Replace(".", "");
+            _ = sb.Replace(".", string.Empty);
             if (sb.Length > outputCreator.DigitCount)
             {
                 byte digitCount = outputCreator.DigitCount.Value;
@@ -362,7 +358,7 @@ public class Profile : IDisposable
 
                 while (sb.Length < outputCreator.DigitCount + dotCount) _ = sb.Insert(0, outputCreator.PaddingCharacter);
             }
-            else if (outputCreator.PaddingCharacter is null && outputCreator.DigitCount is null)
+            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737, PaddingCharacter: null, DigitCount: null })
             {
                 B737.SetMcp(ref sb, name);
                 B737.SetIrsDisplay(ref sb, name);
