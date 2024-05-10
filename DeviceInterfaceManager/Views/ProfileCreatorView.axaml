@@ -69,17 +69,17 @@
                         <ui:CommandBarButton.Styles>
                             <Style Selector="ui|CommandBarButton.ascending">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalAscending}"/>
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalAscending}" />
                                 </Setter>
                             </Style>
                             <Style Selector="ui|CommandBarButton.descending">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalDescending}"/>
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalDescending}" />
                                 </Setter>
                             </Style>
                             <Style Selector="ui|CommandBarButton.null">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabetical}"/>
+                                    <ui:PathIconSource Data="{StaticResource SortAlphabetical}" />
                                 </Setter>
                             </Style>
                         </ui:CommandBarButton.Styles>
@@ -96,34 +96,34 @@
                                          Classes.running="{Binding StartProfilesCommand.IsRunning}">
                         <ui:CommandBarButton.Styles>
                             <Style Selector="ui|CommandBarButton.start">
-                                <Setter Property="Label" Value="Start"/>
-                                <Setter Property="Command" Value="{Binding StartProfilesCommand}"/>
+                                <Setter Property="Label" Value="Start" />
+                                <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Play}"/>
+                                    <ui:PathIconSource Data="{StaticResource Play}" />
                                 </Setter>
                             </Style>
                             <Style Selector="ui|CommandBarButton.stop">
-                                <Setter Property="Label" Value="Stop"/>
-                                <Setter Property="Command" Value="{Binding StartProfilesCommand}"/>
+                                <Setter Property="Label" Value="Stop" />
+                                <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Stop}"/>
+                                    <ui:PathIconSource Data="{StaticResource Stop}" />
                                 </Setter>
                             </Style>
                             <Style Selector="ui|CommandBarButton.running">
-                                <Setter Property="Label" Value="Cancel"/>
-                                <Setter Property="Command" Value="{Binding StartProfilesCancelCommand}"/>
+                                <Setter Property="Label" Value="Cancel" />
+                                <Setter Property="Command" Value="{Binding StartProfilesCancelCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Cancel}"/>
+                                    <ui:PathIconSource Data="{StaticResource Cancel}" />
                                 </Setter>
                             </Style>
                         </ui:CommandBarButton.Styles>
                     </ui:CommandBarButton>
-                    
+
                     <ui:CommandBarElementContainer Margin="0 15 10 0">
                         <styles:ProgressRing IsActive="{Binding StartProfilesCommand.IsRunning}"
-                                             VerticalAlignment="Top"/>
+                                             VerticalAlignment="Top" />
                     </ui:CommandBarElementContainer>
-                    
+
                     <ui:CommandBarSeparator />
 
                     <ui:CommandBarElementContainer Margin="10 10 0 0">
@@ -154,7 +154,7 @@
                     <ui:CommandBarSeparator />
 
                     <ui:CommandBarElementContainer>
-                        <TextBlock Text="{Binding ProfileName}" />
+                        <TextBlock Text="{Binding ProfileCreatorModel.ProfileName, FallbackValue=''}" />
                     </ui:CommandBarElementContainer>
 
                 </ui:CommandBar.PrimaryCommands>
@@ -192,7 +192,7 @@
                     </Setter>
                 </Style>
                 <Style Selector="DataGrid DataGridRowHeader">
-                    <Setter Property="AreSeparatorsVisible" Value="True"/>
+                    <Setter Property="AreSeparatorsVisible" Value="True" />
                     <Setter Property="(i:Interaction.Behaviors)">
                         <i:BehaviorCollectionTemplate>
                             <i:BehaviorCollection>
@@ -208,7 +208,7 @@
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
                                 <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOutline}"/>
+                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOutline}" />
                                 </ui:MenuFlyoutItem.IconSource>
                             </ui:MenuFlyoutItem>
                             <ui:MenuFlyoutItem Text="Deactivate"
@@ -216,7 +216,7 @@
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
                                 <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOffOutline}"/>
+                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOffOutline}" />
                                 </ui:MenuFlyoutItem.IconSource>
                             </ui:MenuFlyoutItem>
                             <ui:MenuFlyoutItem Text="Duplicate"
@@ -224,7 +224,7 @@
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
                                 <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ContentDuplicate}"/>
+                                    <ui:PathIconSource Data="{StaticResource ContentDuplicate}" />
                                 </ui:MenuFlyoutItem.IconSource>
                             </ui:MenuFlyoutItem>
                             <ui:MenuFlyoutItem Text="Delete"
@@ -232,7 +232,7 @@
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
                                 <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource TrashCanOutline}"/>
+                                    <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
                                 </ui:MenuFlyoutItem.IconSource>
                             </ui:MenuFlyoutItem>
                         </ui:FAMenuFlyout>
@@ -288,7 +288,7 @@
 
             <TabItem Header="Input">
                 <TabItem.Content>
-                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto" IsEnabled="{Binding !IsStarted}">
                         <DataGrid
                             ItemsSource="{Binding ProfileCreatorModel.InputCreators,
                             FallbackValue={x:Null}}">
@@ -348,27 +348,30 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="Logic" SortMemberPath="Preconditions.Length">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Viewbox>
-                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}" />
-                                            </Viewbox>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
                                 <DataGridTextColumn
                                     Header="Description"
                                     SortMemberPath="Description"
                                     Binding="{Binding Description}"
                                     MaxWidth="500" />
-
-                                <DataGridTextColumn
-                                    Header="Input Type"
-                                    SortMemberPath="InputType"
-                                    Binding="{Binding InputType}"
-                                    IsReadOnly="True" />
+                                
+                                <DataGridTemplateColumn Header="Input Type"
+                                                        SortMemberPath="InputType"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Classes.hasLogic="{Binding !!Preconditions.Length}"
+                                                       Margin="12"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding InputType}">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.hasLogic">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Header="Input"
@@ -432,7 +435,7 @@
 
             <TabItem Header="Output">
                 <TabItem.Content>
-                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto" IsEnabled="{Binding !IsStarted}">
                         <DataGrid
                             ItemsSource="{Binding ProfileCreatorModel.OutputCreators,
                             FallbackValue={x:Null}}">
@@ -490,27 +493,30 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="Logic" SortMemberPath="Preconditions.Length">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Viewbox>
-                                                <CheckBox IsChecked="{Binding !!Preconditions.Length}" />
-                                            </Viewbox>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
                                 <DataGridTextColumn
                                     Header="Description"
                                     SortMemberPath="Description"
                                     Binding="{Binding Description}"
                                     MaxWidth="500" />
 
-                                <DataGridTextColumn
-                                    Header="Output Type"
-                                    SortMemberPath="OutputType"
-                                    Binding="{Binding OutputType}"
-                                    IsReadOnly="True" />
+                                <DataGridTemplateColumn Header="Output Type"
+                                                        SortMemberPath="OutputType"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Classes.hasLogic="{Binding !!Preconditions.Length}"
+                                                       Margin="12"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding OutputType}">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.hasLogic">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Header="Output"
@@ -553,6 +559,66 @@
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Comparison" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Classes.inverted="{Binding IsInverted}"
+                                                       Margin="12"
+                                                       VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0} {1}">
+                                                        <Binding Path="Operator" />
+                                                        <Binding Path="ComparisonValue" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.inverted">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Flight Sim Value" SortMemberPath="Value"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding FlightSimValue}"
+                                                     IsVisible="{Binding FlightSimValue, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                     VerticalContentAlignment="Center"
+                                                     Foreground="Red"
+                                                     SelectionForegroundBrush="Red"
+                                                     IsReadOnly="True"
+                                                     BorderThickness="0"
+                                                     Background="Transparent">
+                                                <TextBox.Styles>
+                                                    <Style Selector="TextBox.valueIsNull /template/ DockPanel#PART_InnerDockPanel">
+                                                        <Setter Property="Cursor" Value="Arrow" />
+                                                    </Style>
+                                                </TextBox.Styles>
+                                            </TextBox>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Output Value" SortMemberPath="Value" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding OutputValue}"
+                                                     IsVisible="{Binding OutputValue, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                     VerticalContentAlignment="Center"
+                                                     Foreground="LimeGreen"
+                                                     SelectionForegroundBrush="LimeGreen"
+                                                     IsReadOnly="True"
+                                                     BorderThickness="0"
+                                                     Background="Transparent">
+                                            </TextBox>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
