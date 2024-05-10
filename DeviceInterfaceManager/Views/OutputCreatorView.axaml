@@ -9,13 +9,13 @@
              xmlns:local="clr-namespace:DeviceInterfaceManager.Views"
              xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              mc:Ignorable="d"
-             d:DesignHeight="700"
-             d:DesignWidth="500"
+             d:DesignHeight="{StaticResource ContentDialogMaxHeight}"
+             Width="{StaticResource ContentDialogMaxWidth}"
              x:Class="DeviceInterfaceManager.Views.OutputCreatorView"
              x:DataType="vm:OutputCreatorViewModel">
-    
+
     <Design.DataContext>
-        <vm:OutputCreatorViewModel/>
+        <vm:OutputCreatorViewModel />
     </Design.DataContext>
 
     <UserControl.Resources>
@@ -96,12 +96,12 @@
                                          SelectedItem="{Binding PmdgData}"
                                          ItemsSource="{Binding PmdgDataEnumerable}"
                                          Text="{Binding SearchPmdgData}"
-                                         Classes="clearButton rightEdgeAlignedBottomPopup" 
+                                         Classes="clearButton rightEdgeAlignedBottomPopup"
                                          Classes.selected="{Binding PmdgData, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <AutoCompleteBox.Styles>
                                 <Style Selector="AutoCompleteBox.selected">
                                     <Style Selector="^ /template/ TextBox#PART_TextBox">
-                                        <Setter Property="Foreground" Value="LimeGreen"/>
+                                        <Setter Property="Foreground" Value="LimeGreen" />
                                     </Style>
                                 </Style>
                             </AutoCompleteBox.Styles>
@@ -130,6 +130,7 @@
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
+                                 TextWrapping="WrapWithOverflow"
                                  Watermark="SimVar / L:Var"
                                  Text="{Binding Data}" />
                     </Grid>
@@ -219,6 +220,18 @@
             <TabItem Header="Display"
                      IsVisible="{Binding IsDisplay}">
                 <StackPanel Margin="20" Spacing="25" Width="400">
+                    
+                    <!-- Numeric Format -->
+                    <Grid ColumnDefinitions="*,2*">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="Numeric Format" />
+                        <TextBox Grid.Column="1"
+                                 Classes="clearButton"
+                                 HorizontalAlignment="Stretch"
+                                 Watermark="Numeric Format"
+                                 Text="{Binding NumericFormat}" />
+                    </Grid>
 
                     <!-- Left Padding -->
                     <Grid ColumnDefinitions="*,2*">
@@ -235,13 +248,17 @@
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Padding Character" />
-                        <ComboBox Grid.Column="1"
-                                  HorizontalAlignment="Stretch"
-                                  DisplayMemberBinding="{Binding 
+                        <Grid Grid.Column="1">
+                            <ComboBox HorizontalAlignment="Stretch"
+                                      DisplayMemberBinding="{Binding 
                                   Converter={StaticResource NullableKeyValuePairConverter},
                                   ConverterParameter='Key'}"
-                                  SelectedItem="{Binding PaddingCharacterPair}"
-                                  ItemsSource="{Binding PaddingCharacters}" />
+                                      SelectedItem="{Binding PaddingCharacterPair}"
+                                      ItemsSource="{Binding PaddingCharacters}" />
+                            <Button Classes="clear"
+                                    Command="{Binding ClearPaddingCharacterCommand}"
+                                    IsVisible="{Binding PaddingCharacter, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </Grid>
                     </Grid>
 
                     <!-- Digit Count -->
@@ -249,10 +266,14 @@
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Digit Count" />
-                        <ComboBox Grid.Column="1"
-                                  HorizontalAlignment="Stretch"
+                        <Grid Grid.Column="1">
+                        <ComboBox HorizontalAlignment="Stretch"
                                   SelectedItem="{Binding DigitCount}"
                                   ItemsSource="{Binding DigitCounts}" />
+                        <Button Classes="clear"
+                                Command="{Binding ClearDigitCountCommand}"
+                                IsVisible="{Binding DigitCount, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </Grid>
                     </Grid>
 
                     <!-- Digit & Decimal Point -->
