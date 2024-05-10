@@ -36,10 +36,15 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         }
     }
 
+    [ObservableProperty]
+    private string? _currentVersion;
+
     [RelayCommand]
-    private static async Task CheckForUpdatesAsync()
+    private async Task CheckForUpdatesAsync()
     {
         UpdateManager updateManager = new(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
+
+        CurrentVersion = updateManager.CurrentVersion?.ToFullString();
         
         if (updateManager.IsInstalled)
         {
@@ -58,9 +63,6 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
     [ObservableProperty]
     private string? _wasmModuleUpdaterMessage;
-
-    [RelayCommand]
-    private static void OpenDiscord() => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://discord.gg/8SS5ew4WvT") { UseShellExecute = true });
 
     [RelayCommand]
     private async Task UpdateDimWasmModuleAsync()
