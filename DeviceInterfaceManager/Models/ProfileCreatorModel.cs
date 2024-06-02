@@ -40,6 +40,9 @@ public partial class ProfileCreatorModel : ObservableObject
     [ObservableProperty]
     private string? _profileName;
 
+    [ObservableProperty]
+    private string? _description;
+
     public string? DeviceName { get; set; }
 
     [ObservableProperty]
@@ -88,7 +91,13 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     private uint? _dataPress;
 
     [ObservableProperty]
+    private uint? _dataPress2;
+
+    [ObservableProperty]
     private uint? _dataRelease;
+    
+    [ObservableProperty]
+    private uint? _dataRelease2;
 
     [ObservableProperty]
     private Precondition[]? _preconditions;
@@ -187,6 +196,8 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
     {
         OutputCreator clone = MemberwiseClone() as OutputCreator ?? new OutputCreator();
         clone.Id = Guid.NewGuid();
+        clone.OutputValue = null;
+        clone.FlightSimValue = null;
         return clone;
     }
 }
