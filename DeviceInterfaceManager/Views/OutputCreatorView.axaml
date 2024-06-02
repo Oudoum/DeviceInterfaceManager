@@ -130,7 +130,7 @@
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
-                                 TextWrapping="WrapWithOverflow"
+                                 TextWrapping="Wrap"
                                  Watermark="SimVar / L:Var"
                                  Text="{Binding Data}" />
                     </Grid>
