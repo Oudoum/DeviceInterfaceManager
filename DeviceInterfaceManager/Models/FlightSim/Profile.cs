@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 namespace DeviceInterfaceManager.Models.FlightSim;
 
-public class Profile : IDisposable
+public class Profile : IAsyncDisposable
 {
     private readonly SimConnectClient _simConnectClient;
 
@@ -28,7 +29,7 @@ public class Profile : IDisposable
         _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
 
         _simConnectClient.Helper!.FieldChanged += PmdgHelperOnFieldChanged;
-        
+
         _inputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
 
         foreach (string watchedField in _simConnectClient.Helper!.WatchedFields)
@@ -95,13 +96,25 @@ public class Profile : IDisposable
                 break;
 
             case ProfileCreatorModel.SevenSegment when outputCreator.ComparisonValue is null:
-                SetStringValue(simVar.Data.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), simVar.Name, outputCreator);
+                try
+                {
+                    SetStringValue(simVar.Data.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), simVar.Name, outputCreator);
+                }
+                catch (Exception)
+                {
+                    SetNumericFormatError(outputCreator);
+                }
                 break;
 
             case ProfileCreatorModel.SevenSegment:
                 SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, simVar.Data));
                 break;
         }
+    }
+
+    private static void SetNumericFormatError(OutputCreator outputCreator)
+    {
+        outputCreator.OutputValue = "NumericFormat Error";
     }
 
     private void PrecomparisonIteration(OutputCreator outputCreator)
@@ -179,9 +192,9 @@ public class Profile : IDisposable
 
                 SetStringValue(valueString, e.PmdgDataName, outputCreator);
                 break;
-
-            //byte, ushort, short, uint, int, float
-            default:
+            
+            //float
+            case float:
                 double valueDouble = Convert.ToDouble(e.Value);
                 if (outputCreator.ComparisonValue is not null)
                 {
@@ -189,7 +202,34 @@ public class Profile : IDisposable
                     break;
                 }
 
-                SetStringValue(valueDouble.ToString(CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
+                try
+                {
+                    SetStringValue(valueDouble.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
+
+                }
+                catch (Exception)
+                {
+                    SetNumericFormatError(outputCreator);
+                }
+                break;
+            
+            //byte, ushort, short, uint, int
+            default:
+                if (outputCreator.ComparisonValue is not null)
+                {
+                    SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, Convert.ToDouble(e.Value)));
+                    break;
+                }
+                    
+                long valueLong = Convert.ToInt64(e.Value);
+                try
+                {
+                    SetStringValue(valueLong.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
+                }
+                catch (Exception)
+                {
+                    SetNumericFormatError(outputCreator);
+                }
                 break;
         }
     }
@@ -444,7 +484,7 @@ public class Profile : IDisposable
             }
         }
     }
-    
+
     private void InputOutputDeviceOnInputChanged(object? sender, InputChangedEventArgs e)
     {
         foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.Input?.Position == e.Position && x.IsActive))
@@ -463,23 +503,34 @@ public class Profile : IDisposable
             }
 
             //Direction
-            uint newDirection = Convert.ToUInt32(e.IsPressed);
-            switch (newDirection)
+            uint firstParameter = Convert.ToUInt32(e.IsPressed);
+            uint secondParameter = 0;
+            switch (firstParameter)
             {
                 case 0 when inputCreator.DataRelease is not null:
-                    newDirection = inputCreator.DataRelease.Value;
+                    firstParameter = inputCreator.DataRelease.Value;
+                    if (inputCreator.DataRelease2 is not null)
+                    {
+                        secondParameter = inputCreator.DataRelease2.Value;
+                    }
+
                     break;
 
                 case 1 when inputCreator.DataPress is not null:
-                    newDirection = inputCreator.DataPress.Value;
+                    firstParameter = inputCreator.DataPress.Value;
+                    if (inputCreator.DataPress2 is not null)
+                    {
+                        secondParameter = inputCreator.DataPress2.Value;
+                    }
+
                     break;
 
                 case 0 when inputCreator.PmdgMouseRelease is not null:
-                    newDirection = (uint)inputCreator.PmdgMouseRelease.Value;
+                    firstParameter = (uint)inputCreator.PmdgMouseRelease.Value;
                     break;
 
                 case 1 when inputCreator.PmdgMousePress is not null:
-                    newDirection = (uint)inputCreator.PmdgMousePress.Value;
+                    firstParameter = (uint)inputCreator.PmdgMousePress.Value;
                     break;
 
                 default:
@@ -490,38 +541,29 @@ public class Profile : IDisposable
             {
                 //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]), Key Event ID (K:Event[K])
                 case ProfileCreatorModel.MsfsSimConnect when !string.IsNullOrEmpty(inputCreator.Event):
-                    _simConnectClient.SetSimVar(newDirection, inputCreator.Event);
+                    _simConnectClient.SetSimVar(firstParameter, inputCreator.Event);
                     continue;
 
                 case ProfileCreatorModel.KEvent when !string.IsNullOrEmpty(inputCreator.Event):
-                    _simConnectClient.TransmitSimEvent(newDirection, inputCreator.Event);
+                    _simConnectClient.TransmitSimEvent(firstParameter, secondParameter, inputCreator.Event);
                     continue;
 
                 //PMDG 737
                 case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
-                    _simConnectClient.TransmitEvent(newDirection, inputCreator.PmdgEvent);
+                    _simConnectClient.TransmitEvent(firstParameter, inputCreator.PmdgEvent);
                     break;
             }
         }
     }
-
-    private void ReleaseUnmanagedResources()
+    
+    public async ValueTask DisposeAsync()
     {
+        await _inputOutputDevice.ResetAllOutputsAsync();
+
         _inputOutputDevice.InputChanged -= InputOutputDeviceOnInputChanged;
         _simConnectClient.Helper!.FieldChanged -= PmdgHelperOnFieldChanged;
         _simConnectClient.OnSimVarChanged -= SimConnectClientOnOnSimVarChanged;
-
         
-    }
-
-    public void Dispose()
-    {
-        ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
-    }
-
-    ~Profile()
-    {
-        ReleaseUnmanagedResources();
     }
 }
