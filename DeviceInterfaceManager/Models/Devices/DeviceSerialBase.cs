@@ -28,8 +28,13 @@ public class DeviceSerialBase : IDeviceSerial
         return Task.CompletedTask;
     }
 
+    public Task ResetAllOutputsAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public string Id => "000000";
     public string DeviceName => "Debug";
-    public string SerialNumber => "000000";
     public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("UsbPort");
 
     public Task<ConnectionStatus> ConnectAsync()
