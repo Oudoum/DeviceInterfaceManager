@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+
+#pragma warning disable CS0657 // Not a valid attribute location for this declaration
 
 namespace DeviceInterfaceManager.Models.Devices;
 
@@ -39,6 +42,7 @@ public partial class Component(int position) : ObservableObject
     public int Position { get; } = position;
 
     [ObservableProperty]
+    [property: JsonIgnore]
     private bool _isSet;
 
     public static IEnumerable<Component> GetComponents(int first, int last)
