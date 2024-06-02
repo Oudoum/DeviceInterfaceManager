@@ -140,6 +140,13 @@ public class SimConnectClient : IFlightSimConnection
         RegisterSimVar("CAMERA STATE", "Enum");
 
         // _simConnect.OnRecvEnumerateInputEvents += SimConnectOnOnRecvEnumerateInputEvents;
+        // RegisterSimEvent("ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE");
+        //
+        // if (_simEvents.TryGetValue("ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE", out int id))
+        // {
+        //     _simConnect.TransmitClientEvent_EX1(0, (EventId)id, SimConnectGroupPriority.Standard, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY, 2, 8,0,0,0 );
+        // }
+
 
         _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
 
@@ -238,6 +245,23 @@ public class SimConnectClient : IFlightSimConnection
                 data,
                 SimConnectGroupPriority.Standard,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+        }
+    }
+
+    private void TransmitEvent(uint data0, uint data1, Enum eventId)
+    {
+        lock (_lockObject)
+        {
+            _simConnect?.TransmitClientEvent_EX1(
+                0,
+                (EventId)eventId,
+                SimConnectGroupPriority.Standard,
+                SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY,
+                data0,
+                data1,
+                0,
+                0,
+                0 );
         }
     }
 
@@ -345,11 +369,11 @@ public class SimConnectClient : IFlightSimConnection
         _simConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
     }
 
-    public void TransmitSimEvent(uint data, string simEventName)
+    public void TransmitSimEvent(uint data0, uint data1, string simEventName)
     {
         if (_simEvents.TryGetValue(simEventName, out int id))
         {
-            TransmitEvent(data, (EventId)id);
+            TransmitEvent(data0, data1, (EventId)id);
         }
     }
     //
