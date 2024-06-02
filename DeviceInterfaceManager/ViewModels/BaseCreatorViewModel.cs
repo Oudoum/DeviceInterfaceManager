@@ -36,9 +36,17 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
             {
                 IsActive = true,
                 Preconditions = [new Precondition()],
-                Description = "Description",
+                Description = "Description 1",
                 OutputType = ProfileCreatorModel.Led,
                 Output = new Component(1)
+            },
+            new OutputCreator
+            {
+            IsActive = true,
+            Preconditions = [new Precondition()],
+            Description = "Description 2",
+            OutputType = ProfileCreatorModel.Led,
+            Output = new Component(1)
             }
         ];
     }
@@ -78,6 +86,11 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
     
     [ObservableProperty]
     private PreconditionModel? _selectedPrecondition;
+
+    partial void OnSelectedPreconditionChanged(PreconditionModel? value)
+    {
+        SelectedOutputCreator = OutputCreators.FirstOrDefault(x => value is not null && x.Id == value.ReferenceId);
+    }
 
     public static char[] Operators => ['=', '≠', '<', '>', '≤', '≥'];
     
