@@ -5,12 +5,12 @@ namespace DeviceInterfaceManager.Models.Devices;
 
 public interface IInputOutputDevice : IInput, IOutput
 {
-    string? DeviceName { get; }
-    string? SerialNumber { get; }
-    Geometry? Icon { get; }
+    public string? Id { get; }
+    public string? DeviceName { get; }
+    public Geometry? Icon { get; }
 
-    Task<ConnectionStatus> ConnectAsync();
-    void Disconnect();
+    public Task<ConnectionStatus> ConnectAsync();
+    public void Disconnect();
 }
 
 public enum ConnectionStatus
