@@ -2,32 +2,220 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
-             xmlns:device="clr-namespace:DeviceInterfaceManager.Models.Devices"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:model="clr-namespace:DeviceInterfaceManager.Models"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
              x:Class="DeviceInterfaceManager.Views.HomeView"
-             x:DataType="vm:HomeViewModel"
-             IsEnabled="False">
+             x:DataType="vm:HomeViewModel">
 
     <Design.DataContext>
         <vm:HomeViewModel />
     </Design.DataContext>
     <Grid>
-        <StackPanel>
-            <Button Content="Start Test"
-                    Command="{Binding StartProfileCommand}" />
-            <Button x:Name="MyButton" DragDrop.AllowDrop="True" Height="50" Width="300">
-                <Button.DataTemplates>
-                    <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding SerialNumber}" />
-                            <TextBlock FontSize="14" Text="{Binding DeviceName}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Button.DataTemplates>
-            </Button>
-            
-        </StackPanel>
-    </Grid>
 
+        <TextBlock Text="No device found! Please enable the specific driver in the settings!"
+                   IsVisible="{Binding !InputOutputDevices.Count}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontWeight="Bold"
+                   FontSize="24" />
+
+
+        <Grid RowDefinitions="Auto *" ColumnDefinitions="Auto Auto" HorizontalAlignment="Center"
+              IsVisible="{Binding !!InputOutputDevices.Count}">
+
+            <Button Grid.Column="0"
+                    Grid.Row="0"
+                    Grid.ColumnSpan="2"
+                    Classes.start="{Binding !IsStarted}"
+                    Classes.stop="{Binding IsStarted}"
+                    Classes.running="{Binding StartProfilesCommand.IsRunning}"
+                    HorizontalAlignment="Stretch"
+                    Margin="0 25 0 0">
+                <Button.Styles>
+                    <Style Selector="Button.start">
+                        <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
+                        <Setter Property="Content">
+                            <Template>
+                                <PathIcon Data="{StaticResource Play}" />
+                            </Template>
+                        </Setter>
+                    </Style>
+                    <Style Selector="Button.stop">
+                        <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
+                        <Setter Property="Content">
+                            <Template>
+                                <PathIcon Data="{StaticResource Stop}" />
+                            </Template>
+                        </Setter>
+                    </Style>
+                    <Style Selector="Button.running">
+                        <Setter Property="Command" Value="{Binding StartProfilesCancelCommand}" />
+                        <Setter Property="Content">
+                            <Template>
+                                <PathIcon Data="{StaticResource Cancel}" />
+                            </Template>
+                        </Setter>
+                    </Style>
+                </Button.Styles>
+            </Button>
+
+            <Border Grid.Column="0" Grid.Row="1"
+                    IsEnabled="{Binding !IsStarted}"
+                    Margin="25"
+                    CornerRadius="5"
+                    BorderBrush="Gray"
+                    BorderThickness="2">
+                <Grid RowDefinitions="Auto *">
+                    <Button Grid.Row="0"
+                            Content="Add"
+                            Margin="0 0 0 5"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding AddCommand}" />
+
+                    <ui:ProgressRing Grid.Row="0"
+                                     Grid.RowSpan="2"
+                                     IsVisible="{Binding StartProfilesCommand.IsRunning}"
+                                     IsIndeterminate="{Binding StartProfilesCommand.IsRunning}" />
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding DeviceProfileList}"
+                              GridLinesVisibility="All"
+                              AutoGenerateColumns="False">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGrid:focus DataGridCell:current /template/ Grid#FocusVisual">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                            <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+                                <Setter Property="Fill" Value="{DynamicResource DataGridRowBackgroundBrush}" />
+                                <Setter Property="Opacity" Value="0" />
+                            </Style>
+                            <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+                                <Setter Property="Fill" Value="{DynamicResource DataGridRowBackgroundBrush}" />
+                                <Setter Property="Opacity" Value="0" />
+                            </Style>
+                            <Style Selector="Button.b1">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Setter Property="VerticalAlignment" Value="Stretch" />
+                                <Setter Property="CornerRadius" Value="0" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                            <Style
+                                Selector="Button.Delete:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                <Setter Property="TextBlock.Background" Value="Red" />
+                            </Style>
+                        </DataGrid.Styles>
+
+                        <DataGrid.Columns>
+
+                            <DataGridTemplateColumn Header="Active" SortMemberPath="IsActive">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ToggleSwitch IsChecked="{Binding IsActive}"
+                                                      Margin="10 0 0 0"
+                                                      HorizontalAlignment="Center"
+                                                      OnContent=""
+                                                      OffContent="">
+                                            <ToggleSwitch.Styles>
+                                                <Style
+                                                    Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+                                                    <Setter Property="Background" Value="LimeGreen" />
+                                                </Style>
+                                            </ToggleSwitch.Styles>
+                                        </ToggleSwitch>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Delete">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            Classes="b1 Delete"
+                                            Command="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).DeleteCommand,
+                                        FallbackValue={x:Null}}"
+                                            CommandParameter="{Binding}">
+                                            <PathIcon Data="{StaticResource DeleteForeverOutline}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Device" SortMemberPath="Device" MinWidth="200">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel x:Name="DeviceStackPanel"
+                                                    DragDrop.AllowDrop="True"
+                                                    DoubleTapped="DataGridOnDoubleTapped"
+                                                    Background="Transparent">
+                                            <TextBlock IsHitTestVisible="False"
+                                                       Text="{Binding Id}"
+                                                       Margin="10 12 0 0" />
+                                            <TextBlock IsHitTestVisible="False"
+                                                       Text="{Binding DeviceName}"
+                                                       FontSize="10"
+                                                       Margin="10 0 0 12" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Profile" SortMemberPath="Profile" MinWidth="200">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel x:Name="ProfileStackPanel"
+                                                    DragDrop.AllowDrop="True"
+                                                    DoubleTapped="DataGridOnDoubleTapped"
+                                                    Background="Transparent">
+                                            <TextBlock IsHitTestVisible="False"
+                                                       Text="{Binding ProfileName}"
+                                                       Margin="10 18 0 0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1" Grid.Row="1"
+                  RowDefinitions="Auto *"
+                  Margin="0 25 25 25">
+                <ToggleSwitch IsChecked="{Binding IsFiltered}"
+                              Width="200"
+                              OnContent="All devices"
+                              OffContent="Connected devices" />
+                <ScrollViewer Grid.Row="1"
+                              AllowAutoHide="False">
+                    <ItemsControl ItemsSource="{Binding FilteredProfileCreatorModels}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="model:ProfileCreatorModel">
+                                <Border>
+                                    <StackPanel Margin="10 5"
+                                                Background="Transparent"
+                                                ToolTip.Tip="{Binding Description}"
+                                                PointerPressed="ProfileListOnPointerPressed">
+                                        <TextBlock Text="{Binding ProfileName}"
+                                                   FontWeight="Bold" />
+                                        <TextBlock Margin="5 0 0 0" Text="{Binding DeviceName}" />
+                                    </StackPanel>
+                                    <Border.Styles>
+                                        <Style Selector="Border:pointerover">
+                                            <Setter Property="Background"
+                                                    Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+                                        </Style>
+                                    </Border.Styles>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
 </UserControl>
