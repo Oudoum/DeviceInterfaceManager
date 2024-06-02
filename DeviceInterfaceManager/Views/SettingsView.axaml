@@ -25,10 +25,10 @@
 
                 <StackPanel Spacing="0" Margin="12 0">
                     <TextBlock Text="Device Interface Manager"
-                               Theme="{StaticResource TitleTextBlockStyle}" />
+                               Theme="{DynamicResource TitleTextBlockStyle}" />
 
                     <TextBlock Text="{Binding CurrentVersion}"
-                               Theme="{StaticResource BodyTextBlockStyle}" />
+                               Theme="{DynamicResource BodyTextBlockStyle}" />
                 </StackPanel>
             </DockPanel>
 
@@ -36,14 +36,7 @@
                 <ui:SettingsExpander.IconSource>
                     <ui:PathIconSource Data="{StaticResource ApplicationOutline}" />
                 </ui:SettingsExpander.IconSource>
-
-                <ui:SettingsExpanderItem Content="Always on top"
-                                         Description="The window will always stay on top">
-                    <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.AlwaysOnTop}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-
+                
                 <ui:SettingsExpanderItem Content="Autohide on startup"
                                          Description="The window starts directly into the tray and all assigned profiles start automatically">
                     <ui:SettingsExpanderItem.Footer>
@@ -186,6 +179,12 @@
                         <ui:HyperlinkButton NavigateUri="https://github.com/Oudoum/DeviceInterfaceManager">
                             <Svg Height="42" Path="/Assets/Images/github-mark-white.svg" />
                         </ui:HyperlinkButton>
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                
+                <ui:SettingsExpanderItem>
+                    <ui:SettingsExpanderItem.Footer>
+                        <ui:HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data"/>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
