@@ -28,7 +28,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         Event = inputCreator.Event;
         OnRelease = inputCreator.OnRelease;
         DataPress = inputCreator.DataPress;
+        DataPress2 = inputCreator.DataPress2;
         DataRelease = inputCreator.DataRelease;
+        DataRelease2 = inputCreator.DataRelease2;
 
         if (PmdgEvent is not null)
         {
@@ -80,7 +82,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         _inputCreator.Event = Event;
         _inputCreator.OnRelease = OnRelease;
         _inputCreator.DataPress = DataPress;
+        _inputCreator.DataPress2 = DataPress2;
         _inputCreator.DataRelease = DataRelease;
+        _inputCreator.DataRelease2 = DataRelease2;
         return base.Copy();
     }
 
@@ -148,6 +152,8 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsKEvent = false;
         IsRpn = false;
         IsPmdg737 = false;
+        DataPress2 = null;
+        DataRelease2 = null;
         ResetEventType();
     }
 
@@ -184,7 +190,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsPmdg737 = false;
         ResetEventType();
         DataPress = null;
+        DataPress2 = null;
         DataRelease = null;
+        DataRelease2 = null;
     }
 
     [ObservableProperty]
@@ -203,6 +211,8 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsRpn = false;
         Event = null;
         OnRelease = false;
+        DataPress2 = null;
+        DataRelease2 = null;
     }
 
     private void ResetEventType()
@@ -235,8 +245,8 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         Mouse.LeftRelease,
         Mouse.RightSingle,
         Mouse.RightRelease,
-        Mouse.WheelUp,
-        Mouse.WheelDown
+        Mouse.WheelDown,
+        Mouse.WheelUp
     ];
 
     [ObservableProperty]
@@ -259,9 +269,15 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private uint? _dataPress;
+    
+    [ObservableProperty]
+    private uint? _dataPress2;
 
     [ObservableProperty]
     private uint? _dataRelease;
+    
+    [ObservableProperty]
+    private uint? _dataRelease2;
 
     [RelayCommand]
     private void GetSwitch()
