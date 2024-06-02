@@ -9,7 +9,6 @@
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
-             xmlns:styles="clr-namespace:DeviceInterfaceManager.Styles"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
@@ -119,9 +118,10 @@
                         </ui:CommandBarButton.Styles>
                     </ui:CommandBarButton>
 
-                    <ui:CommandBarElementContainer Margin="0 15 10 0">
-                        <styles:ProgressRing IsActive="{Binding StartProfilesCommand.IsRunning}"
-                                             VerticalAlignment="Top" />
+                    <ui:CommandBarElementContainer>
+                        <ui:ProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
+                                         IsIndeterminate="{Binding StartProfilesCommand.IsRunning}"
+                                         BorderThickness="5"/>
                     </ui:CommandBarElementContainer>
 
                     <ui:CommandBarSeparator />
@@ -148,13 +148,25 @@
                 <ui:CommandBar.PrimaryCommands>
 
                     <ui:CommandBarElementContainer>
-                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}" />
+                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}"/>
                     </ui:CommandBarElementContainer>
 
                     <ui:CommandBarSeparator />
 
-                    <ui:CommandBarElementContainer>
+                    <ui:CommandBarElementContainer IsHitTestVisible="{Binding InputOutputDevice, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                   PointerPressed="InputElementOnPointerPressed">
                         <TextBlock Text="{Binding ProfileCreatorModel.ProfileName, FallbackValue=''}" />
+                        <FlyoutBase.AttachedFlyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <TextBox Text="{Binding ProfileCreatorModel.Description, FallbackValue=''}"
+                                         Watermark="Description"
+                                         TextWrapping="Wrap"
+                                         AcceptsTab="True"
+                                         AcceptsReturn="True"
+                                         Height="200"
+                                         Width="400"/>
+                            </Flyout>
+                        </FlyoutBase.AttachedFlyout>
                     </ui:CommandBarElementContainer>
 
                 </ui:CommandBar.PrimaryCommands>
@@ -176,6 +188,23 @@
                     <Setter Property="BorderBrush" Value="Gray" />
                     <Setter Property="HeadersVisibility" Value="All" />
                 </Style>
+                <Style Selector="DataGrid /template/ ScrollBar#PART_HorizontalScrollbar">
+                    <Setter Property="AllowAutoHide" Value="False"/>
+                </Style>
+                <Style Selector="DataGrid /template/ ScrollBar#PART_VerticalScrollbar">
+                    <Setter Property="AllowAutoHide" Value="False"/>
+                </Style>
+                <Style Selector="DataGrid DataGridCell:current:focus /template/ Grid#FocusVisual">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+                <Style Selector="DataGrid DataGridCell:selected /template/ Grid#FocusVisual">
+                    <Setter Property="IsVisible" Value="False" />
+                </Style>
+                <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+                    <Setter Property="Fill" Value="#434343" />
+                        
+                </Style>
+
                 <!-- DataGrid DragAndDrop -->
                 <Style Selector="DataGrid DataGridRow.DraggingUp">
                     <Setter Property="AdornerLayer.Adorner">
@@ -259,6 +288,7 @@
                     <Setter Property="HorizontalAlignment" Value="Stretch" />
                     <Setter Property="VerticalAlignment" Value="Stretch" />
                     <Setter Property="CornerRadius" Value="0" />
+                    <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="Background" Value="Transparent" />
                 </Style>
                 <Style Selector="Button.Add">
@@ -266,6 +296,7 @@
                     <Setter Property="Margin" Value="0 0 0 10" />
                     <Setter Property="HorizontalAlignment" Value="Stretch" />
                     <Setter Property="CornerRadius" Value="0" />
+                    <Setter Property="IsEnabled" Value="{Binding !IsStarted}" />
                 </Style>
                 <Style Selector="Button.Edit:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                     <Setter Property="TextBlock.Background" Value="SteelBlue" />
@@ -288,7 +319,7 @@
 
             <TabItem Header="Input">
                 <TabItem.Content>
-                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto" IsEnabled="{Binding !IsStarted}">
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
                         <DataGrid
                             ItemsSource="{Binding ProfileCreatorModel.InputCreators,
                             FallbackValue={x:Null}}">
@@ -325,6 +356,8 @@
                                         <DataTemplate>
                                             <Button
                                                 Classes="b1 Edit"
+                                                IsEnabled="{Binding !$parent.((vm:ProfileCreatorViewModel)DataContext).IsStarted,
+                                                FallbackValue=False}"
                                                 Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).EditInputCommand,
                                                 FallbackValue={x:Null}}"
                                                 CommandParameter="{Binding}">
@@ -339,6 +372,8 @@
                                         <DataTemplate>
                                             <Button
                                                 Classes="b1 Delete"
+                                                IsEnabled="{Binding !$parent.((vm:ProfileCreatorViewModel)DataContext).IsStarted,
+                                                FallbackValue=False}"
                                                 Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
                                                 FallbackValue={x:Null}}"
                                                 CommandParameter="{Binding}">
@@ -353,7 +388,7 @@
                                     SortMemberPath="Description"
                                     Binding="{Binding Description}"
                                     MaxWidth="500" />
-                                
+
                                 <DataGridTemplateColumn Header="Input Type"
                                                         SortMemberPath="InputType"
                                                         IsReadOnly="True">
@@ -409,18 +444,40 @@
                                     SortMemberPath="PmdgMouseRelease"
                                     Binding="{Binding PmdgMouseRelease}"
                                     IsReadOnly="True" />
-
-                                <DataGridTextColumn
-                                    Header="Data Press"
-                                    SortMemberPath="DataPress"
-                                    Binding="{Binding DataPress}"
-                                    IsReadOnly="True" />
-
-                                <DataGridTextColumn
-                                    Header="Data Release"
-                                    SortMemberPath="DataRelease"
-                                    Binding="{Binding DataRelease}"
-                                    IsReadOnly="True" />
+                                
+                                <DataGridTemplateColumn Header="Data Press" IsReadOnly="True" SortMemberPath="DataPress">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="12" VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}{1}">
+                                                        <Binding Path="DataPress" />
+                                                        <Binding Path="DataPress2"
+                                                                 StringFormat="{} │ {0}"
+                                                                 TargetNullValue="" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                
+                                <DataGridTemplateColumn Header="Data Release" IsReadOnly="True" SortMemberPath="DataRelease">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="12" VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}{1}">
+                                                        <Binding Path="DataRelease" />
+                                                        <Binding Path="DataRelease2"
+                                                                 StringFormat="{} │ {0}"
+                                                                 TargetNullValue="" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                             </DataGrid.Columns>
                         </DataGrid>
@@ -435,7 +492,7 @@
 
             <TabItem Header="Output">
                 <TabItem.Content>
-                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto" IsEnabled="{Binding !IsStarted}">
+                    <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
                         <DataGrid
                             ItemsSource="{Binding ProfileCreatorModel.OutputCreators,
                             FallbackValue={x:Null}}">
@@ -470,6 +527,8 @@
                                         <DataTemplate>
                                             <Button
                                                 Classes="b1 Edit"
+                                                IsEnabled="{Binding !$parent.((vm:ProfileCreatorViewModel)DataContext).IsStarted,
+                                                FallbackValue=False}"
                                                 Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).EditOutputCommand,
                                                 FallbackValue={x:Null}}"
                                                 CommandParameter="{Binding}">
@@ -484,6 +543,8 @@
                                         <DataTemplate>
                                             <Button
                                                 Classes="b1 Delete"
+                                                IsEnabled="{Binding !$parent.((vm:ProfileCreatorViewModel)DataContext).IsStarted,
+                                                FallbackValue=False}"
                                                 Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
                                                 FallbackValue={x:Null}}"
                                                 CommandParameter="{Binding}">
@@ -553,9 +614,11 @@
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0} {1}">
+                                                    <MultiBinding StringFormat="{}{0}{1}">
                                                         <Binding Path="Data" />
-                                                        <Binding Path="Unit" />
+                                                        <Binding Path="Unit"
+                                                                 StringFormat="{}[{0}]"
+                                                                 TargetNullValue="" />
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
@@ -598,7 +661,8 @@
                                                      BorderThickness="0"
                                                      Background="Transparent">
                                                 <TextBox.Styles>
-                                                    <Style Selector="TextBox.valueIsNull /template/ DockPanel#PART_InnerDockPanel">
+                                                    <Style
+                                                        Selector="TextBox.valueIsNull /template/ DockPanel#PART_InnerDockPanel">
                                                         <Setter Property="Cursor" Value="Arrow" />
                                                     </Style>
                                                 </TextBox.Styles>
@@ -617,8 +681,7 @@
                                                      SelectionForegroundBrush="LimeGreen"
                                                      IsReadOnly="True"
                                                      BorderThickness="0"
-                                                     Background="Transparent">
-                                            </TextBox>
+                                                     Background="Transparent" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
