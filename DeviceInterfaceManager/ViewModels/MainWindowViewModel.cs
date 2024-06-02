@@ -11,8 +11,8 @@ public partial class MainWindowViewModel : ObservableObject
 {
     public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IInputOutputDevice> inputOutputDevices)
     {
-        _homeViewModel = homeViewModel;
-        _profileCreatorViewModel = profileCreatorViewModel;
+        HomeViewModel = homeViewModel;
+        ProfileCreatorViewModel = profileCreatorViewModel;
         _settingsViewModel = settingsViewModel;
         InputOutputDevices = inputOutputDevices;
         InputOutputDevices.CollectionChanged += InputOutputDevicesOnCollectionChanged;
@@ -21,16 +21,16 @@ public partial class MainWindowViewModel : ObservableObject
 #if DEBUG
     public MainWindowViewModel()
     {
-        _homeViewModel = new HomeViewModel();
-        _profileCreatorViewModel = new ProfileCreatorViewModel();
+        HomeViewModel = new HomeViewModel();
+        ProfileCreatorViewModel = new ProfileCreatorViewModel();
         _settingsViewModel = new SettingsViewModel();
         InputOutputDevices = [];
     }
 #endif
     
-    private readonly HomeViewModel _homeViewModel;
+    public HomeViewModel HomeViewModel { get; }
 
-    private readonly ProfileCreatorViewModel _profileCreatorViewModel;
+    public ProfileCreatorViewModel ProfileCreatorViewModel { get; }
 
     private readonly SettingsViewModel _settingsViewModel;
 
@@ -53,8 +53,8 @@ public partial class MainWindowViewModel : ObservableObject
             case NavigationViewItem navigationViewItem:
                 CurrentViewModel = (navigationViewItem.Content as string) switch
                 {
-                    "Home" => _homeViewModel,
-                    "Profile Creator" => _profileCreatorViewModel,
+                    "Home" => HomeViewModel,
+                    "Profile Creator" => ProfileCreatorViewModel,
                     "Settings" => _settingsViewModel,
                     _ => CurrentViewModel
                 };
@@ -77,6 +77,13 @@ public partial class MainWindowViewModel : ObservableObject
                 CurrentViewModel = CurrentViewModel;
                 break;
         }
+
+        if (CurrentViewModel == HomeViewModel)
+        {
+            HomeViewModel.IsActive = true;
+        }
+
+        HomeViewModel.IsActive = false;
     }
     
     private void InputOutputDevicesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
