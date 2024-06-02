@@ -39,7 +39,7 @@
                         <TextBlock Text="Device" />
                     </StackPanel>
                     <TextBlock Text="{Binding InputOutputDevice.DeviceName}"
-                               ToolTip.Tip="{Binding InputOutputDevice.SerialNumber}"/>
+                               ToolTip.Tip="{Binding InputOutputDevice.Id}"/>
                 </StackPanel>
             </Border>
 
