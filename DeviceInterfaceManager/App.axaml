@@ -15,7 +15,7 @@
         <StyleInclude Source="Assets/Icons.axaml" />
         <StyleInclude Source="Styles/AutoCompleteBoxClearStyle.axaml" />
         <StyleInclude Source="Styles/ButtonClearStyle.axaml" />
-        <StyleInclude Source="Styles/ProgressRing.axaml" />
+        <StyleInclude Source="avares://FluentAvalonia.ProgressRing/Styling/Controls/ProgressRing.axaml" />
     </Application.Styles>
 
 </Application>
