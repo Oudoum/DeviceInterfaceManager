@@ -8,6 +8,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
@@ -171,7 +173,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
             InputOutputDevice = inputOutputDevice;
             ProfileCreatorModel!.DeviceName = InputOutputDevice.DeviceName;
             await ChangeProfileNameAsync();
-            //Add logic for converting
         }
     }
 
@@ -204,11 +205,32 @@ public partial class ProfileCreatorViewModel : ObservableObject
             {
                 ProfileCreatorModel profileCreatorModel = JsonSerializer.Deserialize<ProfileCreatorModel>(result) ?? throw new InvalidOperationException();
 
-                InputOutputDevice = _inputOutputDevices.FirstOrDefault(device => device.DeviceName == profileCreatorModel.DeviceName);
-                if (InputOutputDevice is null)
+                IInputOutputDevice? inputOutputDevice = _inputOutputDevices.FirstOrDefault(device => device.DeviceName == profileCreatorModel.DeviceName);
+                switch (inputOutputDevice)
                 {
-                    SetInfoBar(profileCreatorModel.ProfileName + " could not be loaded, because no controller for this profile was found.", InfoBarSeverity.Warning);
-                    return;
+                    case null when InputOutputDevice is null:
+                        SetInfoBar(profileCreatorModel.ProfileName + " could not be loaded, because no controller for this profile was found and no controller is selected.", InfoBarSeverity.Warning);
+                        return;
+
+                    case null when InputOutputDevice is not null:
+                    {
+                        TaskDialogStandardResult dialogResult = await _dialogService.ShowTaskDialogAsync(
+                            Ioc.Default.GetService<MainWindowViewModel>()!,
+                            new TaskDialogSettings
+                            {
+                                Header = "Profile not for devices",
+                                Content = "Do you want to keep the mapped positions of this profile with available positions on your device?",
+                                Buttons = [TaskDialogButton.YesButton, TaskDialogButton.NoButton, TaskDialogButton.CancelButton]
+                            });
+
+                        if (!CheckRemap(dialogResult, profileCreatorModel))
+                        {
+                            return;
+                        }
+
+                        profileCreatorModel.DeviceName = InputOutputDevice?.DeviceName;
+                        break;
+                    }
                 }
 
                 if (await OverwriteCheck())
@@ -224,6 +246,81 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 SetInfoBar(e.Message, InfoBarSeverity.Error);
             }
         }
+    }
+
+    private bool CheckRemap(TaskDialogStandardResult result, ProfileCreatorModel profileCreatorModel)
+    {
+        switch (result)
+        {
+            case TaskDialogStandardResult.Cancel:
+                return false;
+
+            case TaskDialogStandardResult.No:
+                foreach (InputCreator inputCreator in profileCreatorModel.InputCreators)
+                {
+                    inputCreator.Input = null;
+                }
+
+                foreach (OutputCreator outputCreator in profileCreatorModel.OutputCreators)
+                {
+                    outputCreator.Output = null;
+                }
+                return true;
+            
+            case TaskDialogStandardResult.Yes:
+                if (InputOutputDevice is null)
+                {
+                    return false;
+                }
+                
+                foreach (InputCreator inputCreator in profileCreatorModel.InputCreators)
+                {
+                    if (inputCreator.Input is null)
+                    {
+                        continue;
+                    }
+                    
+                    if (inputCreator.InputType == ProfileCreatorModel.Switch && InputOutputDevice.Switch.Components.All(x => x.Position != inputCreator.Input.Position))
+                    {
+                        inputCreator.Input = null;
+                    }
+                }
+
+                foreach (OutputCreator outputCreator in profileCreatorModel.OutputCreators)
+                {
+                    if (outputCreator.Output is null)
+                    {
+                        continue;
+                    }
+                    
+                    switch (outputCreator.OutputType)
+                    {
+                        case ProfileCreatorModel.Led when InputOutputDevice.Led.Components.All(x => x.Position != outputCreator.Output.Position):
+                        case ProfileCreatorModel.Dataline when InputOutputDevice.Dataline.Components.All(x => x.Position != outputCreator.Output.Position):
+                        case ProfileCreatorModel.SevenSegment when InputOutputDevice.SevenSegment.Components.All(x => x.Position != outputCreator.Output.Position):
+                            outputCreator.Output = null;
+                            break;
+                    }
+                }
+                return true;
+
+            case TaskDialogStandardResult.None:
+                break;
+
+            case TaskDialogStandardResult.OK:
+                break;
+
+            case TaskDialogStandardResult.Retry:
+                break;
+
+            case TaskDialogStandardResult.Close:
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(result), result, null);
+        }
+
+        return false;
     }
 
     private async Task<bool> OverwriteCheck()
@@ -405,7 +502,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
             ProfileCreatorModel?.OutputCreators.Clear();
         }
     }
-
+    
     [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private void AddInput()
     {
@@ -629,6 +726,14 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [ObservableProperty]
     private bool _isStarted;
 
+    partial void OnIsStartedChanged(bool value)
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop)
+        {
+            desktop.MainWindow.Topmost = value;
+        }
+    }
+
     private Profile? _profile;
 
     [RelayCommand(CanExecute = nameof(CanEditProfile), IncludeCancelCommand = true)]
@@ -643,7 +748,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
         if (!IsStarted)
         {
             _simConnectClient.Disconnect();
-            _profile?.Dispose();
+            if (_profile is not null)
+            {
+                await _profile.DisposeAsync();
+            }
+
             SetInfoBar(ProfileCreatorModel?.ProfileName + " stopped.", InfoBarSeverity.Informational);
             return;
         }
