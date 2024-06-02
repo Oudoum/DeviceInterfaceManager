@@ -4,13 +4,15 @@ namespace DeviceInterfaceManager.Models.Devices;
 
 public interface IOutput
 {
-    ComponentInfo Led { get; }
-    ComponentInfo Dataline { get; }
-    ComponentInfo SevenSegment { get; }
+    public ComponentInfo Led { get; }
+    public ComponentInfo Dataline { get; }
+    public ComponentInfo SevenSegment { get; }
     
-    Task SetLedAsync(string? position, bool isEnabled);
+    public Task SetLedAsync(string? position, bool isEnabled);
     
-    Task SetDatalineAsync(string? position, bool isEnabled);
+    public Task SetDatalineAsync(string? position, bool isEnabled);
     
-    Task SetSevenSegmentAsync(string? position, string data);
+    public Task SetSevenSegmentAsync(string? position, string data);
+
+    public Task ResetAllOutputsAsync();
 }
