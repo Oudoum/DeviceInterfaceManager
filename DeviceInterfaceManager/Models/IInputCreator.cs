@@ -22,6 +22,10 @@ public interface IInputCreator
     public Mouse? PmdgMouseRelease { get; set; }
 
     public uint? DataPress { get; set; }
+    
+    public uint? DataPress2 { get; set; }
 
     public uint? DataRelease { get; set; }
+    
+    public uint? DataRelease2 { get; set; }
 }
