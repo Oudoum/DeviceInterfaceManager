@@ -36,9 +36,16 @@ public partial class InterfaceItData : IDeviceSerial
         CheckError(interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position)));
         return Task.CompletedTask;
     }
-    
+
+    public async Task ResetAllOutputsAsync()
+    {
+        await Led.PerformOperationOnAllComponents(async i => await SetLedAsync(i, false));
+        await Dataline.PerformOperationOnAllComponents(async i => await SetDatalineAsync(i, false));
+        await SevenSegment.PerformOperationOnAllComponents(async i => await SetSevenSegmentAsync(i, " "));
+    }
+
+    public string? Id { get; private set; }
     public string? DeviceName { get; private set; }
-    public string? SerialNumber { get; private set; }
     public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("UsbPort");
 
     public Task<ConnectionStatus> ConnectAsync()
@@ -67,8 +74,8 @@ public partial class InterfaceItData : IDeviceSerial
                 CheckError(interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64));
             }
 
-            SerialNumber = device;
-            DeviceName = boardId.ToString().Replace('_', ' ') + $" ({boardInfo.BoardType})";
+            Id = device;
+            DeviceName = boardId.ToString().Replace('_', ' ');
             _features = boardInfo.Features;
             Switch = new ComponentInfo(boardInfo.SwitchFirst, boardInfo.SwitchLast);
             Led = new ComponentInfo(boardInfo.LedFirst, boardInfo.LedLast);
