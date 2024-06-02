@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 
 namespace DeviceInterfaceManager.Views;
@@ -9,17 +10,94 @@ public partial class HomeView : UserControl
     public HomeView()
     {
         InitializeComponent();
-        
-        MyButton.AddHandler(DragDrop.DropEvent, Drop);
+
+        AddHandler(DragDrop.DropEvent, Drop);
+        AddHandler(DragDrop.DragOverEvent, DragEnter);
     }
-    
+
+    private async void ProfileListOnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsRightButtonPressed || sender is not StackPanel { DataContext: not null } stackPanel)
+        {
+            return;
+        }
+
+        DataObject data = new();
+        data.Set(nameof(ProfileCreatorModel), stackPanel.DataContext);
+        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
+    }
+
     private void Drop(object? sender, DragEventArgs e)
     {
-        object? data = e.Data.Get(nameof(IInputOutputDevice));
+        DropLogic(e, true);
+    }
 
-        if (data is IInputOutputDevice inputOutputDevice)
+    private static void DropLogic(DragEventArgs e, bool set = false)
+    {
+        object? data = e.Data.Get(nameof(IInputOutputDevice)) ?? e.Data.Get(nameof(ProfileCreatorModel));
+
+        if (e.Source is not Control control)
         {
-            MyButton.Content = inputOutputDevice;
+            return;
+        }
+
+        if (control.DataContext is not ProfileMapping profileMapping)
+        {
+            return;
+        }
+
+        switch (control.Name)
+        {
+            case "DeviceStackPanel" when data is IInputOutputDevice inputOutputDevice && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == inputOutputDevice.DeviceName):
+                e.DragEffects = DragDropEffects.Link;
+                if (set)
+                {
+                    profileMapping.Id = inputOutputDevice.Id;
+                    profileMapping.DeviceName = inputOutputDevice.DeviceName;
+                }
+                break;
+
+            case "ProfileStackPanel" when data is ProfileCreatorModel profileCreatorModel && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == profileCreatorModel.DeviceName):
+                e.DragEffects = DragDropEffects.Link;
+                if (set)
+                {
+                    profileMapping.ProfileName = profileCreatorModel.ProfileName;
+                    profileMapping.DeviceName = profileCreatorModel.DeviceName;
+                }
+                break;
+        }
+    }
+
+    private void DragEnter(object? sender, DragEventArgs e)
+    {
+        e.DragEffects = DragDropEffects.None;
+        DropLogic(e);
+    }
+
+    private void DataGridOnDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (e.Source is not Control { DataContext: ProfileMapping profileMapping } control)
+        {
+            return;
+        }
+
+        switch (control.Name)
+        {
+            case "DeviceStackPanel":
+                profileMapping.Id = null;
+                if (string.IsNullOrEmpty(profileMapping.ProfileName))
+                {
+                    profileMapping.DeviceName = null;
+                }
+                break;
+
+            case "ProfileStackPanel":
+                profileMapping.ProfileName = null;
+                if (string.IsNullOrEmpty(profileMapping.Id))
+                {
+                    profileMapping.DeviceName = null;
+                }
+                break;
         }
     }
 }
