@@ -10,9 +10,9 @@
              Width="{StaticResource ContentDialogMaxWidth}"
              x:Class="DeviceInterfaceManager.Views.InputCreatorView"
              x:DataType="vm:InputCreatorViewModel">
-    
+
     <Design.DataContext>
-        <vm:InputCreatorViewModel/>
+        <vm:InputCreatorViewModel />
     </Design.DataContext>
 
     <UserControl.Resources>
@@ -23,6 +23,15 @@
         <TabControl>
             <TabItem Header="Input">
                 <StackPanel Margin="20" Spacing="20">
+                    <StackPanel.Styles>
+                        <Style Selector="TextBox.normalParameter">
+                            <Setter Property="Watermark" Value="Parameter"/>
+                        </Style>
+                        <Style Selector="TextBox.secondParameter">
+                            <Setter Property="Watermark" Value="Parameter 1"/>
+                        </Style>
+                    </StackPanel.Styles>
+                    
                     <StackPanel Spacing="10">
                         <StackPanel Spacing="25" Orientation="Horizontal">
                             <RadioButton Content="SimVar / L:Var"
@@ -81,7 +90,6 @@
                                    VerticalAlignment="Center"
                                    Text="PMDG Event" />
                         <AutoCompleteBox Grid.Column="1"
-                                         HorizontalAlignment="Stretch"
                                          Watermark="Search..."
                                          FilterMode="ContainsOrdinal"
                                          SelectedItem="{Binding PmdgEvent}"
@@ -92,7 +100,7 @@
                             <AutoCompleteBox.Styles>
                                 <Style Selector="AutoCompleteBox.selected">
                                     <Style Selector="^ /template/ TextBox#PART_TextBox">
-                                        <Setter Property="Foreground" Value="LimeGreen"/>
+                                        <Setter Property="Foreground" Value="LimeGreen" />
                                     </Style>
                                 </Style>
                             </AutoCompleteBox.Styles>
@@ -107,8 +115,7 @@
                                    Text="Event" />
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
-                                 HorizontalAlignment="Stretch"
-                                 TextWrapping="WrapWithOverflow"
+                                 TextWrapping="Wrap"
                                  Watermark="SimVar/K:Event/H:Event/RPN"
                                  Text="{Binding Event}" />
                     </Grid>
@@ -142,19 +149,26 @@
                     </Grid>
 
                     <!-- Data Press -->
-                    <Grid ColumnDefinitions="*,2*"
+                    <Grid ColumnDefinitions="* 2*"
                           IsVisible="{Binding !IsRpn}"
                           IsEnabled="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNull}}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Press" />
-                        <TextBox Grid.Column="1"
-                                 Classes="clearButton"
-                                 HorizontalAlignment="Stretch"
-                                 Watermark="Number"
-                                 Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" />
+                        <StackPanel Grid.Column="1"
+                                    Spacing="10">
+                            <TextBox Classes="clearButton"
+                                     Classes.normalParameter="{Binding !IsKEvent}"
+                                     Classes.secondParameter="{Binding IsKEvent}"
+                                     Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" >
+                            </TextBox>
+                            <TextBox IsVisible="{Binding IsKEvent}"
+                                     Classes="clearButton"
+                                     Watermark="Parameter 2"
+                                     Text="{Binding DataPress2, Converter={StaticResource NullableConverter}}" />
+                        </StackPanel>
                     </Grid>
-                    
+
                     <!-- Mouse Release -->
                     <Grid ColumnDefinitions="*,2*"
                           IsVisible="{Binding IsPmdg737}"
@@ -173,21 +187,27 @@
                     </Grid>
 
                     <!-- Data Release -->
-                    <Grid ColumnDefinitions="*,2*"
+                    <Grid ColumnDefinitions="* 2*"
                           IsVisible="{Binding !IsRpn}"
                           IsEnabled="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNull}}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
-                        <TextBox Grid.Column="1"
-                                 Classes="clearButton"
-                                 HorizontalAlignment="Stretch"
-                                 Watermark="Number"
-                                 Text="{Binding DataRelease, Converter={StaticResource NullableConverter}}" />
+                        <StackPanel Grid.Column="1"
+                                    Spacing="10">
+                            <TextBox Classes="clearButton"
+                                     Classes.normalParameter="{Binding !IsKEvent}"
+                                     Classes.secondParameter="{Binding IsKEvent}"
+                                     Text="{Binding DataRelease, Converter={StaticResource NullableConverter}}" />
+                            <TextBox IsVisible="{Binding IsKEvent}"
+                                     Classes="clearButton"
+                                     Watermark="Parameter 2"
+                                     Text="{Binding DataRelease2, Converter={StaticResource NullableConverter}}" />
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
             </TabItem>
-            
+
             <TabItem Header="Precondition">
                 <local:PreconditionView />
             </TabItem>
