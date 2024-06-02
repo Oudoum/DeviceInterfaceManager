@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeviceInterfaceManager.Models;
@@ -10,9 +8,6 @@ namespace DeviceInterfaceManager.Models;
 public sealed partial class Settings : ObservableObject
 {
     private static readonly string SettingsFile = Path.Combine(App.UserDataPath, "settings.json");
-    
-    [ObservableProperty]
-    private bool _alwaysOnTop;
 
     [ObservableProperty]
     private bool _minimizedHide;
@@ -57,10 +52,5 @@ public sealed partial class Settings : ObservableObject
         base.OnPropertyChanged(e);
         
         SaveSettings();
-
-        if (e.PropertyName == nameof(AlwaysOnTop) && Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop)
-        {
-            desktop.MainWindow.Topmost = AlwaysOnTop;
-        }
     }
 }
