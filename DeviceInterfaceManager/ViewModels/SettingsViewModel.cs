@@ -78,6 +78,12 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     }
 
     [RelayCommand]
+    private static void OpenUserDataFolder()
+    {
+        System.Diagnostics.Process.Start("explorer.exe", App.UserDataPath);
+    }
+
+    [RelayCommand]
     private async Task ToggleFdsUsbAsync()
     {
         if (!Settings.FdsUsb)
