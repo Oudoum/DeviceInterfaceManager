@@ -16,20 +16,40 @@ using DeviceInterfaceManager.Models.FlightSim.MSFS;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class HomeViewModel : ObservableObject
+public partial class HomeViewModel : ObservableRecipient
 {
     private readonly SimConnectClient _simConnectClient;
-    
-    private readonly ObservableCollection<IInputOutputDevice> _inputOutputDevices;
 
-    private List<ProfileCreatorModel> _profileCreatorModels = [];
+    public ObservableCollection<IInputOutputDevice> InputOutputDevices { get; }
 
-    private List<Profile> _profiles = [];
+    private readonly ObservableCollection<ProfileCreatorModel> _profileCreatorModels = [];
 
-    public HomeViewModel(SimConnectClient simConnectClient ,ObservableCollection<IInputOutputDevice> inputOutputDevices)
+    public IEnumerable<ProfileCreatorModel> FilteredProfileCreatorModels { get; private set; } = [];
+
+    private IEnumerable<ProfileCreatorModel> GetFilteredProfileCreatorModels()
+    {
+        return IsFiltered ? _profileCreatorModels : _profileCreatorModels.Where(x => InputOutputDevices.Any(y => y.DeviceName == x.DeviceName));
+    }
+
+    public ObservableCollection<ProfileMapping> DeviceProfileList { get; } = [];
+
+    private readonly List<Profile> _profiles = [];
+
+    public HomeViewModel(SimConnectClient simConnectClient, ObservableCollection<IInputOutputDevice> inputOutputDevices)
     {
         _simConnectClient = simConnectClient;
-        _inputOutputDevices = inputOutputDevices;
+        InputOutputDevices = inputOutputDevices;
+
+        InputOutputDevices.CollectionChanged += (sender, args) =>
+        {
+            FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
+            OnPropertyChanged(nameof(FilteredProfileCreatorModels));
+        };
+    }
+
+    protected override void OnActivated()
+    {
+        _profileCreatorModels.Clear();
 
         if (!Directory.Exists(App.ProfilesPath))
         {
@@ -48,20 +68,103 @@ public partial class HomeViewModel : ObservableObject
             }
         }
     }
-    
+
+#if DEBUG
     public HomeViewModel()
     {
         _simConnectClient = Ioc.Default.GetService<SimConnectClient>()!;
-        _inputOutputDevices = [];
+        InputOutputDevices =
+        [
+            new DeviceSerialBase()
+        ];
+
+        _profileCreatorModels =
+        [
+            new ProfileCreatorModel { DeviceName = "Device 1", ProfileName = "Profile 1" },
+            new ProfileCreatorModel { DeviceName = "Device 2", ProfileName = "Profile 2" }
+        ];
+
+        DeviceProfileList.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
+        DeviceProfileList.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
+    }
+#endif
+    
+    private bool _isFiltered;
+    public bool IsFiltered
+    {
+        get => _isFiltered;
+        set
+        {
+            _isFiltered = value;
+            FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
+            OnPropertyChanged(nameof(FilteredProfileCreatorModels));
+        }
     }
 
     [RelayCommand]
-    private async Task StartProfile()
+    private void Add()
     {
-        await _simConnectClient.ConnectAsync(new CancellationToken());
-        // ProfileCreatorModel profileCreatorModel = _profileCreatorModels.First();
-        // _simConnectClient.Helper?.Init(profileCreatorModel);
-        // Profile profile = new(_simConnectClient, profileCreatorModel, _inputOutputDevices.First());
-        // _profiles.Add(profile);
+        DeviceProfileList.Add(new ProfileMapping());
+    }
+
+    [RelayCommand]
+    private void Delete(ProfileMapping profileMapping)
+    {
+        DeviceProfileList.Remove(profileMapping);
+    }
+
+    [ObservableProperty]
+    private bool _isStarted;
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private async Task StartProfilesAsync(CancellationToken token)
+    {
+        IsStarted = !IsStarted;
+
+        if (!IsStarted)
+        {
+            _simConnectClient.Disconnect();
+
+            foreach (Profile profile in _profiles)
+            {
+                await profile.DisposeAsync();
+            }
+
+            return;
+        }
+
+        await _simConnectClient.ConnectAsync(token);
+
+        if (!token.IsCancellationRequested)
+        {
+            foreach (ProfileMapping profileMapping in DeviceProfileList)
+            {
+                if (!profileMapping.IsActive)
+                {
+                    continue;
+                }
+
+                ProfileCreatorModel? profileCreatorModel = _profileCreatorModels.FirstOrDefault(x => x.ProfileName == profileMapping.ProfileName);
+
+                if (profileCreatorModel is null)
+                {
+                    continue;
+                }
+
+                IInputOutputDevice? inputOutputDevice = InputOutputDevices.FirstOrDefault(x => x.Id == profileMapping.Id);
+
+                if (inputOutputDevice is null)
+                {
+                    continue;
+                }
+
+                Profile profile = new(_simConnectClient, profileCreatorModel, inputOutputDevice);
+                _profiles.Add(profile);
+            }
+
+            return;
+        }
+
+        IsStarted = !IsStarted;
     }
 }
