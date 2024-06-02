@@ -10,7 +10,7 @@
         x:DataType="vm:MainWindowViewModel"
         Width="1800"
         Height="1000"
-        MinWidth="800"
+        MinWidth="1000"
         MinHeight="650"
         WindowStartupLocation="CenterScreen"
         Title="">
@@ -27,13 +27,13 @@
                            Content="{Binding CurrentViewModel}">
 
             <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem IsSelected="True" Content="Home">
+                <ui:NavigationViewItem IsSelected="True" Content="Home" IsEnabled="{Binding !ProfileCreatorViewModel.IsStarted}">
                     <ui:NavigationViewItem.IconSource>
                         <ui:PathIconSource Data="{StaticResource HomeOutline}" />
                     </ui:NavigationViewItem.IconSource>
                 </ui:NavigationViewItem>
                 <ui:NavigationViewItemSeparator />
-                <ui:NavigationViewItem Content="Profile Creator">
+                <ui:NavigationViewItem Content="Profile Creator" IsEnabled="{Binding !HomeViewModel.IsStarted}">
                     <ui:NavigationViewItem.IconSource>
                         <ui:PathIconSource Data="{StaticResource ShapePlusOutline}" />
                     </ui:NavigationViewItem.IconSource>
@@ -51,8 +51,8 @@
                     </ui:NavigationViewItem.MenuItemsSource>
                     <ui:NavigationViewItem.DataTemplates>
                         <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
-                            <StackPanel Orientation="Horizontal" Spacing="10" PointerPressed="InputElement_OnPointerPressed">
-                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding SerialNumber}" />
+                            <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent" PointerPressed="DeviceOnPointerPressed">
+                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
                                 <TextBlock FontSize="14" Text="{Binding DeviceName}" />
                             </StackPanel>
                         </DataTemplate>
