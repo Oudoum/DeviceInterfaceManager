@@ -13,15 +13,15 @@ public partial class MainWindow : AppWindow
         InitializeComponent();
     }
 
-    private void InputElement_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    private async void DeviceOnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.KeyModifiers != KeyModifiers.Control || sender is not StackPanel { DataContext: not null } stackPanel)
+        if (!e.GetCurrentPoint(this).Properties.IsRightButtonPressed || sender is not StackPanel { DataContext: not null } stackPanel)
         {
             return;
         }
         
         DataObject data = new();
         data.Set(nameof(IInputOutputDevice), stackPanel.DataContext);
-        DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
+        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
     }
 }
