@@ -7,7 +7,7 @@ namespace DeviceInterfaceManager.Models;
 
 public sealed partial class Settings : ObservableObject
 {
-    private static readonly string SettingsFile = Path.Combine(App.UserDataPath, "settings.json");
+
 
     [ObservableProperty]
     private bool _minimizedHide;
@@ -26,14 +26,14 @@ public sealed partial class Settings : ObservableObject
     
     public static Settings CreateSettings()
     {
-        if (!File.Exists(SettingsFile))
+        if (!File.Exists(App.SettingsFile))
         {
             return new Settings();
         }
 
         try
         {
-            return JsonSerializer.Deserialize<Settings>(File.ReadAllText(SettingsFile)) ?? new Settings();
+            return JsonSerializer.Deserialize<Settings>(File.ReadAllText(App.SettingsFile)) ?? new Settings();
         }
         catch
         {
@@ -44,7 +44,7 @@ public sealed partial class Settings : ObservableObject
     private void SaveSettings()
     {
         string serialize = JsonSerializer.Serialize(this);
-        File.WriteAllText(SettingsFile, serialize);
+        File.WriteAllText(App.SettingsFile, serialize);
     }
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
