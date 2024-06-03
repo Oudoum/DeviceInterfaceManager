@@ -13,16 +13,14 @@
     <Design.DataContext>
         <vm:HomeViewModel />
     </Design.DataContext>
-    <Grid>
-
+    <Grid Margin="25">
         <TextBlock Text="No device found! Please enable the specific driver in the settings!"
                    IsVisible="{Binding !InputOutputDevices.Count}"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontWeight="Bold"
                    FontSize="24" />
-
-
+        
         <Grid RowDefinitions="Auto *" ColumnDefinitions="Auto Auto" HorizontalAlignment="Center"
               IsVisible="{Binding !!InputOutputDevices.Count}">
 
@@ -32,8 +30,7 @@
                     Classes.start="{Binding !IsStarted}"
                     Classes.stop="{Binding IsStarted}"
                     Classes.running="{Binding StartProfilesCommand.IsRunning}"
-                    HorizontalAlignment="Stretch"
-                    Margin="0 25 0 0">
+                    HorizontalAlignment="Stretch">
                 <Button.Styles>
                     <Style Selector="Button.start">
                         <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
@@ -64,7 +61,7 @@
 
             <Border Grid.Column="0" Grid.Row="1"
                     IsEnabled="{Binding !IsStarted}"
-                    Margin="25"
+                    Margin=" 0 25 25 0"
                     CornerRadius="5"
                     BorderBrush="Gray"
                     BorderThickness="2">
@@ -184,13 +181,19 @@
             </Border>
 
             <Grid Grid.Column="1" Grid.Row="1"
-                  RowDefinitions="Auto *"
-                  Margin="0 25 25 25">
-                <ToggleSwitch IsChecked="{Binding IsFiltered}"
+                  RowDefinitions="Auto Auto *"
+                  Margin="0 25 0 0">
+                <Button Grid.Row="0"
+                        Command="{Binding SaveMappingsCommand}"
+                        HorizontalAlignment="Stretch">
+                    <PathIcon Data="{StaticResource ContentSaveOutline}" />
+                </Button>
+                <ToggleSwitch Grid.Row="1"
+                              IsChecked="{Binding IsFiltered}"
                               Width="200"
                               OnContent="All devices"
                               OffContent="Connected devices" />
-                <ScrollViewer Grid.Row="1"
+                <ScrollViewer Grid.Row="2"
                               AllowAutoHide="False">
                     <ItemsControl ItemsSource="{Binding FilteredProfileCreatorModels}">
                         <ItemsControl.ItemTemplate>
