@@ -90,22 +90,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     private string? _previousProfileName;
 
-    // public string? ProfileName
-    // {
-    //     get => ProfileCreatorModel?.ProfileName;
-    //     set
-    //     {
-    //         if (ProfileCreatorModel is null)
-    //         {
-    //             return;
-    //         }
-    //
-    //         _previousProfileName = ProfileCreatorModel.ProfileName;
-    //         ProfileCreatorModel.ProfileName = value;
-    //         OnPropertyChanged();
-    //     }
-    // }
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveProfileCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveProfileAsCommand))]
@@ -116,11 +100,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(AddOutputCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartProfilesCommand))]
     private IInputOutputDevice? _inputOutputDevice;
-
-    partial void OnInputOutputDeviceChanged(IInputOutputDevice? value)
-    {
-        ProfileCreatorModel = new ProfileCreatorModel();
-    }
 
     [ObservableProperty]
     private bool _infoBarIsOpen;
@@ -235,6 +214,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
                 if (await OverwriteCheck())
                 {
+                    if (inputOutputDevice is not null)
+                    {
+                        InputOutputDevice = inputOutputDevice;
+                    }
+                    
                     ProfileCreatorModel = profileCreatorModel;
                     _previousProfileName = ProfileCreatorModel.ProfileName;
                     
@@ -325,12 +309,12 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     private async Task<bool> OverwriteCheck()
     {
-        if (ProfileCreatorModel is null)
+        if (ProfileCreatorModel?.DeviceName is null)
         {
-            return false;
+            return true;
         }
 
-        if (ProfileCreatorModel.DeviceName is null)
+        if (ProfileCreatorModel.InputCreators.Count == 0 && ProfileCreatorModel.OutputCreators.Count == 0)
         {
             return true;
         }
