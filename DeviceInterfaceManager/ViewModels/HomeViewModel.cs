@@ -19,7 +19,7 @@ namespace DeviceInterfaceManager.ViewModels;
 public partial class HomeViewModel : ObservableRecipient
 {
     private readonly SimConnectClient _simConnectClient;
-
+    
     public ObservableCollection<IInputOutputDevice> InputOutputDevices { get; }
 
     private readonly ObservableCollection<ProfileCreatorModel> _profileCreatorModels = [];
@@ -31,7 +31,8 @@ public partial class HomeViewModel : ObservableRecipient
         return IsFiltered ? _profileCreatorModels : _profileCreatorModels.Where(x => InputOutputDevices.Any(y => y.DeviceName == x.DeviceName));
     }
 
-    public ObservableCollection<ProfileMapping> DeviceProfileList { get; } = [];
+    [ObservableProperty]
+    private ObservableCollection<ProfileMapping> _deviceProfileList = [];
 
     private readonly List<Profile> _profiles = [];
 
@@ -39,7 +40,7 @@ public partial class HomeViewModel : ObservableRecipient
     {
         _simConnectClient = simConnectClient;
         InputOutputDevices = inputOutputDevices;
-
+        
         InputOutputDevices.CollectionChanged += (sender, args) =>
         {
             FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
@@ -54,6 +55,11 @@ public partial class HomeViewModel : ObservableRecipient
         if (!Directory.Exists(App.ProfilesPath))
         {
             return;
+        }
+
+        if (File.Exists(App.MappingsFile))
+        {
+            DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
         }
 
         foreach (string filePath in Directory.GetFiles(App.ProfilesPath))
@@ -111,6 +117,13 @@ public partial class HomeViewModel : ObservableRecipient
     private void Delete(ProfileMapping profileMapping)
     {
         DeviceProfileList.Remove(profileMapping);
+    }
+
+    [RelayCommand]
+    public void SaveMappings()
+    {
+        string serialize = JsonSerializer.Serialize(DeviceProfileList);
+        File.WriteAllText(App.MappingsFile, serialize);
     }
 
     [ObservableProperty]
