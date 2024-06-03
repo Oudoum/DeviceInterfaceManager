@@ -23,6 +23,10 @@ public class App : Application
     public static readonly string UserDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDomain.CurrentDomain.FriendlyName);
     
     public static readonly string ProfilesPath = Path.Combine(UserDataPath, "Profiles");
+    
+    public static readonly string SettingsFile = Path.Combine(UserDataPath, "settings.json");
+    
+    public static readonly string MappingsFile = Path.Combine(UserDataPath, "mappings.json");
 
     public override void Initialize()
     {
@@ -65,6 +69,8 @@ public class App : Application
                     {
                         item.Disconnect();
                     }
+
+                    MainWindowViewModel.HomeViewModel.SaveMappings();
                 };
 
                 if (desktop.MainWindow is not null)
@@ -151,7 +157,7 @@ public class App : Application
         _trayIcon!.IsVisible = false;
         desktop.MainWindow.Show();
     }
-
+    
     private void MenuItemExitClick(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
