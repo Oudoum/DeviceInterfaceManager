@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -13,7 +14,6 @@ namespace DeviceInterfaceManager.ViewModels;
 
 public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices) : ObservableObject
 {
-    
 #if DEBUG
     public SettingsViewModel() : this([])
     {
@@ -26,17 +26,17 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     public async Task Startup()
     {
         UpdateManager updateManager = CreateUpdateManager();
-        
+
         CurrentVersion = updateManager.CurrentVersion?.ToFullString();
-        
+
         if (Settings.CheckForUpdates)
         {
-           await CheckForUpdatesAsync(updateManager);
+            await CheckForUpdatesAsync(updateManager);
         }
-        
+
         if (Settings.FdsUsb)
         {
-          await ToggleFdsUsbAsync();
+            await ToggleFdsUsbAsync();
         }
     }
 
@@ -48,22 +48,28 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         return new UpdateManager(new GithubSource("https://github.com/Oudoum/DeviceInterfaceManager", null, false));
     }
 
+    [ObservableProperty]
+    private bool _isUpToDate;
+
     [RelayCommand]
-    private static async Task CheckForUpdatesAsync(UpdateManager? updateManager)
+    private async Task CheckForUpdatesAsync(UpdateManager? updateManager)
     {
+        IsUpToDate = false;
+
         updateManager ??= CreateUpdateManager();
 
         if (updateManager.IsInstalled)
         {
             UpdateInfo? newVersion = await updateManager.CheckForUpdatesAsync();
-            
+
             if (newVersion is null)
             {
+                IsUpToDate = true;
                 return;
             }
-            
+
             await updateManager.DownloadUpdatesAsync(newVersion);
-        
+
             updateManager.ApplyUpdatesAndRestart(newVersion);
         }
     }
@@ -80,7 +86,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     [RelayCommand]
     private static void OpenUserDataFolder()
     {
-        System.Diagnostics.Process.Start("explorer.exe", App.UserDataPath);
+        Process.Start("explorer.exe", App.UserDataPath);
     }
 
     [RelayCommand]
@@ -94,15 +100,15 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
                 {
                     continue;
                 }
-        
+
                 inputOutputDevice.Disconnect();
                 inputOutputDevices.Remove(inputOutputDevice);
             }
-            
+
             return;
         }
-        
-        for (int i = 0; i < InterfaceItData.TotalControllers ; i++)
+
+        for (int i = 0; i < InterfaceItData.TotalControllers; i++)
         {
             InterfaceItData interfaceItData = new();
             await interfaceItData.ConnectAsync();
