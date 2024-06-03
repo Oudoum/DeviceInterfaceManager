@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
-             xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              mc:Ignorable="d"
              d:DesignWidth="860"
              d:DesignHeight="520"
@@ -36,7 +36,7 @@
                 <ui:SettingsExpander.IconSource>
                     <ui:PathIconSource Data="{StaticResource ApplicationOutline}" />
                 </ui:SettingsExpander.IconSource>
-                
+
                 <ui:SettingsExpanderItem Content="Autohide on startup"
                                          Description="The window starts directly into the tray and all assigned profiles start automatically">
                     <ui:SettingsExpanderItem.Footer>
@@ -59,7 +59,12 @@
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
-                <ui:SettingsExpanderItem>
+                <ui:SettingsExpanderItem Height="73">
+                    <ui:SettingsExpanderItem.Content>
+                        <ui:InfoBar Title="Device Interface Manager is up-to-date."
+                                    IsOpen="{Binding IsUpToDate}"
+                                    Severity="Success" />
+                    </ui:SettingsExpanderItem.Content>
                     <ui:SettingsExpanderItem.Footer>
                         <Button Content="Check for updates"
                                 Command="{Binding CheckForUpdatesCommand}" />
@@ -150,13 +155,26 @@
 
                 <ui:SettingsExpanderItem Content="IP-Address">
                     <ui:SettingsExpanderItem.Footer>
-                        <TextBox Width="180" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBox Classes="clear"
+                                     Watermark="127.0.0.1"
+                                     HorizontalContentAlignment="Center"
+                                     Width="120" />
+                            <Button Content="Ok"/>
+                        </StackPanel>
+
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <ui:SettingsExpanderItem Content="Port">
                     <ui:SettingsExpanderItem.Footer>
-                        <TextBox Width="90" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBox Classes="clear"
+                                     Watermark="500"
+                                     HorizontalContentAlignment="Center"
+                                     Width="90" />
+                            <Button Content="Ok"/>
+                        </StackPanel>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
@@ -181,10 +199,10 @@
                         </ui:HyperlinkButton>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
-                
+
                 <ui:SettingsExpanderItem>
                     <ui:SettingsExpanderItem.Footer>
-                        <ui:HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data"/>
+                        <ui:HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
