@@ -87,8 +87,43 @@
 
                 <ui:SettingsExpanderItem Content="Flightdeck Solutions E-Series">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="25">
+                            <Button Content="Search"
+                                    Command="{Binding GetInterfaceItEthernetDevicesCommand}" />
+                            <Button Content="Add"
+                                    Command="{Binding AddInterfaceItEthernetConnectionCommand}"
+                                    CommandParameter="{Binding #TextBox.Text}" />
+                            <TextBox Name="TextBox"
+                                     Classes="clearButton"
+                                     Watermark="127.0.0.1"
+                                     VerticalAlignment="Center"
+                                     HorizontalContentAlignment="Center"
+                                     Width="120" />
+                            <ToggleSwitch IsChecked="{Binding Settings.FdsEthernet }"
+                                          Command="{Binding ToggleFdsEthernetCommand }" />
+                        </StackPanel>
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                <ui:SettingsExpanderItem>
+                    <ui:SettingsExpanderItem.Footer>
+                        <ItemsControl ItemsSource="{Binding Settings.FdsEthernetConnections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               Background="Transparent">
+                                        <TextBlock.ContextFlyout>
+                                            <MenuFlyout>
+                                                <MenuItem Header="Remove"
+                                                          Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RemoveInterfaceItEthernetConnectionCommand,
+                                                          FallbackValue={x:Null}}"
+                                                          CommandParameter="{Binding}" />
+                                            </MenuFlyout>
+                                        </TextBlock.ContextFlyout>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
@@ -160,7 +195,7 @@
                                      Watermark="127.0.0.1"
                                      HorizontalContentAlignment="Center"
                                      Width="120" />
-                            <Button Content="Ok"/>
+                            <Button Content="Ok" />
                         </StackPanel>
 
                     </ui:SettingsExpanderItem.Footer>
@@ -173,7 +208,7 @@
                                      Watermark="500"
                                      HorizontalContentAlignment="Center"
                                      Width="90" />
-                            <Button Content="Ok"/>
+                            <Button Content="Ok" />
                         </StackPanel>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
