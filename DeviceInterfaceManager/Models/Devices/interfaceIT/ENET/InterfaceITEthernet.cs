@@ -7,104 +7,144 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
 
-public class InterfaceItEthernet(
-    string iPAddress,
-    TcpClient client,
-    NetworkStream stream,
-    InterfaceItEthernetInfo interfaceItEthernetInfo,
-    bool hasErrorBeenShown)
+public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 {
-    private string HostIpAddress { get; set; } = iPAddress;
-    private int TcpPort { get; set; } = 10346;
-    private InterfaceItEthernetInfo? InterfaceItEthernetInfo { get; set; } = interfaceItEthernetInfo;
-    public bool IsPolling { get; set; }
+    public ComponentInfo Switch { get; private set; } = new(0,0);
+    public event EventHandler<InputChangedEventArgs>? InputChanged;
+    public ComponentInfo Led { get; private set; } = new(0,0);
+    public ComponentInfo Dataline { get; private set; } = new(0,0);
+    public ComponentInfo SevenSegment { get; private set; } = new(0,0);
 
-    public static async Task<InterfaceItEthernetDiscovery?> ReceiveControllerDiscoveryDataAsync()
+    public async Task SetLedAsync(string? position, bool isEnabled)
     {
-        UdpClient client = new() { EnableBroadcast = true };
-        client.Send(Encoding.ASCII.GetBytes("D"), new IPEndPoint(IPAddress.Broadcast, 30303));
         try
         {
-            UdpReceiveResult result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1));
-            string[] sResult = Encoding.ASCII.GetString(result.Buffer).Split("\r\n");
-            InterfaceItEthernetDiscovery discovery = new()
+            if (_networkStream is not null)
             {
-                IpAddress = result.RemoteEndPoint.Address.ToString(),
-                HostName = sResult[0],
-                MacAddress = sResult[1],
-                Message = sResult[2],
-                Id = sResult[3],
-                Name = sResult[4],
-                Description = sResult[5]
-            };
-            return discovery;
+                await _networkStream.WriteAsync(Encoding.ASCII.GetBytes("B1:LED:" + position + ":" + Convert.ToUInt16(isEnabled) + "\r\n"));
+            }
         }
         catch (Exception)
         {
-            return null;
+            // ignored
         }
     }
 
-    public enum ConnectionStatus
+    public Task SetDatalineAsync(string? position, bool isEnabled)
     {
-        Default,
-        NotConnected,
-        PingSuccessful,
-        Connected
+        //Add
+        return Task.CompletedTask;
     }
 
-    public async Task<ConnectionStatus> InterfaceItEthernetConnectionAsync(CancellationToken cancellationToken)
+    public Task SetSevenSegmentAsync(string? position, string data)
+    {
+        //Add
+        return Task.CompletedTask;
+    }
+
+    public async Task ResetAllOutputsAsync()
+    {
+        await Led.PerformOperationOnAllComponents(async i => await SetLedAsync(i, false));
+        await Dataline.PerformOperationOnAllComponents(async i => await SetDatalineAsync(i, false));
+        await SevenSegment.PerformOperationOnAllComponents(async i => await SetSevenSegmentAsync(i, " "));
+    }
+
+    public string Id { get; } = iPAddress;
+    public string? DeviceName { get; private set; }
+    public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("Ethernet");
+
+    public async Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
     {
         if (!await PingHostAsync())
         {
             return ConnectionStatus.NotConnected;
         }
+
         if (!await ConnectToHostAsync(cancellationToken))
         {
             return ConnectionStatus.PingSuccessful;
         }
+
         return ConnectionStatus.Connected;
+    }
+
+    public async void Disconnect()
+    {
+       await CloseStream();
+    }
+
+    private const int TcpPort = 10346;
+
+    private TcpClient? _tcpClient;
+
+    private NetworkStream? _networkStream;
+    
+    public static async Task<string> ReceiveControllerDiscoveryDataAsync()
+    {
+        UdpClient client = new() { EnableBroadcast = true };
+        client.Send("D"u8, new IPEndPoint(IPAddress.Broadcast, 30303));
+        try
+        {
+            UdpReceiveResult result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1));
+            return result.RemoteEndPoint.Address.ToString();
+        }
+        catch (Exception)
+        {
+            return string.Empty;
+        }
     }
 
     private async Task<bool> PingHostAsync()
     {
         using Ping ping = new();
-        return (await ping.SendPingAsync(HostIpAddress)).Status == IPStatus.Success;
+        return (await ping.SendPingAsync(Id)).Status == IPStatus.Success;
     }
 
     private async Task<bool> ConnectToHostAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
-        {
             try
             {
-                client = new TcpClient();
-                await client.ConnectAsync(HostIpAddress, TcpPort, cancellationToken);
-                stream = client.GetStream();
+                _tcpClient = new TcpClient();
+                await _tcpClient.ConnectAsync(Id, TcpPort, cancellationToken);
+                _networkStream = _tcpClient.GetStream();
+                GetInterfaceItEthernetDataAsync(cancellationToken);
+                await Task.Run(() =>
+                {
+                    while (DeviceName is null)
+                    {
+                        Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    }
+                }, cancellationToken);
                 return true;
             }
             catch (OperationCanceledException)
             {
-
+                await CloseStream();
+                return false;
             }
             catch (ArgumentNullException)
             {
-                CloseStream();
+                await CloseStream();
+                return false;
             }
             catch (SocketException)
             {
-                CloseStream();
+                await CloseStream();
+                return false;
             }
-        }
+
         return false;
     }
 
-    public async Task<InterfaceItEthernetInfo?> GetInterfaceItEthernetDataAsync(Action<int, uint> interfaceItKeyAction, CancellationToken cancellationToken)
+    private void GetInterfaceItEthernetDataAsync(CancellationToken cancellationToken)
     {
-        TaskCompletionSource<InterfaceItEthernetInfo?> tcs = new();
         _ = Task.Run(async () =>
         {
             StringBuilder sb = new();
@@ -115,11 +155,14 @@ public class InterfaceItEthernet(
             {
                 try
                 {
-                    int bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-                    sb.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
-                    if (buffer[bytesRead - 1] != 10)
+                    if (_networkStream is not null)
                     {
-                        continue;
+                        int bytesRead = await _networkStream.ReadAsync(buffer, cancellationToken);
+                        sb.Append(Encoding.ASCII.GetString(buffer, 0, bytesRead));
+                        if (buffer[bytesRead - 1] != 10)
+                        {
+                            continue;
+                        }
                     }
                 }
                 catch (IOException)
@@ -128,7 +171,6 @@ public class InterfaceItEthernet(
                 }
                 catch (OperationCanceledException)
                 {
-
                 }
 
                 foreach (string ethernetData in sb.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries))
@@ -137,15 +179,10 @@ public class InterfaceItEthernet(
                     {
                         case "STATE=2":
                             isInitializing = true;
-                            InterfaceItEthernetInfo = new InterfaceItEthernetInfo
-                            {
-                                HostIpAddress = HostIpAddress,
-                            };
                             break;
 
                         case "STATE=3":
                             isSwitchIdentifying = true;
-                            tcs.SetResult(InterfaceItEthernetInfo);
                             break;
 
                         case "STATE=4":
@@ -156,64 +193,46 @@ public class InterfaceItEthernet(
                         default:
                             if (isSwitchIdentifying || !isInitializing)
                             {
-                                ProcessSwitchData(interfaceItKeyAction, ethernetData);
+                                ProcessSwitchData(ethernetData);
                             }
                             else if (isInitializing && !isSwitchIdentifying)
                             {
                                 GetInterfaceItEthernetInfoData(ethernetData);
                             }
+
                             break;
                     }
                 }
+
                 sb.Clear();
             }
         }, cancellationToken);
-        return await tcs.Task;
     }
 
-    private void ProcessSwitchData(Action<int, uint> interfaceItKeyAction, string ethernetData)
+    private void ProcessSwitchData(string ethernetData)
     {
-        if (ethernetData.StartsWith("B1="))
+        if (!ethernetData.StartsWith("B1="))
         {
-            string[] splitSwitchData = ethernetData.Replace("B1=SW:", string.Empty).Split(':');
-            if (int.TryParse(splitSwitchData[0], out int ledNumber))
-            {
-                uint direction = 0;
-                if (splitSwitchData[1] == "ON")
-                {
-                    direction = 1;
-                }
-                interfaceItKeyAction(ledNumber, direction);
-
-                if (IsPolling)
-                {
-                    _polling.Push(new KeyValuePair<int, uint>(ledNumber, direction));
-                }
-            }
+            return;
         }
-        File.AppendAllText("Log.txt", ethernetData + Environment.NewLine);
-    }
 
-    private readonly Stack<KeyValuePair<int, uint>> _polling = new();
+        string[] splitSwitchData = ethernetData.Replace("B1=SW:", string.Empty).Split(':');
 
-    public bool GetSwitch(out int ledNumber, out uint direction)
-    {
-        ledNumber = 0;
-        direction = 0;
-        if (_polling.Count == 0)
+        if (!int.TryParse(splitSwitchData[0], out int position))
         {
-            return false;
+            return;
         }
-        var keyValuePair = _polling.Pop();
-        ledNumber = keyValuePair.Key;
-        direction = keyValuePair.Value;
-        return true;
+
+        bool isPressed = splitSwitchData[1] == "ON";
+
+        Switch.UpdatePosition(position, isPressed);
+        InputChanged?.Invoke(this, new InputChangedEventArgs(position, isPressed));
     }
 
     private void GetInterfaceItEthernetInfoData(string ethernetData)
     {
         int index = ethernetData.IndexOf('=');
-        if (index < 0 || InterfaceItEthernetInfo is null)
+        if (index < 0)
         {
             return;
         }
@@ -221,54 +240,8 @@ public class InterfaceItEthernet(
         string value = ethernetData[(index + 1)..];
         switch (ethernetData[..index])
         {
-            case "ID":
-                InterfaceItEthernetInfo.Id = value;
-                break;
-
             case "NAME":
-                InterfaceItEthernetInfo.Name = value;
-                break;
-
-            case "SERIAL":
-                InterfaceItEthernetInfo.SerialNumber = value;
-                break;
-
-            case "DESC":
-                InterfaceItEthernetInfo.Description = value;
-                break;
-
-            case "COPYRIGHT":
-                InterfaceItEthernetInfo.Copyright = value;
-                break;
-
-            case "VERSION":
-                InterfaceItEthernetInfo.Version = value;
-                break;
-
-            case "FIRMWARE":
-                InterfaceItEthernetInfo.Firmware = value;
-                break;
-
-            case "LOCATION":
-                InterfaceItEthernetInfo.Location = Convert.ToByte(value);
-                break;
-
-            case "USAGE":
-                InterfaceItEthernetInfo.Usage = Convert.ToByte(value);
-                break;
-
-            case "HOSTNAME":
-                InterfaceItEthernetInfo.HostName = value;
-                break;
-
-            case "CLIENT":
-                InterfaceItEthernetInfo.Client = value;
-                break;
-
-            case "BOARD":
-                string[] board = value.Split(':');
-                InterfaceItEthernetInfo.Boards ??= [];
-                InterfaceItEthernetInfo.Boards.Add(new InterfaceItEthernetBoardInfo { BoardNumber = Convert.ToByte(board[0]), Id = board[1], Description = board[2] });
+                DeviceName = value;
                 break;
 
             case "CONFIG":
@@ -280,200 +253,55 @@ public class InterfaceItEthernet(
     private void GetConfigData(string value)
     {
         string[] config = value.Split(":");
-        int boardNumberMinusOne = Convert.ToInt32(config[0]) -1;
-
-        if (InterfaceItEthernetInfo?.Boards is null)
-        {
-            return;
-        }
         
         switch (config[1])
         {
             case "LED":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].LedConfig = GetConfigData(config);
+                Led = GetComponentInfo(config);
                 break;
 
             case "SWITCH":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SwitchConfig = GetConfigData(config);
+                Switch = GetComponentInfo(config);
                 break;
 
             case "7 SEGMENT":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].SevenSegmentConfig = GetConfigData(config);
+                SevenSegment = GetComponentInfo(config);
                 break;
 
             case "DATALINE":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].DataLineConfig = GetConfigData(config);
+                Dataline = GetComponentInfo(config);
                 break;
 
             case "ENCODER":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].EncoderConfig = GetConfigData(config);
+                //Add
                 break;
 
             case "ANALOG IN":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].AnalogInputConfig = GetConfigData(config);
+                //Add
                 break;
 
             case "PULSE WIDTH":
-                InterfaceItEthernetInfo.Boards[boardNumberMinusOne].PulseWidthConfig = GetConfigData(config);
+                //Add
                 break;
         }
     }
 
-    private static InterfaceItEthernetBoardConfig GetConfigData(IReadOnlyList<string> config)
+    private static ComponentInfo GetComponentInfo(IReadOnlyList<string> config)
     {
-        return new InterfaceItEthernetBoardConfig
-        {
-            StartIndex = Convert.ToInt32(config[3]),
-            StopIndex = Convert.ToInt32(config[5]),
-            TotalCount = Convert.ToInt32(config[7])
-        };
+        return new ComponentInfo(Convert.ToInt32(config[3]), Convert.ToInt32(config[5]));
     }
 
-    private void CloseStream()
+    private async Task CloseStream()
     {
         try
         {
-            SetAllLedOff();
-            stream.Write(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
-            client.Close();
+            await ResetAllOutputsAsync();
+            _networkStream?.Write(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
+            _tcpClient?.Close();
         }
         catch (Exception)
         {
             // ignored
         }
     }
-
-    private void SetAllLedOff()
-    {
-        InterfaceItEthernetBoardConfig? interfaceItEthernetBoardConfig = InterfaceItEthernetInfo?.Boards?[0].LedConfig;
-        if (interfaceItEthernetBoardConfig is null)
-        {
-            return;
-        }
-
-        for (int i = interfaceItEthernetBoardConfig.StartIndex; i <= interfaceItEthernetBoardConfig.TotalCount; i++)
-        {
-            stream?.Write(Encoding.ASCII.GetBytes("B1:LED:" + i + ":" + 0 + "\r\n"));
-        }
-        //stream?.Write(Encoding.ASCII.GetBytes("B1:CLEAR" + "\r\n"));
-    }
-
-    public void SetLed(int nLed, bool bOn)
-    {
-        SetLed<bool>(nLed, bOn);
-    }
-
-    public void SetLed(int nLed, int bOn)
-    {
-        SetLed<int>(nLed, bOn);
-    }
-
-    public void SetLed(int nLed, double bOn)
-    {
-        SetLed<double>(nLed, bOn);
-    }
-
-    bool _hasErrorBeenShown = hasErrorBeenShown;
-    private void SetLed<T>(int nLed, T bOn)
-    {
-        if (nLed < 0)
-        {
-            throw new ArgumentException("nLED must be a non-negative integer.");
-        }
-
-        if (bOn is not bool && bOn is not int && bOn is not double)
-        {
-            throw new ArgumentException("bOn must be of type bool, int, or double.");
-        }
-
-        Reconnect();
-
-        try
-        {
-            stream.Write(Encoding.ASCII.GetBytes("B1:LED:" + nLed + ":" + Convert.ToUInt16(bOn) + "\r\n"));
-        }
-        catch (Exception)
-        {
-            Reconnect();
-            if (!_hasErrorBeenShown)
-            {
-                _hasErrorBeenShown = true;
-            }
-        }
-    }
-
-    private void Reconnect()
-    {
-        if (!_hasErrorBeenShown)
-            return;
-        
-        try
-        {
-            client = new TcpClient();
-            client.Connect(HostIpAddress, TcpPort);
-            stream = client.GetStream();
-            _hasErrorBeenShown = false;
-
-        }
-        catch (OperationCanceledException)
-        {
-
-        }
-        catch (ArgumentNullException)
-        {
-
-        }
-        catch (SocketException)
-        {
-        }
-    }
-}
-
-public readonly struct InterfaceItEthernetDiscovery
-{
-    public string HostName { get; init; }
-    public string MacAddress { get; init; }
-    public string IpAddress { get; init; }
-    public string Message { get; init; }
-    public string Id { get; init; }
-    public string Name { get; init; }
-    public string Description { get; init; }
-}
-
-public class InterfaceItEthernetInfo
-{
-    public string? HostIpAddress { get; set; }
-    public string? Id { get; set; }
-    public string? Name { get; set; }
-    public string? SerialNumber { get; set; }
-    public string? Description { get; set; }
-    public string? Copyright { get; set; }
-    public string? Version { get; set; }
-    public string? Firmware { get; set; }
-    public byte Location { get; set; }
-    public byte Usage { get; set; }
-    public string? HostName { get; set; }
-    public string? Client { get; set; }
-    public List<InterfaceItEthernetBoardInfo>? Boards { get; set; }
-}
-
-public class InterfaceItEthernetBoardInfo
-{
-    public byte BoardNumber { get; set; }
-    public string? Id { get; set; }
-    public string? Description { get; set; }
-    public InterfaceItEthernetBoardConfig? LedConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? SwitchConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? SevenSegmentConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? DataLineConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? EncoderConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? AnalogInputConfig { get; set; }
-    public InterfaceItEthernetBoardConfig? PulseWidthConfig { get; set; }
-}
-
-public class InterfaceItEthernetBoardConfig
-{
-    public int StartIndex { get; init; }
-    public int StopIndex { get; init; }
-    public int TotalCount { get; init; }
 }
