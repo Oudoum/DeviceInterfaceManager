@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 
@@ -9,7 +10,7 @@ public interface IInputOutputDevice : IInput, IOutput
     public string? DeviceName { get; }
     public Geometry? Icon { get; }
 
-    public Task<ConnectionStatus> ConnectAsync();
+    public Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken);
     public void Disconnect();
 }
 
