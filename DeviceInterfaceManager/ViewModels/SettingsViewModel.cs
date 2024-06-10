@@ -1,11 +1,14 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
 using DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 using Velopack;
 using Velopack.Sources;
@@ -36,7 +39,12 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
         if (Settings.FdsUsb)
         {
-            await ToggleFdsUsbAsync();
+            ToggleFdsUsbCommand.Execute(null);
+        }
+
+        if (Settings.FdsEthernet)
+        {
+            ToggleFdsEthernetCommand.Execute(null);
         }
     }
 
@@ -89,30 +97,97 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         Process.Start("explorer.exe", App.UserDataPath);
     }
 
+    private void DisconnectAndRemove<T>() where T : IInputOutputDevice
+    {
+        foreach (IInputOutputDevice inputOutputDevice in inputOutputDevices.ToArray())
+        {
+            if (inputOutputDevice is not T)
+            {
+                continue;
+            }
+
+            inputOutputDevice.Disconnect();
+            inputOutputDevices.Remove(inputOutputDevice);
+        }
+    }
+
     [RelayCommand]
-    private async Task ToggleFdsUsbAsync()
+    private async Task ToggleFdsUsbAsync(CancellationToken cancellationToken)
     {
         if (!Settings.FdsUsb)
         {
-            foreach (IInputOutputDevice inputOutputDevice in inputOutputDevices.ToArray())
-            {
-                if (inputOutputDevice is not InterfaceItData)
-                {
-                    continue;
-                }
-
-                inputOutputDevice.Disconnect();
-                inputOutputDevices.Remove(inputOutputDevice);
-            }
-
+            DisconnectAndRemove<InterfaceItData>();
             return;
         }
 
         for (int i = 0; i < InterfaceItData.TotalControllers; i++)
         {
             InterfaceItData interfaceItData = new();
-            await interfaceItData.ConnectAsync();
-            inputOutputDevices.Add(interfaceItData);
+            if (await interfaceItData.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+            {
+                inputOutputDevices.Add(interfaceItData);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleFdsEthernetAsync(CancellationToken cancellationToken)
+    {
+        if (!Settings.FdsEthernet)
+        {
+            DisconnectAndRemove<InterfaceItEthernet>();
+            return;
+        }
+
+        if (Settings.FdsEthernetConnections is not null)
+        {
+            foreach (string fdsEthernetConnection in Settings.FdsEthernetConnections)
+            {
+                if (inputOutputDevices.Any(x => x.Id == fdsEthernetConnection))
+                {
+                    continue;
+                }
+
+                InterfaceItEthernet interfaceItEthernet = new(fdsEthernetConnection);
+                if (await interfaceItEthernet.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+                {
+                    inputOutputDevices.Add(interfaceItEthernet);
+                }
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void AddInterfaceItEthernetConnection(string connection)
+    {
+        if (!IPAddress.TryParse(connection, out IPAddress? ipAddress))
+        {
+            return;
+        }
+
+        connection = ipAddress.ToString();
+        if (Settings.FdsEthernetConnections is null || Settings.FdsEthernetConnections.Contains(connection))
+        {
+            return;
+        }
+
+        Settings.FdsEthernetConnections?.Add(connection);
+        ToggleFdsEthernetCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void RemoveInterfaceItEthernetConnection(string connection)
+    {
+        Settings.FdsEthernetConnections?.Remove(connection);
+    }
+
+    [RelayCommand]
+    private async Task GetInterfaceItEthernetDevices()
+    {
+        string connection = await InterfaceItEthernet.ReceiveControllerDiscoveryDataAsync();
+        if (!string.IsNullOrEmpty(connection))
+        {
+            AddInterfaceItEthernetConnection(connection);
         }
     }
 }
