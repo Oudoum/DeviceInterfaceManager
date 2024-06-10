@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -13,11 +14,11 @@ namespace DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 
 public partial class InterfaceItData : IDeviceSerial
 {
-    public ComponentInfo Switch { get; private set; } = null!;
+    public ComponentInfo Switch { get; private set; } = new(0,0);
     public event EventHandler<InputChangedEventArgs>? InputChanged;
-    public ComponentInfo Led { get; private set; } = null!;
-    public ComponentInfo Dataline { get; private set; } = null!;
-    public ComponentInfo SevenSegment { get; private set; } = null!;
+    public ComponentInfo Led { get; private set; } = new(0,0);
+    public ComponentInfo Dataline { get; private set; } = new(0,0);
+    public ComponentInfo SevenSegment { get; private set; } = new(0,0);
 
     public Task SetLedAsync(string? position, bool isEnabled)
     {
@@ -48,7 +49,7 @@ public partial class InterfaceItData : IDeviceSerial
     public string? DeviceName { get; private set; }
     public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("UsbPort");
 
-    public Task<ConnectionStatus> ConnectAsync()
+    public Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
     {
         if (_totalControllers == -1)
         {
