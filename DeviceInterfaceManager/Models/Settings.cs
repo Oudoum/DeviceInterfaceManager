@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Text.Json;
@@ -7,14 +8,12 @@ namespace DeviceInterfaceManager.Models;
 
 public sealed partial class Settings : ObservableObject
 {
-
-
     [ObservableProperty]
     private bool _minimizedHide;
 
     [ObservableProperty]
     private bool _autoHide;
-    
+
     [ObservableProperty]
     private bool _checkForUpdates;
 
@@ -23,7 +22,13 @@ public sealed partial class Settings : ObservableObject
 
     [ObservableProperty]
     private bool _fdsUsb;
-    
+
+    [ObservableProperty]
+    private bool _fdsEthernet;
+
+    [ObservableProperty]
+    private ObservableCollection<string>? _fdsEthernetConnections = [];
+
     public static Settings CreateSettings()
     {
         if (!File.Exists(App.SettingsFile))
@@ -50,7 +55,11 @@ public sealed partial class Settings : ObservableObject
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        
+
+        if (e.PropertyName == nameof(FdsEthernetConnections) && FdsEthernetConnections is not null)
+        {
+            FdsEthernetConnections.CollectionChanged += (sender, args) => SaveSettings();
+        }
         SaveSettings();
     }
 }
