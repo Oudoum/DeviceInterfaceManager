@@ -149,8 +149,9 @@ public partial class ProfileCreatorViewModel : ObservableObject
         IInputOutputDevice? inputOutputDevice = viewModel.SelectedItem;
         if (result == ContentDialogResult.Primary && inputOutputDevice is not null)
         {
+            ProfileCreatorModel ??= new ProfileCreatorModel();
             InputOutputDevice = inputOutputDevice;
-            ProfileCreatorModel!.DeviceName = InputOutputDevice.DeviceName;
+            ProfileCreatorModel.DeviceName = InputOutputDevice.DeviceName;
             await ChangeProfileNameAsync();
         }
     }
