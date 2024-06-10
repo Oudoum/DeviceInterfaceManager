@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -37,7 +38,7 @@ public class DeviceSerialBase : IDeviceSerial
     public string DeviceName => "Debug";
     public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("UsbPort");
 
-    public Task<ConnectionStatus> ConnectAsync()
+    public Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(ConnectionStatus.Connected);
     }
