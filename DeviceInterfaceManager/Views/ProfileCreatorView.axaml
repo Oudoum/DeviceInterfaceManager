@@ -19,6 +19,7 @@
 
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
+        <converters:PmdgEventToStringConverter x:Key="PmdgEventToStringConverter" />
         <b:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
         <b:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
     </UserControl.Resources>
@@ -121,7 +122,7 @@
                     <ui:CommandBarElementContainer>
                         <ui:ProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
                                          IsIndeterminate="{Binding StartProfilesCommand.IsRunning}"
-                                         BorderThickness="5"/>
+                                         BorderThickness="5" />
                     </ui:CommandBarElementContainer>
 
                     <ui:CommandBarSeparator />
@@ -148,13 +149,14 @@
                 <ui:CommandBar.PrimaryCommands>
 
                     <ui:CommandBarElementContainer>
-                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}"/>
+                        <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}" />
                     </ui:CommandBarElementContainer>
 
                     <ui:CommandBarSeparator />
 
-                    <ui:CommandBarElementContainer IsHitTestVisible="{Binding InputOutputDevice, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                   PointerPressed="InputElementOnPointerPressed">
+                    <ui:CommandBarElementContainer
+                        IsHitTestVisible="{Binding InputOutputDevice, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        PointerPressed="InputElementOnPointerPressed">
                         <TextBlock Text="{Binding ProfileCreatorModel.ProfileName, FallbackValue=''}" />
                         <FlyoutBase.AttachedFlyout>
                             <Flyout Placement="BottomEdgeAlignedLeft">
@@ -164,7 +166,7 @@
                                          AcceptsTab="True"
                                          AcceptsReturn="True"
                                          Height="200"
-                                         Width="400"/>
+                                         Width="400" />
                             </Flyout>
                         </FlyoutBase.AttachedFlyout>
                     </ui:CommandBarElementContainer>
@@ -189,10 +191,10 @@
                     <Setter Property="HeadersVisibility" Value="All" />
                 </Style>
                 <Style Selector="DataGrid /template/ ScrollBar#PART_HorizontalScrollbar">
-                    <Setter Property="AllowAutoHide" Value="False"/>
+                    <Setter Property="AllowAutoHide" Value="False" />
                 </Style>
                 <Style Selector="DataGrid /template/ ScrollBar#PART_VerticalScrollbar">
-                    <Setter Property="AllowAutoHide" Value="False"/>
+                    <Setter Property="AllowAutoHide" Value="False" />
                 </Style>
                 <Style Selector="DataGrid DataGridCell:current:focus /template/ Grid#FocusVisual">
                     <Setter Property="IsVisible" Value="False" />
@@ -202,7 +204,7 @@
                 </Style>
                 <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
                     <Setter Property="Fill" Value="#434343" />
-                        
+
                 </Style>
 
                 <!-- DataGrid DragAndDrop -->
@@ -288,7 +290,7 @@
                     <Setter Property="HorizontalAlignment" Value="Stretch" />
                     <Setter Property="VerticalAlignment" Value="Stretch" />
                     <Setter Property="CornerRadius" Value="0" />
-                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="BorderThickness" Value="0" />
                     <Setter Property="Background" Value="Transparent" />
                 </Style>
                 <Style Selector="Button.Add">
@@ -424,8 +426,15 @@
                                 <DataGridTextColumn
                                     Header="PMDG Event"
                                     SortMemberPath="PmdgEvent"
-                                    Binding="{Binding PmdgEvent}"
-                                    IsReadOnly="True" />
+                                    
+                                    IsReadOnly="True" >
+                                    <DataGridTextColumn.Binding>
+                                        <MultiBinding Converter="{StaticResource PmdgEventToStringConverter}">
+                                            <Binding Path="EventType"/>
+                                            <Binding Path="PmdgEvent"/>
+                                        </MultiBinding>
+                                    </DataGridTextColumn.Binding>
+                                </DataGridTextColumn>
 
                                 <DataGridTextColumn
                                     Header="Event"
@@ -444,8 +453,9 @@
                                     SortMemberPath="PmdgMouseRelease"
                                     Binding="{Binding PmdgMouseRelease}"
                                     IsReadOnly="True" />
-                                
-                                <DataGridTemplateColumn Header="Data Press" IsReadOnly="True" SortMemberPath="DataPress">
+
+                                <DataGridTemplateColumn Header="Data Press" IsReadOnly="True"
+                                                        SortMemberPath="DataPress">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
@@ -461,8 +471,9 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                
-                                <DataGridTemplateColumn Header="Data Release" IsReadOnly="True" SortMemberPath="DataRelease">
+
+                                <DataGridTemplateColumn Header="Data Release" IsReadOnly="True"
+                                                        SortMemberPath="DataRelease">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
