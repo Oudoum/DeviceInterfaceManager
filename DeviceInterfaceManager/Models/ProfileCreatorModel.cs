@@ -73,7 +73,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     private string? _eventType;
 
     [ObservableProperty]
-    private B737.Event? _pmdgEvent;
+    private int? _pmdgEvent;
 
     [ObservableProperty]
     private string? _event;
