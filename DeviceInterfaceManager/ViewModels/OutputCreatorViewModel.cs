@@ -44,7 +44,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         SearchPmdgData = PmdgData;
     }
 
-    #if DEBUG
+#if DEBUG
     public OutputCreatorViewModel()
     {
         _outputCreator = new OutputCreator
@@ -53,12 +53,12 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             Preconditions = [new Precondition()],
             Description = "Description",
             OutputType = ProfileCreatorModel.Led,
-            Output = new Component(1),
+            Output = new Component(1)
         };
         Components = new List<Component>();
         Digits = CreateDigits(3, 1, 1);
     }
-    #endif
+#endif
 
     public override Precondition[]? Copy()
     {
@@ -100,7 +100,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsComparisonEnabled))]
+    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private string? _outputType;
 
     partial void OnOutputTypeChanged(string? value)
@@ -132,7 +132,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         SubstringStart = null;
         SubstringEnd = null;
     }
-    
+
     private IEnumerable<Component?> GetComponents(string? value)
     {
         return value switch
@@ -172,7 +172,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 break;
         }
     }
-    
+
     private string? _dataType;
 
     public string? DataType
@@ -184,6 +184,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             {
                 ProfileCreatorModel.MsfsSimConnect => true,
                 ProfileCreatorModel.Pmdg737 => false,
+                ProfileCreatorModel.Pmdg777 => false,
                 _ => IsMsfsSimConnect
             };
 
@@ -192,9 +193,13 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 case ProfileCreatorModel.MsfsSimConnect:
                     IsMsfsSimConnect = true;
                     break;
-                    
-                    case ProfileCreatorModel.Pmdg737:
+
+                case ProfileCreatorModel.Pmdg737:
                     IsPmdg737 = true;
+                    break;
+
+                case ProfileCreatorModel.Pmdg777:
+                    IsPmdg777 = true;
                     break;
             }
 
@@ -202,23 +207,30 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             SwitchDataType();
         }
     }
-    
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(IsComparisonEnabled))]
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private bool _isMsfsSimConnect;
-    
+
     partial void OnIsMsfsSimConnectChanged(bool value)
     {
         if (!value)
         {
             return;
         }
-        
+
         DataType = ProfileCreatorModel.MsfsSimConnect;
         IsPmdg737 = false;
+        IsPmdg777 = false;
+        IsPmdg = false;
         SearchPmdgData = null;
         PmdgData = null;
     }
-    
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
+    private bool _isPmdg;
+
     [ObservableProperty]
     private bool _isPmdg737;
 
@@ -228,15 +240,38 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         {
             return;
         }
-        
+
         DataType = ProfileCreatorModel.Pmdg737;
-        IsMsfsSimConnect = false;
-        Data = null;
-        Unit = null;
+        OnPmdgChanged();
+        PmdgDataEnumerable = typeof(B737.Data).GetFields().Select(field => field.Name);
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsComparisonEnabled))]
+    private bool _isPmdg777;
+
+    partial void OnIsPmdg777Changed(bool value)
+    {
+        if (!value)
+        {
+            return;
+        }
+
+        DataType = ProfileCreatorModel.Pmdg777;
+        OnPmdgChanged();
+        PmdgDataEnumerable = typeof(B777.Data).GetFields().Select(field => field.Name);
+    }
+
+    private void OnPmdgChanged()
+    {
+        IsMsfsSimConnect = false;
+        IsPmdg = true;
+        Data = null;
+        Unit = null;
+        PmdgData = null;
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private string? _pmdgData;
 
     partial void OnPmdgDataChanged(string? value)
@@ -257,39 +292,77 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [ObservableProperty]
     private string? _searchPmdgData;
 
-    public static IEnumerable<string?> PmdgDataEnumerable => typeof(B737.Data).GetFields().Select(field => field.Name);
+    [ObservableProperty]
+    private IEnumerable<string?>? _pmdgDataEnumerable;
 
     [ObservableProperty]
     private int? _pmdgDataArrayIndex;
 
-    public int?[] PmdgDataArrayIndices => (string.IsNullOrEmpty(PmdgData)
-        ? []
-        : typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute && attribute.Value != UnmanagedType.ByValTStr && attribute.SizeConst is var size
-            ? new int?[size].Select((_, i) => i).Cast<int?>().ToArray()
-            : null) ?? [];
+    public int?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
 
-    public bool IsComparisonEnabled => (!string.IsNullOrEmpty(PmdgData) && (typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
-                                                                        && DataType == ProfileCreatorModel.Pmdg737 && !IsDisplay)
-                                       || (DataType != ProfileCreatorModel.Pmdg737 && !IsDisplay);
+    private int?[] GetPmdgDataArrayIndices()
+    {
+        if (string.IsNullOrEmpty(PmdgData))
+        {
+            return [];
+        }
 
+        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute1 && attribute1.Value != UnmanagedType.ByValTStr && attribute1.SizeConst is var size1)
+        {
+            return new int?[size1].Select((_, i) => i).Cast<int?>().ToArray();
+        }
+        
+        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute2 && attribute2.Value != UnmanagedType.ByValTStr && attribute2.SizeConst is var size2)
+        {
+            return new int?[size2].Select((_, i) => i).Cast<int?>().ToArray();
+        }
+
+        return [];
+    }
+
+    public bool IsInvertedEnabled => GetIsInvertedEnabled();
+
+    private bool GetIsInvertedEnabled()
+    {
+        if (IsDisplay)
+        {
+            return false;
+        }
+        
+        if (!IsPmdg)
+        {
+            return true;
+        }
+        
+        if (string.IsNullOrEmpty(PmdgData))
+        {
+            return false;
+        }
+
+        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
+        {
+            return true;
+        }
+        
+        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B777.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
+        {
+            return true;
+        }
+
+        return false;
+    }
+    
     [ObservableProperty]
     private char? _operator;
 
     [RelayCommand]
-    private void ClearOperator() => Operator = null;
-
-    private string? _comparisonValue;
-
-    public string? ComparisonValue
+    private void ClearOperator()
     {
-        get => string.IsNullOrEmpty(PmdgData)
-               || typeof(B737.Data).GetField(PmdgData)?.FieldType != typeof(bool)
-               || typeof(B737.Data).GetField(PmdgData)?.FieldType != typeof(bool[])
-               || DataType == ProfileCreatorModel.MsfsSimConnect
-            ? _comparisonValue
-            : null;
-        set => SetProperty(ref _comparisonValue, value);
+        Operator = null;
     }
+
+    [ObservableProperty]
+    private string? _comparisonValue;
 
     [ObservableProperty]
     private double? _trueValue;
@@ -331,17 +404,23 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             OnPropertyChanged();
         }
     }
-    
+
     [RelayCommand]
-    private void ClearPaddingCharacter() => PaddingCharacterPair = null;
+    private void ClearPaddingCharacter()
+    {
+        PaddingCharacterPair = null;
+    }
 
     [ObservableProperty]
     private char? _paddingCharacter;
 
     public byte[] DigitCounts { get; } = [1, 2, 3, 4, 5, 6, 7, 8];
-    
+
     [RelayCommand]
-    private void ClearDigitCount() => DigitCount = null;
+    private void ClearDigitCount()
+    {
+        DigitCount = null;
+    }
 
     [ObservableProperty]
     private byte? _digitCount;
@@ -410,7 +489,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 break;
 
             case ProfileCreatorModel.SevenSegment:
-                await InputOutputDevice.SetSevenSegmentAsync(position, isEnabled ? "8" : " " );
+                await InputOutputDevice.SetSevenSegmentAsync(position, isEnabled ? "8" : " ");
                 break;
         }
     }
@@ -424,6 +503,6 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [RelayCommand]
     private async Task PointerExitedComboBox(string? position)
     {
-         await SetOutputPosition(position, false);
+        await SetOutputPosition(position, false);
     }
 }
