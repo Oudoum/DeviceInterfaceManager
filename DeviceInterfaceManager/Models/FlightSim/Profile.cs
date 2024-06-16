@@ -28,13 +28,13 @@ public class Profile : IAsyncDisposable
 
         _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
 
-        _simConnectClient.Helper!.FieldChanged += PmdgHelperOnFieldChanged;
+        _simConnectClient.PmdgHelper!.FieldChanged += PmdgHelperOnFieldChanged;
 
         _inputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
 
-        foreach (string watchedField in _simConnectClient.Helper!.WatchedFields)
+        foreach (string watchedField in _simConnectClient.PmdgHelper!.WatchedFields)
         {
-            object? obj = _simConnectClient.Helper!.DynDict[watchedField];
+            object? obj = _simConnectClient.PmdgHelper!.DynDict[watchedField];
             if (obj is not null)
             {
                 PmdgHelperOnFieldChanged(this, new PmdgDataFieldChangedEventArgs(watchedField, obj));
@@ -104,6 +104,7 @@ public class Profile : IAsyncDisposable
                 {
                     SetNumericFormatError(outputCreator);
                 }
+
                 break;
 
             case ProfileCreatorModel.SevenSegment:
@@ -137,12 +138,12 @@ public class Profile : IAsyncDisposable
                     break;
 
                 case ProfileCreatorModel.Pmdg737:
+                case ProfileCreatorModel.Pmdg777:
                     string? propertyName = Helper.ConvertDataToPmdgDataFieldName(precondition);
                     if (!string.IsNullOrEmpty(propertyName))
                     {
                         ProfileEntryIteration(precondition, new PmdgDataFieldChangedEventArgs(propertyName, precondition.FlightSimValue!));
                     }
-
                     break;
             }
         }
@@ -192,7 +193,7 @@ public class Profile : IAsyncDisposable
 
                 SetStringValue(valueString, e.PmdgDataName, outputCreator);
                 break;
-            
+
             //float
             case float:
                 double valueDouble = Convert.ToDouble(e.Value);
@@ -205,14 +206,14 @@ public class Profile : IAsyncDisposable
                 try
                 {
                     SetStringValue(valueDouble.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
-
                 }
                 catch (Exception)
                 {
                     SetNumericFormatError(outputCreator);
                 }
+
                 break;
-            
+
             //byte, ushort, short, uint, int
             default:
                 if (outputCreator.ComparisonValue is not null)
@@ -220,7 +221,7 @@ public class Profile : IAsyncDisposable
                     SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, Convert.ToDouble(e.Value)));
                     break;
                 }
-                    
+
                 long valueLong = Convert.ToInt64(e.Value);
                 try
                 {
@@ -230,6 +231,7 @@ public class Profile : IAsyncDisposable
                 {
                     SetNumericFormatError(outputCreator);
                 }
+
                 break;
         }
     }
@@ -550,20 +552,25 @@ public class Profile : IAsyncDisposable
 
                 //PMDG 737
                 case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
-                    _simConnectClient.TransmitEvent(firstParameter, inputCreator.PmdgEvent);
+                    _simConnectClient.TransmitEvent(firstParameter, (B737.Event)inputCreator.PmdgEvent.Value);
+                    break;
+
+                //PMDG 777
+                case ProfileCreatorModel.Pmdg777 when inputCreator.PmdgEvent is not null:
+                    _simConnectClient.TransmitEvent(firstParameter, (B777.Event)inputCreator.PmdgEvent.Value);
                     break;
             }
         }
     }
-    
+
     public async ValueTask DisposeAsync()
     {
         await _inputOutputDevice.ResetAllOutputsAsync();
 
         _inputOutputDevice.InputChanged -= InputOutputDeviceOnInputChanged;
-        _simConnectClient.Helper!.FieldChanged -= PmdgHelperOnFieldChanged;
         _simConnectClient.OnSimVarChanged -= SimConnectClientOnOnSimVarChanged;
-        
+        _simConnectClient.PmdgHelper?.Dispose();
+
         GC.SuppressFinalize(this);
     }
 }
