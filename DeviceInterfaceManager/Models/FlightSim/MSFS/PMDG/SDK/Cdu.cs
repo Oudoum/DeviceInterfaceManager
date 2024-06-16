@@ -26,7 +26,6 @@ public static class Cdu
             {
                 [MarshalAs(UnmanagedType.U1)]
                 public char Symbol;
-
                 public Color Color; // any of CDU_COLOR_ defines
                 public Flags Flags;  // a combination of CDU_FLAG_ bits
             }
