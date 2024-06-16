@@ -28,6 +28,7 @@ public class SimConnectClient : IFlightSimConnection
     private SimConnect? _simConnect;
 
     public bool IsConnected { get; private set; }
+    public Helper? PmdgHelper { get; private set; }
 
     [DllImport("User32.dll", SetLastError = true)]
 #pragma warning disable SYSLIB1054
@@ -96,7 +97,7 @@ public class SimConnectClient : IFlightSimConnection
                         _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
                         _simConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
                         _simConnect.OnRecvException += SimConnectOnOnRecvException;
-                        Helper = new Helper(_simConnect);
+                        PmdgHelper = new Helper(_simConnect);
                         tcs.SetResult(true);
                     }
                     catch (Exception)
@@ -120,9 +121,6 @@ public class SimConnectClient : IFlightSimConnection
         }
     }
 
-
-    public Helper? Helper { get; private set; }
-
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
     {
         if (_simConnect is null)
@@ -134,8 +132,6 @@ public class SimConnectClient : IFlightSimConnection
 
         _simConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
         _simConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
-
-        Helper?.RegisterB737DataAndEvents();
 
         RegisterSimVar("CAMERA STATE", "Enum");
 
@@ -378,26 +374,18 @@ public class SimConnectClient : IFlightSimConnection
     }
     //
 
-    public class SimVar
+    public class SimVar(uint id, string name, string? unit)
     {
-        public uint Id { get; }
+        public uint Id { get; } = id;
 
-        public string Name { get; }
+        public string Name { get; } = name;
 
         public double Data { get; set; }
 
-        public string? Unit { get; }
+        public string? Unit { get; } = unit;
 
-        public SimVar(uint id, string name, string? unit)
+        public SimVar(string name, double data) : this(0, name, null)
         {
-            Id = id;
-            Name = name;
-            Unit = unit;
-        }
-
-        public SimVar(string name, double data)
-        {
-            Name = name;
             Data = data;
         }
     }
