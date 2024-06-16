@@ -34,13 +34,13 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
         if (PmdgEvent is not null)
         {
-            SearchPmdgEvent = Enum.GetName(PmdgEvent.Value);
+            SearchPmdgEvent = GetPmdgEventName();
         }
 
         InputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
     }
 
-    #if DEBUG
+#if DEBUG
     public InputCreatorViewModel()
     {
         _inputCreator =
@@ -54,7 +54,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             };
         Components = new List<Component?>();
     }
-    #endif
+#endif
 
     public void OnClosed()
     {
@@ -70,7 +70,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             _currentPosition = e.Position;
         }
     }
-    
+
     public override Precondition[]? Copy()
     {
         _inputCreator.InputType = InputType;
@@ -132,6 +132,10 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                 case ProfileCreatorModel.Pmdg737:
                     IsPmdg737 = true;
                     break;
+
+                case ProfileCreatorModel.Pmdg777:
+                    IsPmdg777 = true;
+                    break;
             }
 
             _eventType = value;
@@ -152,6 +156,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsKEvent = false;
         IsRpn = false;
         IsPmdg737 = false;
+        IsPmdg777 = false;
         DataPress2 = null;
         DataRelease2 = null;
         ResetEventType();
@@ -171,6 +176,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsMsfsSimConnect = false;
         IsRpn = false;
         IsPmdg737 = false;
+        IsPmdg777 = false;
         ResetEventType();
     }
 
@@ -188,12 +194,16 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsMsfsSimConnect = false;
         IsKEvent = false;
         IsPmdg737 = false;
+        IsPmdg777 = false;
         ResetEventType();
         DataPress = null;
         DataPress2 = null;
         DataRelease = null;
         DataRelease2 = null;
     }
+
+    [ObservableProperty]
+    private bool _isPmdg;
 
     [ObservableProperty]
     private bool _isPmdg737;
@@ -206,10 +216,33 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         }
 
         EventType = ProfileCreatorModel.Pmdg737;
+        OnPmdgChanged();
+        PmdgEventEnumerable = Enum.GetNames(typeof(B737.Event));
+    }
+
+    [ObservableProperty]
+    private bool _isPmdg777;
+
+    partial void OnIsPmdg777Changed(bool value)
+    {
+        if (!value)
+        {
+            return;
+        }
+
+        EventType = ProfileCreatorModel.Pmdg777;
+        OnPmdgChanged();
+        PmdgEventEnumerable = Enum.GetNames(typeof(B777.Event));
+    }
+
+    private void OnPmdgChanged()
+    {
         IsMsfsSimConnect = false;
         IsKEvent = false;
         IsRpn = false;
+        IsPmdg = true;
         Event = null;
+        SearchPmdgEvent = null;
         OnRelease = false;
         DataPress2 = null;
         DataRelease2 = null;
@@ -217,28 +250,64 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     private void ResetEventType()
     {
+        IsPmdg = false;
         PmdgEvent = null;
+        PmdgEventName = null;
         ClearPmdgMousePress();
         ClearPmdgMouseRelease();
         OnRelease = false;
     }
 
-    [ObservableProperty]
-    private B737.Event? _pmdgEvent;
+    public int? PmdgEvent { get; set; }
     
+    [ObservableProperty]
+    private string? _pmdgEventName;
+
     [ObservableProperty]
     private string? _searchPmdgEvent;
-    
+
     partial void OnSearchPmdgEventChanged(string? value)
     {
-        if (Enum.TryParse(value, true, out B737.Event result))
+        if (IsPmdg737 && Enum.TryParse(value, true, out B737.Event pmdg737Event))
         {
-            PmdgEvent = result;
+            PmdgEvent = (int)pmdg737Event;
+            PmdgEventName = value;
+            return;
         }
+        
+        if (IsPmdg777 && Enum.TryParse(value, true, out B777.Event pmdg777Event))
+        {
+            PmdgEvent = (int)pmdg777Event;
+            PmdgEventName = value;
+            return;
+        }
+        
+        PmdgEvent = null;
     }
 
-    public static IEnumerable<string?> PmdgEventEnumerable => Enum.GetNames(typeof(B737.Event));
-    
+    private string? GetPmdgEventName()
+    {
+        if (PmdgEvent is null)
+        {
+            return null;
+        }
+        
+        if (IsPmdg737)
+        {
+            return Enum.GetName((B737.Event)PmdgEvent);
+        }
+
+        if (IsPmdg777)
+        {
+           return Enum.GetName((B777.Event)PmdgEvent);
+        }
+
+        return null;
+    }
+
+    [ObservableProperty]
+    private IEnumerable<string?>? _pmdgEventEnumerable;
+
     public static Mouse[] PmdgMouseFlags =>
     [
         Mouse.LeftSingle,
@@ -253,13 +322,19 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     private Mouse? _pmdgMousePress;
 
     [RelayCommand]
-    private void ClearPmdgMousePress() => PmdgMousePress = null;
+    private void ClearPmdgMousePress()
+    {
+        PmdgMousePress = null;
+    }
 
     [ObservableProperty]
     private Mouse? _pmdgMouseRelease;
 
     [RelayCommand]
-    private void ClearPmdgMouseRelease() => PmdgMouseRelease = null;
+    private void ClearPmdgMouseRelease()
+    {
+        PmdgMouseRelease = null;
+    }
 
     [ObservableProperty]
     private string? _event;
@@ -269,13 +344,13 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private uint? _dataPress;
-    
+
     [ObservableProperty]
     private uint? _dataPress2;
 
     [ObservableProperty]
     private uint? _dataRelease;
-    
+
     [ObservableProperty]
     private uint? _dataRelease2;
 
