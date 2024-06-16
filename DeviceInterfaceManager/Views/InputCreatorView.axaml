@@ -45,8 +45,7 @@
                             <RadioButton Content="PMDG 737"
                                          IsChecked="{Binding IsPmdg737}" />
                             <RadioButton Content="PMDG 777"
-                                         IsEnabled="False"
-                                         IsChecked="" />
+                                         IsChecked="{Binding IsPmdg777}" />
                         </StackPanel>
                     </StackPanel>
 
@@ -85,22 +84,24 @@
 
                     <!-- PMDG Event -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg737}">
+                          IsVisible="{Binding IsPmdg}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="PMDG Event" />
                         <AutoCompleteBox Grid.Column="1"
                                          Watermark="Search..."
                                          FilterMode="ContainsOrdinal"
-                                         SelectedItem="{Binding PmdgEvent}"
+                                         SelectedItem="{Binding PmdgEventName}"
                                          ItemsSource="{Binding PmdgEventEnumerable}"
                                          Text="{Binding SearchPmdgEvent}"
                                          Classes="clearButton rightEdgeAlignedBottomPopup"
-                                         Classes.selected="{Binding PmdgEvent, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                         Classes.selected="{Binding PmdgEventName, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <AutoCompleteBox.Styles>
                                 <Style Selector="AutoCompleteBox.selected">
                                     <Style Selector="^ /template/ TextBox#PART_TextBox">
                                         <Setter Property="Foreground" Value="LimeGreen" />
+                                        <Setter Property="SelectionForegroundBrush" Value="LimeGreen" />
+                                        <Setter Property="SelectionBrush" Value="SlateGray" />
                                     </Style>
                                 </Style>
                             </AutoCompleteBox.Styles>
@@ -109,7 +110,7 @@
 
                     <!-- MSFS Event -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding !IsPmdg737}">
+                          IsVisible="{Binding !IsPmdg}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Event" />
@@ -133,7 +134,7 @@
 
                     <!-- Mouse Press -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg737}"
+                          IsVisible="{Binding IsPmdg}"
                           IsEnabled="{Binding DataPress, Converter={x:Static ObjectConverters.IsNull}}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
@@ -171,7 +172,7 @@
 
                     <!-- Mouse Release -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg737}"
+                          IsVisible="{Binding IsPmdg}"
                           IsEnabled="{Binding DataRelease, Converter={x:Static ObjectConverters.IsNull}}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
