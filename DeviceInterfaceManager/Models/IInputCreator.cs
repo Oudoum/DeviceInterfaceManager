@@ -11,7 +11,7 @@ public interface IInputCreator
 
     public string? EventType { get; set; }
 
-    public B737.Event? PmdgEvent { get; set; }
+    public int? PmdgEvent { get; set; }
 
     public string? Event { get; set; }
 
