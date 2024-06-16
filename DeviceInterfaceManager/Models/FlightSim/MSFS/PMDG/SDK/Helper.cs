@@ -8,39 +8,67 @@ using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
-public class Helper
+public class Helper : IDisposable
 {
     private readonly SimConnect _simConnect;
-    
+
     public Helper(SimConnect simConnect)
     {
         _simConnect = simConnect;
+        _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
         _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
     }
-    
+
     public event EventHandler<PmdgDataFieldChangedEventArgs>? FieldChanged;
 
-    private readonly B737.Data _data = new();
+    private B737.Data? _pmdg737Data;
+    private B777.Data? _pmdg777Data;
 
     public List<string> WatchedFields { get; } = [];
 
     public IDictionary<string, object?> DynDict { get; } = new ExpandoObject();
 
     private bool _initialized;
-    
-    private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
+
+    private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
     {
-        if ((uint)DataRequestId.Data == data.dwRequestID)
+        if (_pmdg737Data is not null)
         {
-            Iteration((B737.Data)data.dwData[0]);
+            RegisterB737DataAndEvents();
+        }
+
+        else if (_pmdg777Data is not null)
+        {
+            RegisterB777DataAndEvents();
         }
     }
-    
+
+
+    private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
+    {
+        if ((uint)DataRequestId.Data != data.dwRequestID)
+        {
+            return;
+        }
+
+        object clientData = data.dwData[0];
+
+        if (clientData is B737.Data pmdg737Data)
+        {
+            Iteration(pmdg737Data);
+        }
+
+        else if (clientData is B737.Data pmdg777Data)
+        {
+            Iteration(pmdg777Data);
+        }
+    }
+
     public void Init(ProfileCreatorModel profileCreatorModel)
     {
         foreach (OutputCreator output in profileCreatorModel.OutputCreators)
         {
-            if (output is not { DataType: ProfileCreatorModel.Pmdg737, IsActive: true })
+            if (output is not { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, IsActive: true })
             {
                 continue;
             }
@@ -60,10 +88,22 @@ public class Helper
             }
 
             _initialized = true;
-            Initialize<B737.Data>();
+
+            switch (output.DataType)
+            {
+                case ProfileCreatorModel.Pmdg737:
+                    _pmdg737Data = new B737.Data();
+                    Initialize(_pmdg737Data);
+                    break;
+
+                case ProfileCreatorModel.Pmdg777:
+                    _pmdg777Data = new B777.Data();
+                    Initialize(_pmdg777Data);
+                    break;
+            }
         }
     }
-    
+
     public static string? ConvertDataToPmdgDataFieldName(OutputCreator output)
     {
         string? pmdgDataFieldName = output.PmdgData;
@@ -71,10 +111,11 @@ public class Helper
         {
             pmdgDataFieldName = pmdgDataFieldName + '_' + output.PmdgDataArrayIndex;
         }
+
         return pmdgDataFieldName;
     }
-    
-    private void Initialize<T>() where T : struct
+
+    private void Initialize<T>(T? pmdgData) where T : struct
     {
         foreach (FieldInfo field in typeof(T).GetFields())
         {
@@ -85,12 +126,13 @@ public class Helper
 
             if (field.FieldType.IsArray)
             {
-                Array array = (Array)field.GetValue(_data)!;
+                Array array = (Array)field.GetValue(pmdgData)!;
                 if (field.GetCustomAttributes(typeof(MarshalAsAttribute), false).FirstOrDefault() is MarshalAsAttribute marshalAsAttribute)
                 {
                     array = Array.CreateInstance(field.FieldType.GetElementType()!, marshalAsAttribute.SizeConst);
-                    field.SetValue(_data, array);
+                    field.SetValue(pmdgData, array);
                 }
+
                 int i = 0;
                 foreach (object item in array)
                 {
@@ -98,11 +140,11 @@ public class Helper
                     i++;
                 }
             }
-            
-            DynDict[field.Name] = field.GetValue(_data);
+
+            DynDict[field.Name] = field.GetValue(pmdgData);
         }
     }
-    
+
     private void Iteration<T>(T newData) where T : struct
     {
         foreach (FieldInfo field in typeof(T).GetFields())
@@ -121,13 +163,14 @@ public class Helper
                         CheckOldNewValue(field.Name + '_' + i, array.GetValue(i)!);
                     }
                 }
+
                 continue;
             }
 
             CheckOldNewValue(field.Name, field.GetValue(newData)!);
         }
     }
-    
+
     private void CheckOldNewValue(string propertyName, object newValue)
     {
         if (!DynDict.TryGetValue(propertyName, out object? oldValue))
@@ -144,7 +187,7 @@ public class Helper
 
         FieldChanged?.Invoke(null, new PmdgDataFieldChangedEventArgs(propertyName, newValue));
     }
-    
+
     //
     private void CreateEvents<T>() where T : Enum
     {
@@ -175,13 +218,23 @@ public class Helper
             0);
     }
 
-    public void RegisterB737DataAndEvents()
+    private void RegisterB737DataAndEvents()
     {
         CreateEvents<B737.Event>();
 
         AssociateData<B737.Data>(B737.DataName, B737.ClientDataId.Data, B737.DefineId.Data, DataRequestId.Data);
         AssociateData<B737.Cdu>(B737.Cdu0Name, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0);
         AssociateData<B737.Cdu>(B737.Cdu1Name, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1);
+    }
+
+    private void RegisterB777DataAndEvents()
+    {
+        CreateEvents<B777.Event>();
+
+        AssociateData<B777.Data>(B777.DataName, B777.ClientDataId.Data, B777.DefineId.Data, DataRequestId.Data);
+        AssociateData<B777.Cdu>(B777.Cdu0Name, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0);
+        AssociateData<B777.Cdu>(B777.Cdu1Name, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1);
+        AssociateData<B777.Cdu>(B777.Cdu2Name, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2);
     }
 
     private enum DataRequestId
@@ -192,6 +245,14 @@ public class Helper
         Cdu0,
         Cdu1,
         Cdu2
+    }
+
+    public void Dispose()
+    {
+        _simConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
+        _simConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
+
+        GC.SuppressFinalize(this);
     }
 }
 
