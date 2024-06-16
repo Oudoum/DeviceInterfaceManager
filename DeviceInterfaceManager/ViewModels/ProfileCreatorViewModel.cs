@@ -215,13 +215,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
                 if (await OverwriteCheck())
                 {
+                    ProfileCreatorModel = profileCreatorModel;
+                    _previousProfileName = ProfileCreatorModel.ProfileName;
+                    
                     if (inputOutputDevice is not null)
                     {
                         InputOutputDevice = inputOutputDevice;
                     }
-                    
-                    ProfileCreatorModel = profileCreatorModel;
-                    _previousProfileName = ProfileCreatorModel.ProfileName;
                     
                     SetInfoBar(_previousProfileName + " successfully loaded.", InfoBarSeverity.Success);
                 }
@@ -636,9 +636,9 @@ public partial class ProfileCreatorViewModel : ObservableObject
         }
     }
 
-    public string[] EventDataTypePreSelections { get; set; } = [ProfileCreatorModel.MsfsSimConnect, ProfileCreatorModel.Pmdg737];
+    public static string[] EventDataTypePreSelections => [ProfileCreatorModel.MsfsSimConnect, ProfileCreatorModel.Pmdg737, ProfileCreatorModel.Pmdg777];
 
-    public string EventDataTypePreSelection { get; set; } = ProfileCreatorModel.Pmdg737;
+    public string EventDataTypePreSelection { get; set; } = ProfileCreatorModel.MsfsSimConnect;
 
     [RelayCommand]
     private async Task EditInput(InputCreator inputCreator)
@@ -746,7 +746,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
         if (!token.IsCancellationRequested)
         {
-            _simConnectClient.Helper?.Init(ProfileCreatorModel);
+            _simConnectClient.PmdgHelper?.Init(ProfileCreatorModel);
             _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
             SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
             return;
