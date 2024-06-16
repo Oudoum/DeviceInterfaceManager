@@ -114,14 +114,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 _tcpClient = new TcpClient();
                 await _tcpClient.ConnectAsync(Id, TcpPort, cancellationToken);
                 _networkStream = _tcpClient.GetStream();
-                GetInterfaceItEthernetDataAsync(cancellationToken);
-                await Task.Run(() =>
-                {
-                    while (DeviceName is null)
-                    {
-                        Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-                    }
-                }, cancellationToken);
+                await GetInterfaceItEthernetDataAsync(cancellationToken);
                 return true;
             }
             catch (OperationCanceledException)
@@ -143,8 +136,9 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         return false;
     }
 
-    private void GetInterfaceItEthernetDataAsync(CancellationToken cancellationToken)
+    private async Task GetInterfaceItEthernetDataAsync(CancellationToken cancellationToken)
     {
+        TaskCompletionSource tcs = new();
         _ = Task.Run(async () =>
         {
             StringBuilder sb = new();
@@ -171,6 +165,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 }
                 catch (OperationCanceledException)
                 {
+                    return;
                 }
 
                 foreach (string ethernetData in sb.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries))
@@ -183,6 +178,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
                         case "STATE=3":
                             isSwitchIdentifying = true;
+                            
                             break;
 
                         case "STATE=4":
@@ -198,6 +194,10 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                             else if (isInitializing && !isSwitchIdentifying)
                             {
                                 GetInterfaceItEthernetInfoData(ethernetData);
+                                if (!tcs.Task.IsCompleted)
+                                {
+                                    tcs.SetResult();
+                                }
                             }
 
                             break;
@@ -207,6 +207,8 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 sb.Clear();
             }
         }, cancellationToken);
+        
+        await tcs.Task;
     }
 
     private void ProcessSwitchData(string ethernetData)
