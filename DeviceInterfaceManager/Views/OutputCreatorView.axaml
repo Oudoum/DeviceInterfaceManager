@@ -32,6 +32,8 @@
                                      IsChecked="{Binding IsMsfsSimConnect}" />
                         <RadioButton Content="PMDG 737"
                                      IsChecked="{Binding IsPmdg737}" />
+                        <RadioButton Content="PMDG 777"
+                                     IsChecked="{Binding IsPmdg777}" />
                     </StackPanel>
 
                     <!-- Output Type -->
@@ -85,7 +87,7 @@
 
                     <!-- PMDG Data -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg737}">
+                          IsVisible="{Binding IsPmdg}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="PMDG Data" />
@@ -102,6 +104,8 @@
                                 <Style Selector="AutoCompleteBox.selected">
                                     <Style Selector="^ /template/ TextBox#PART_TextBox">
                                         <Setter Property="Foreground" Value="LimeGreen" />
+                                        <Setter Property="SelectionForegroundBrush" Value="LimeGreen" />
+                                        <Setter Property="SelectionBrush" Value="SlateGray" />
                                     </Style>
                                 </Style>
                             </AutoCompleteBox.Styles>
@@ -110,7 +114,7 @@
 
                     <!-- PMDG Array Index -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg737}"
+                          IsVisible="{Binding IsPmdg}"
                           IsEnabled="{Binding PmdgDataArrayIndex, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
@@ -150,7 +154,7 @@
 
                     <!-- Invert -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsComparisonEnabled}">
+                          IsVisible="{Binding IsInvertedEnabled}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Invert" />
