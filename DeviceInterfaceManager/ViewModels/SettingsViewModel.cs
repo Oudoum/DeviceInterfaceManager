@@ -111,6 +111,8 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         }
     }
 
+    #region FdsUsb
+    
     [RelayCommand]
     private async Task ToggleFdsUsbAsync(CancellationToken cancellationToken)
     {
@@ -129,7 +131,11 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             }
         }
     }
+    
+    #endregion
 
+    #region FdsEthernet
+    
     [RelayCommand]
     private async Task ToggleFdsEthernetAsync(CancellationToken cancellationToken)
     {
@@ -190,4 +196,6 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             AddInterfaceItEthernetConnection(connection);
         }
     }
+    
+    #endregion
 }
