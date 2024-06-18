@@ -32,7 +32,7 @@ public partial class HomeViewModel : ObservableRecipient
     }
 
     [ObservableProperty]
-    private ObservableCollection<ProfileMapping> _deviceProfileList = [];
+    private ObservableCollection<ProfileMapping>? _deviceProfileList;
 
     private readonly List<Profile> _profiles = [];
 
@@ -57,13 +57,19 @@ public partial class HomeViewModel : ObservableRecipient
             return;
         }
 
-        if (File.Exists(App.MappingsFile))
+        if (DeviceProfileList is null && File.Exists(App.MappingsFile))
         {
             DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
         }
 
-        foreach (string filePath in Directory.GetFiles(App.ProfilesPath))
+        string[] jsonFilePaths = Directory.GetFiles(App.ProfilesPath, "*.json");
+        foreach (string filePath in jsonFilePaths)
         {
+            if (!filePath.EndsWith(".json"))
+            {
+                return;
+            }
+            
             try
             {
                 _profileCreatorModels.Add(JsonSerializer.Deserialize<ProfileCreatorModel>(File.ReadAllText(filePath)) ?? throw new InvalidOperationException());
@@ -90,8 +96,8 @@ public partial class HomeViewModel : ObservableRecipient
             new ProfileCreatorModel { DeviceName = "Device 2", ProfileName = "Profile 2" }
         ];
 
-        DeviceProfileList.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
-        DeviceProfileList.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
+        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
+        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
     }
 #endif
     
@@ -110,13 +116,14 @@ public partial class HomeViewModel : ObservableRecipient
     [RelayCommand]
     private void Add()
     {
+        DeviceProfileList ??= [];
         DeviceProfileList.Add(new ProfileMapping());
     }
 
     [RelayCommand]
     private void Delete(ProfileMapping profileMapping)
     {
-        DeviceProfileList.Remove(profileMapping);
+        DeviceProfileList?.Remove(profileMapping);
     }
 
     [RelayCommand]
@@ -148,8 +155,13 @@ public partial class HomeViewModel : ObservableRecipient
 
         await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested)
+        if (!token.IsCancellationRequested && _simConnectClient.SimConnect is not null)
         {
+            if (DeviceProfileList is null)
+            {
+                return;
+            }
+
             foreach (ProfileMapping profileMapping in DeviceProfileList)
             {
                 if (!profileMapping.IsActive)
@@ -170,7 +182,7 @@ public partial class HomeViewModel : ObservableRecipient
                 {
                     continue;
                 }
-
+                
                 Profile profile = new(_simConnectClient, profileCreatorModel, inputOutputDevice);
                 _profiles.Add(profile);
             }
