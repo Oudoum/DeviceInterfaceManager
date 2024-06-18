@@ -744,9 +744,8 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
         await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested)
+        if (!token.IsCancellationRequested && _simConnectClient.SimConnect is not null)
         {
-            _simConnectClient.PmdgHelper?.Init(ProfileCreatorModel);
             _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
             SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
             return;
