@@ -70,7 +70,10 @@ public partial class InterfaceItData : IDeviceSerial
 
             interfaceIT_GetBoardInfo(_session, out BoardInfo boardInfo);
             InterfaceItBoardId boardId = GetInterfaceItBoardId(boardInfo.BoardType);
-            if (boardId is InterfaceItBoardId.FDS_CONTROLLER_MCP or InterfaceItBoardId.FDS_737_PMX_MCP or InterfaceItBoardId.JetMAX_737_RADIO)
+            if (boardId != InterfaceItBoardId.FDS_A320_FCU &&
+                boardId != InterfaceItBoardId.JetMAX_737_MCP && 
+                boardId != InterfaceItBoardId.JetMAX_777_MCP &&
+                boardId != InterfaceItBoardId.IIT_HIO_128_256)
             {
                 CheckError(interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64));
             }
