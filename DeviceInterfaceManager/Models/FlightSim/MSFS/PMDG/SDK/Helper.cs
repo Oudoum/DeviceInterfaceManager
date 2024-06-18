@@ -8,17 +8,8 @@ using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
-public class Helper : IDisposable
+public class Helper
 {
-    private readonly SimConnect _simConnect;
-
-    public Helper(SimConnect simConnect)
-    {
-        _simConnect = simConnect;
-        _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
-        _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
-    }
-
     public event EventHandler<PmdgDataFieldChangedEventArgs>? FieldChanged;
 
     private B737.Data? _pmdg737Data;
@@ -30,41 +21,21 @@ public class Helper : IDisposable
 
     private bool _initialized;
 
-    private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
+    public void ReceivePmdgData(object data)
     {
-        if (_pmdg737Data is not null)
+        switch (data)
         {
-            RegisterB737DataAndEvents();
-        }
+            case B737.Data pmdg737Data:
+                Iteration(pmdg737Data);
+                break;
 
-        else if (_pmdg777Data is not null)
-        {
-            RegisterB777DataAndEvents();
+            case B777.Data pmdg777Data:
+                Iteration(pmdg777Data);
+                break;
         }
     }
 
-
-    private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
-    {
-        if ((uint)DataRequestId.Data != data.dwRequestID)
-        {
-            return;
-        }
-
-        object clientData = data.dwData[0];
-
-        if (clientData is B737.Data pmdg737Data)
-        {
-            Iteration(pmdg737Data);
-        }
-
-        else if (clientData is B737.Data pmdg777Data)
-        {
-            Iteration(pmdg777Data);
-        }
-    }
-
-    public void Init(ProfileCreatorModel profileCreatorModel)
+    public void Init(SimConnect simConnect, ProfileCreatorModel profileCreatorModel)
     {
         foreach (OutputCreator output in profileCreatorModel.OutputCreators)
         {
@@ -94,11 +65,13 @@ public class Helper : IDisposable
                 case ProfileCreatorModel.Pmdg737:
                     _pmdg737Data = new B737.Data();
                     Initialize(_pmdg737Data);
+                    RegisterB737DataAndEvents(simConnect);
                     break;
 
                 case ProfileCreatorModel.Pmdg777:
                     _pmdg777Data = new B777.Data();
                     Initialize(_pmdg777Data);
+                    RegisterB777DataAndEvents(simConnect);
                     break;
             }
         }
@@ -189,25 +162,25 @@ public class Helper : IDisposable
     }
 
     //
-    private void CreateEvents<T>() where T : Enum
+    private static void CreateEvents<T>(SimConnect simConnect) where T : Enum
     {
         // Map the PMDG Events to SimConnect
         foreach (T eventId in Enum.GetValues(typeof(T)))
         {
-            _simConnect.MapClientEventToSimEvent(eventId, "#" + Convert.ChangeType(eventId, eventId.GetTypeCode()));
+            simConnect.MapClientEventToSimEvent(eventId, "#" + Convert.ChangeType(eventId, eventId.GetTypeCode()));
         }
     }
 
-    private void AssociateData<T>(string clientDataName, Enum clientDataId, Enum definitionId, Enum requestId) where T : struct
+    private static void AssociateData<T>(SimConnect simConnect, string clientDataName, Enum clientDataId, Enum definitionId, Enum requestId) where T : struct
     {
         // Associate an ID with the PMDG data area name
-        _simConnect.MapClientDataNameToID(clientDataName, clientDataId);
+        simConnect.MapClientDataNameToID(clientDataName, clientDataId);
         // Define the data area structure - this is a required step
-        _simConnect.AddToClientDataDefinition(definitionId, 0, (uint)Marshal.SizeOf<T>(), 0, 0);
+        simConnect.AddToClientDataDefinition(definitionId, 0, (uint)Marshal.SizeOf<T>(), 0, 0);
         // Register the data area structure
-        _simConnect.RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, T>(definitionId);
+        simConnect.RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, T>(definitionId);
         // Sign up for notification of data change
-        _simConnect.RequestClientData(
+        simConnect.RequestClientData(
             clientDataId,
             requestId,
             definitionId,
@@ -218,26 +191,26 @@ public class Helper : IDisposable
             0);
     }
 
-    private void RegisterB737DataAndEvents()
+    private static void RegisterB737DataAndEvents(SimConnect simConnect)
     {
-        CreateEvents<B737.Event>();
+        CreateEvents<B737.Event>(simConnect);
 
-        AssociateData<B737.Data>(B737.DataName, B737.ClientDataId.Data, B737.DefineId.Data, DataRequestId.Data);
-        AssociateData<B737.Cdu>(B737.Cdu0Name, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0);
-        AssociateData<B737.Cdu>(B737.Cdu1Name, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1);
+        AssociateData<B737.Data>(simConnect, B737.DataName, B737.ClientDataId.Data, B737.DefineId.Data, DataRequestId.Data);
+        AssociateData<B737.Cdu>(simConnect, B737.Cdu0Name, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0);
+        AssociateData<B737.Cdu>(simConnect, B737.Cdu1Name, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1);
     }
 
-    private void RegisterB777DataAndEvents()
+    private static void RegisterB777DataAndEvents(SimConnect simConnect)
     {
-        CreateEvents<B777.Event>();
+        CreateEvents<B777.Event>(simConnect);
 
-        AssociateData<B777.Data>(B777.DataName, B777.ClientDataId.Data, B777.DefineId.Data, DataRequestId.Data);
-        AssociateData<B777.Cdu>(B777.Cdu0Name, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0);
-        AssociateData<B777.Cdu>(B777.Cdu1Name, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1);
-        AssociateData<B777.Cdu>(B777.Cdu2Name, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2);
+        AssociateData<B777.Data>(simConnect, B777.DataName, B777.ClientDataId.Data, B777.DefineId.Data, DataRequestId.Data);
+        AssociateData<B777.Cdu>(simConnect, B777.Cdu0Name, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0);
+        AssociateData<B777.Cdu>(simConnect, B777.Cdu1Name, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1);
+        AssociateData<B777.Cdu>(simConnect, B777.Cdu2Name, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2);
     }
 
-    private enum DataRequestId
+    public enum DataRequestId
     {
         AirPath,
         Control,
@@ -245,14 +218,6 @@ public class Helper : IDisposable
         Cdu0,
         Cdu1,
         Cdu2
-    }
-
-    public void Dispose()
-    {
-        _simConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
-        _simConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
-
-        GC.SuppressFinalize(this);
     }
 }
 
