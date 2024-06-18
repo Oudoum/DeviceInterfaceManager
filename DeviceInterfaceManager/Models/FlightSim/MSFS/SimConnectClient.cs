@@ -25,10 +25,10 @@ public class SimConnectClient : IFlightSimConnection
     private const int MessageSize = 1024;
     private const string ClientDataNameCommand = "DIM.Command";
 
-    private SimConnect? _simConnect;
+    public SimConnect? SimConnect { get; private set; }
 
     public bool IsConnected { get; private set; }
-    public Helper? PmdgHelper { get; private set; }
+    public Helper PmdgHelper { get; private set; } = new();
 
     [DllImport("User32.dll", SetLastError = true)]
 #pragma warning disable SYSLIB1054
@@ -43,7 +43,7 @@ public class SimConnectClient : IFlightSimConnection
             {
                 try
                 {
-                    _simConnect?.ReceiveMessage();
+                    SimConnect?.ReceiveMessage();
                 }
                 catch (COMException)
                 {
@@ -88,16 +88,15 @@ public class SimConnectClient : IFlightSimConnection
                 {
                     try
                     {
-                        _simConnect = new SimConnect("Device-Interface-Manager", handle, WmUserSimConnect, null, 0);
-                        if (_simConnect is null)
+                        SimConnect = new SimConnect("Device-Interface-Manager", handle, WmUserSimConnect, null, 0);
+                        if (SimConnect is null)
                         {
                             throw new Exception("SimConnect object could not be created");
                         }
 
-                        _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
-                        _simConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
-                        _simConnect.OnRecvException += SimConnectOnOnRecvException;
-                        PmdgHelper = new Helper(_simConnect);
+                        SimConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
+                        SimConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
+                        SimConnect.OnRecvException += SimConnectOnOnRecvException;
                         tcs.SetResult(true);
                     }
                     catch (Exception)
@@ -105,7 +104,7 @@ public class SimConnectClient : IFlightSimConnection
                         tcs.SetResult(false);
                     }
                 }, token);
-                
+
                 if (!await tcs.Task)
                 {
                     await Task.Delay(1000, token);
@@ -123,15 +122,13 @@ public class SimConnectClient : IFlightSimConnection
 
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
     {
-        if (_simConnect is null)
+        if (SimConnect is null)
         {
             return;
         }
-
-        // Test();
-
-        _simConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
-        _simConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
+        
+        SimConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
+        SimConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
 
         RegisterSimVar("CAMERA STATE", "Enum");
 
@@ -142,13 +139,24 @@ public class SimConnectClient : IFlightSimConnection
         // {
         //     _simConnect.TransmitClientEvent_EX1(0, (EventId)id, SimConnectGroupPriority.Standard, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY, 2, 8,0,0,0 );
         // }
-
-
-        _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
+        
+        SimConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
+        SimConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
 
         IsConnected = true;
     }
 
+    private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
+    {
+        if ((uint)Helper.DataRequestId.Data != data.dwRequestID)
+        {
+            return;
+        }
+        
+        PmdgHelper.ReceivePmdgData(data.dwData[0]);
+    }
+
+    //Test
     private void SimConnectOnOnRecvEnumerateInputEvents(SimConnect sender, SIMCONNECT_RECV_ENUMERATE_INPUT_EVENTS data)
     {
         for (int i = 0; i < data.dwArraySize; i++)
@@ -157,12 +165,13 @@ public class SimConnectClient : IFlightSimConnection
             _inputEvents.Add(descriptor.Name, descriptor.Hash);
         }
 
-        _simConnect?.SetInputEvent(_inputEvents["FMC_AS01B_1_Keyboard_N"], 1);
+        SimConnect?.SetInputEvent(_inputEvents["FMC_AS01B_1_Keyboard_N"], 1);
     }
 
+    //Test
     private void Test()
     {
-        _simConnect?.EnumerateInputEvents((RequestId)100);
+        SimConnect?.EnumerateInputEvents((RequestId)100);
     }
 
     private void SimConnectOnOnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
@@ -185,19 +194,23 @@ public class SimConnectClient : IFlightSimConnection
 
     public void Disconnect()
     {
-        if (_simConnect is null)
+        if (SimConnect is null)
         {
             return;
         }
 
-        _simConnect.OnRecvException -= SimConnectOnOnRecvException;
-        _simConnect.OnRecvQuit -= SimConnectOnOnRecvQuit;
-        _simConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
-        _simConnect.Dispose();
-        _simConnect = null;
+        SimConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
+        SimConnect.OnRecvSimobjectData -= SimConnectOnOnRecvSimobjectData;
+        SimConnect.OnRecvException -= SimConnectOnOnRecvException;
+        SimConnect.OnRecvQuit -= SimConnectOnOnRecvQuit;
+        SimConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
+        SimConnect.Dispose();
+        SimConnect = null;
 
         _simVars.Clear();
         _simEvents.Clear();
+
+        PmdgHelper = new Helper();
 
         IsConnected = false;
     }
@@ -235,7 +248,7 @@ public class SimConnectClient : IFlightSimConnection
     {
         lock (_lockObject)
         {
-            _simConnect?.TransmitClientEvent(
+            SimConnect?.TransmitClientEvent(
                 0,
                 eventId,
                 data,
@@ -248,7 +261,7 @@ public class SimConnectClient : IFlightSimConnection
     {
         lock (_lockObject)
         {
-            _simConnect?.TransmitClientEvent_EX1(
+            SimConnect?.TransmitClientEvent_EX1(
                 0,
                 (EventId)eventId,
                 SimConnectGroupPriority.Standard,
@@ -257,7 +270,7 @@ public class SimConnectClient : IFlightSimConnection
                 data1,
                 0,
                 0,
-                0 );
+                0);
         }
     }
 
@@ -265,7 +278,7 @@ public class SimConnectClient : IFlightSimConnection
     {
         lock (_lockObject)
         {
-            _simConnect?.SetClientData(
+            SimConnect?.SetClientData(
                 ClientDataId.Command,
                 DefineId.Command,
                 SIMCONNECT_CLIENT_DATA_SET_FLAG.DEFAULT,
@@ -294,7 +307,7 @@ public class SimConnectClient : IFlightSimConnection
 
         lock (_lockObject)
         {
-            _simConnect?.SetDataOnSimObject(
+            SimConnect?.SetDataOnSimObject(
                 (DefineId)simVar.Id,
                 SimConnect.SIMCONNECT_OBJECT_ID_USER,
                 SIMCONNECT_DATA_SET_FLAG.DEFAULT,
@@ -328,7 +341,7 @@ public class SimConnectClient : IFlightSimConnection
         SimVar simVar = new((uint)(_simVars.Count + Offset + 1), simVarName, simVarUnit);
         _simVars.Add(simVar);
 
-        _simConnect?.AddToDataDefinition(
+        SimConnect?.AddToDataDefinition(
             (DefineId)simVar.Id,
             simVar.Name,
             simVar.Unit,
@@ -336,11 +349,11 @@ public class SimConnectClient : IFlightSimConnection
             0,
             0);
 
-        _simConnect?.RegisterDataDefineStruct<double>((DefineId)simVar.Id);
+        SimConnect?.RegisterDataDefineStruct<double>((DefineId)simVar.Id);
 
         if (request)
         {
-            _simConnect?.RequestDataOnSimObject(
+            SimConnect?.RequestDataOnSimObject(
                 (RequestId)simVar.Id,
                 (DefineId)simVar.Id,
                 SimConnect.SIMCONNECT_OBJECT_ID_USER,
@@ -362,7 +375,7 @@ public class SimConnectClient : IFlightSimConnection
         int id = _simEvents.Count + 1;
         _simEvents.Add(simEventName, id);
 
-        _simConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
+        SimConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
     }
 
     public void TransmitSimEvent(uint data0, uint data1, string simEventName)
