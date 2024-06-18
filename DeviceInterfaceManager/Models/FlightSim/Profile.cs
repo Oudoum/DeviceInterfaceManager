@@ -25,16 +25,23 @@ public class Profile : IAsyncDisposable
         _simConnectClient = simConnectClient;
         _profileCreatorModel = profileCreatorModel;
         _inputOutputDevice = inputOutputDevice;
+        
+        if (_simConnectClient.SimConnect is null)
+        {
+            return;
+        }
+        
+        _simConnectClient.PmdgHelper.Init(_simConnectClient.SimConnect, profileCreatorModel);
 
         _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
 
-        _simConnectClient.PmdgHelper!.FieldChanged += PmdgHelperOnFieldChanged;
+        _simConnectClient.PmdgHelper.FieldChanged += PmdgHelperOnFieldChanged;
 
         _inputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
 
-        foreach (string watchedField in _simConnectClient.PmdgHelper!.WatchedFields)
+        foreach (string watchedField in _simConnectClient.PmdgHelper.WatchedFields)
         {
-            object? obj = _simConnectClient.PmdgHelper!.DynDict[watchedField];
+            object? obj = _simConnectClient.PmdgHelper.DynDict[watchedField];
             if (obj is not null)
             {
                 PmdgHelperOnFieldChanged(this, new PmdgDataFieldChangedEventArgs(watchedField, obj));
@@ -569,7 +576,6 @@ public class Profile : IAsyncDisposable
 
         _inputOutputDevice.InputChanged -= InputOutputDeviceOnInputChanged;
         _simConnectClient.OnSimVarChanged -= SimConnectClientOnOnSimVarChanged;
-        _simConnectClient.PmdgHelper?.Dispose();
 
         GC.SuppressFinalize(this);
     }
