@@ -44,36 +44,41 @@ public class Helper
                 continue;
             }
 
-            if (!string.IsNullOrEmpty(output.PmdgData))
-            {
-                string? pmdgDataFieldName = ConvertDataToPmdgDataFieldName(output);
-                if (pmdgDataFieldName is not null && !WatchedFields.Contains(pmdgDataFieldName))
-                {
-                    WatchedFields.Add(pmdgDataFieldName);
-                }
-            }
-
-            if (_initialized)
+            if (string.IsNullOrEmpty(output.PmdgData))
             {
                 continue;
             }
 
-            _initialized = true;
-
-            switch (output.DataType)
+            string? pmdgDataFieldName = ConvertDataToPmdgDataFieldName(output);
+            if (pmdgDataFieldName is not null && !WatchedFields.Contains(pmdgDataFieldName))
             {
-                case ProfileCreatorModel.Pmdg737:
-                    _pmdg737Data = new B737.Data();
-                    Initialize(_pmdg737Data);
-                    RegisterB737DataAndEvents(simConnect);
-                    break;
-
-                case ProfileCreatorModel.Pmdg777:
-                    _pmdg777Data = new B777.Data();
-                    Initialize(_pmdg777Data);
-                    RegisterB777DataAndEvents(simConnect);
-                    break;
+                WatchedFields.Add(pmdgDataFieldName);
             }
+        }
+        
+        if (_initialized)
+        {
+            return;
+        }
+        
+        string? type = profileCreatorModel.InputCreators.FirstOrDefault(x => x.EventType is ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 && x.IsActive)?.EventType
+                       ?? profileCreatorModel.OutputCreators.FirstOrDefault(x => x.DataType is ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 && x.IsActive)?.DataType;
+
+        switch (type)
+        {
+            case ProfileCreatorModel.Pmdg737:
+                _pmdg737Data = new B737.Data();
+                Initialize(_pmdg737Data);
+                RegisterB737DataAndEvents(simConnect);
+                _initialized = true;
+                break;
+
+            case ProfileCreatorModel.Pmdg777:
+                _pmdg777Data = new B777.Data();
+                Initialize(_pmdg777Data);
+                RegisterB777DataAndEvents(simConnect);
+                _initialized = true;
+                break;
         }
     }
 
