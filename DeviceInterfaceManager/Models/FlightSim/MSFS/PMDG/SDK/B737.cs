@@ -622,9 +622,13 @@ public static class B737
     }
 
 
-    // Control Events
-    //---------------------------------------------------------
     // ReSharper disable InconsistentNaming
+    //////////////////////////////////////////////////////////////////
+    //
+    //  737NG3 EVENTS 
+    //
+    //////////////////////////////////////////////////////////////////
+
     private const int THIRD_PARTY_EVENT_ID_MIN = 0x00011000; // equals to 69632
     
     public enum Event
