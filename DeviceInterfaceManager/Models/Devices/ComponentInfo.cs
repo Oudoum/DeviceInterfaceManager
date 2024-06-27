@@ -27,6 +27,15 @@ public class ComponentInfo(int first, int last)
             component.IsSet = isSet;
         }
     }
+
+    public void UpdatePosition(int position, int value)
+    {
+        Component? component = Components.FirstOrDefault(c => c.Position == position);
+        if (component is not null)
+        {
+            component.Value = value;
+        }
+    }
     
     public async Task PerformOperationOnAllComponents(Func<string?, Task> operationOnElement)
     {
@@ -44,6 +53,10 @@ public partial class Component(int position) : ObservableObject
     [ObservableProperty]
     [property: JsonIgnore]
     private bool _isSet;
+    
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private int _value;
 
     public static IEnumerable<Component> GetComponents(int first, int last)
     {
