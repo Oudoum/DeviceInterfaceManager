@@ -80,7 +80,15 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
     {
         InputOutputDevice.SetSevenSegmentAsync(InputOutputDevice.SevenSegment.First.ToString(), new string(' ', InputOutputDevice.SevenSegment.Count));
     }
-    
+
+    [ObservableProperty]
+    private int _analogOutValue;
+
+    partial void OnAnalogOutValueChanged(int value)
+    {
+        InputOutputDevice.SetAnalogAsync(InputOutputDevice.AnalogOut.First.ToString(), value);
+    }
+
     [RelayCommand]
     private async Task IsChecked(Component component)
     {
