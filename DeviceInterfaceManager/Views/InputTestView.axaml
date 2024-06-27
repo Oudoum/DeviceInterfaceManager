@@ -6,13 +6,55 @@
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.InputTestView"
              x:DataType="vm:InputTestViewModel">
-    
+
     <Design.DataContext>
-        <vm:InputTestViewModel/>
+        <vm:InputTestViewModel />
     </Design.DataContext>
 
-    <Grid Margin="25">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="25"
+          RowDefinitions="* 9*">
+
+        <Grid.Styles>
+            <Style Selector="Border.border">
+                <Setter Property="BorderBrush" Value="DimGray" />
+                <Setter Property="BorderThickness" Value="3" />
+                <Setter Property="CornerRadius" Value="5" />
+                <Setter Property="Background" Value="Transparent" />
+            </Style>
+        </Grid.Styles>
+
+        <ItemsControl ItemsSource="{Binding InputOutputDevice.AnalogIn.Components}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"
+                               ItemHeight="80"
+                               ItemWidth="130" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Width="120">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock FontSize="22"
+                                       FontWeight="Bold"
+                                       Margin="15 5 15 5">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} => {1}">
+                                        <Binding Path="Position" />
+                                        <Binding Path="Value" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                        <Border Classes="border" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding InputOutputDevice.Switch.Components}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -34,14 +76,11 @@
                                           OffContent="{Binding Position}">
                                 <ToggleSwitch.Styles>
                                     <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
-                                        <Setter Property="Background" Value="LimeGreen"/>
+                                        <Setter Property="Background" Value="LimeGreen" />
                                     </Style>
                                 </ToggleSwitch.Styles>
                             </ToggleSwitch>
-                            <Border BorderBrush="DimGray"
-                                    BorderThickness="3"
-                                    CornerRadius="5"
-                                    Background="Transparent"/>
+                            <Border Classes="border" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
