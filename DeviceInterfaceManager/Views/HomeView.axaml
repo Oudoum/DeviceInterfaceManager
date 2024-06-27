@@ -20,7 +20,7 @@
                    VerticalAlignment="Center"
                    FontWeight="Bold"
                    FontSize="24" />
-        
+
         <Grid RowDefinitions="Auto *" ColumnDefinitions="Auto Auto" HorizontalAlignment="Center"
               IsVisible="{Binding !!InputOutputDevices.Count}">
 
@@ -59,6 +59,11 @@
                 </Button.Styles>
             </Button>
 
+            <!-- <StackPanel Grid.Row="0" Grid.Column="0"> -->
+            <!--     <Button Content="Start" Command="{Binding ConnectCommand}" /> -->
+            <!--     <Button Content="Send" Command="{Binding SendDataCommand}" /> -->
+            <!-- </StackPanel> -->
+
             <Border Grid.Column="0" Grid.Row="1"
                     IsEnabled="{Binding !IsStarted}"
                     Margin=" 0 25 25 0"
@@ -82,7 +87,10 @@
                               GridLinesVisibility="All"
                               AutoGenerateColumns="False">
                         <DataGrid.Styles>
-                            <Style Selector="DataGrid:focus DataGridCell:current /template/ Grid#FocusVisual">
+                            <Style Selector="DataGrid DataGridCell:current:focus /template/ Grid#FocusVisual">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                            <Style Selector="DataGrid DataGridCell:selected /template/ Grid#FocusVisual">
                                 <Setter Property="IsVisible" Value="False" />
                             </Style>
                             <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
@@ -155,6 +163,11 @@
                                                        Text="{Binding DeviceName}"
                                                        FontSize="10"
                                                        Margin="10 0 0 12" />
+                                            <StackPanel.Styles>
+                                                <Style Selector="StackPanel">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                </Style>
+                                            </StackPanel.Styles>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -170,6 +183,11 @@
                                             <TextBlock IsHitTestVisible="False"
                                                        Text="{Binding ProfileName}"
                                                        Margin="10 18 0 0" />
+                                            <StackPanel.Styles>
+                                                <Style Selector="StackPanel">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                </Style>
+                                            </StackPanel.Styles>
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -186,7 +204,14 @@
                 <Button Grid.Row="0"
                         Command="{Binding SaveMappingsCommand}"
                         HorizontalAlignment="Stretch">
-                    <PathIcon Data="{StaticResource ContentSaveOutline}" />
+                    <PathIcon Data="{StaticResource ContentSaveOutline}"
+                              Classes.unsaved="{Binding DeviceProfileListHasChanged}">
+                        <PathIcon.Styles>
+                            <Style Selector="PathIcon.unsaved">
+                                <Setter Property="Foreground" Value="Red" />
+                            </Style>
+                        </PathIcon.Styles>
+                    </PathIcon>
                 </Button>
                 <ToggleSwitch Grid.Row="1"
                               IsChecked="{Binding IsFiltered}"
