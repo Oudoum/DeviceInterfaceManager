@@ -37,7 +37,7 @@ public class Profile : IAsyncDisposable
 
         _simConnectClient.PmdgHelper.FieldChanged += PmdgHelperOnFieldChanged;
 
-        _inputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
+        _inputOutputDevice.SwitchPositionChanged += SwitchPositionChanged;
 
         foreach (string watchedField in _simConnectClient.PmdgHelper.WatchedFields)
         {
@@ -159,7 +159,7 @@ public class Profile : IAsyncDisposable
     private void PmdgHelperOnFieldChanged(object? sender, PmdgDataFieldChangedEventArgs e)
     {
         foreach (OutputCreator item in _profileCreatorModel.OutputCreators.Where(x =>
-                     (x is { DataType: ProfileCreatorModel.Pmdg737, IsActive: true, PmdgDataArrayIndex: not null } &&
+                     (x is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, IsActive: true, PmdgDataArrayIndex: not null } &&
                       x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName) ||
                      x.PmdgData == e.PmdgDataName))
         {
@@ -286,18 +286,27 @@ public class Profile : IAsyncDisposable
 
     private static bool CheckComparison(string? comparisonValue, char? charOperator, object? value)
     {
-        string? sValue = value switch
-        {
-            null => "0",
-            bool boolValue => boolValue ? "1" : "0",
-            _ => value.ToString()
-        };
         string? sComparisonValue = comparisonValue switch
         {
             not null when comparisonValue.Equals("true", System.StringComparison.CurrentCultureIgnoreCase) => "1",
             not null when comparisonValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
             _ => comparisonValue
         };
+        
+        string? sValue = value switch
+        {
+            null => string.Empty,
+            bool boolValue => boolValue ? "1" : "0",
+            _ => value.ToString()
+        };
+
+        sValue = sValue switch
+        {
+            not null when sValue.Equals("true", System.StringComparison.CurrentCultureIgnoreCase) => "1",
+            not null when sValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
+            _ => sValue
+        };
+        
         return CheckComparison(sComparisonValue, charOperator, sValue);
     }
 
@@ -494,7 +503,7 @@ public class Profile : IAsyncDisposable
         }
     }
 
-    private void InputOutputDeviceOnInputChanged(object? sender, InputChangedEventArgs e)
+    private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
         foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.Input?.Position == e.Position && x.IsActive))
         {
@@ -574,7 +583,7 @@ public class Profile : IAsyncDisposable
     {
         await _inputOutputDevice.ResetAllOutputsAsync();
 
-        _inputOutputDevice.InputChanged -= InputOutputDeviceOnInputChanged;
+        _inputOutputDevice.SwitchPositionChanged -= SwitchPositionChanged;
         _simConnectClient.OnSimVarChanged -= SimConnectClientOnOnSimVarChanged;
 
         GC.SuppressFinalize(this);
