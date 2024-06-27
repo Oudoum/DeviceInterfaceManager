@@ -9,9 +9,9 @@
              x:CompileBindings="True"
              x:Class="DeviceInterfaceManager.Views.OutputTestView"
              x:DataType="vm:OutputTestViewModel">
-    
+
     <Design.DataContext>
-        <vm:OutputTestViewModel/>
+        <vm:OutputTestViewModel />
     </Design.DataContext>
 
     <Viewbox>
@@ -25,16 +25,16 @@
                     <Setter Property="HorizontalAlignment" Value="Center" />
                 </Style>
                 <Style Selector="ComboBox">
-                    <Setter Property="FontSize" Value="18"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                    <Setter Property="HorizontalAlignment" Value="Center"/>
-                    <Setter Property="Width" Value="100"/>
+                    <Setter Property="FontSize" Value="18" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                    <Setter Property="Width" Value="100" />
                 </Style>
                 <Style Selector="ComboBox /template/ ItemsPresenter#PART_ItemsPresenter">
-                    <Setter Property="Width" Value="100"/>
+                    <Setter Property="Width" Value="100" />
                 </Style>
                 <Style Selector="TextBlock.tb1">
-                    <Setter Property="FontSize" Value="22"/>
+                    <Setter Property="FontSize" Value="22" />
                 </Style>
                 <Style Selector="PathIcon">
                     <Setter Property="Margin" Value="0 4 0 0" />
@@ -46,6 +46,7 @@
                 <Border Classes="b1"
                         IsVisible="{Binding !!InputOutputDevice.Dataline.Count}">
                     <StackPanel Orientation="Vertical"
+                                Width="150"
                                 Spacing="25"
                                 Margin="25">
                         <StackPanel Orientation="Horizontal"
@@ -76,6 +77,7 @@
                 <Border Classes="b1"
                         IsVisible="{Binding !!InputOutputDevice.SevenSegment.Count}">
                     <StackPanel Orientation="Vertical"
+                                Width="150"
                                 Spacing="25"
                                 Margin="25">
                         <StackPanel Orientation="Horizontal"
@@ -96,6 +98,26 @@
                             MinWidth="100"
                             Text="{Binding SevenSegmentText}"
                             FontWeight="Bold" />
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="b1"
+                        IsVisible="{Binding !!InputOutputDevice.AnalogOut.Count}">
+                    <StackPanel Orientation="Vertical"
+                                Spacing="25"
+                                Width="150"
+                                Margin="25">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="10">
+                            <PathIcon Data="{StaticResource  SineWave}" />
+                            <TextBlock Classes="tb1" Text="Analog" />
+                        </StackPanel>
+                        <Slider Value="{Binding AnalogOutValue}"
+                                Maximum="255"
+                                ToolTip.Tip="{Binding AnalogOutValue}"
+                                ToolTip.VerticalOffset="10"
+                                ToolTip.Placement="Top"/>
                     </StackPanel>
                 </Border>
 
