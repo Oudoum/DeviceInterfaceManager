@@ -14,11 +14,14 @@ namespace DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 
 public partial class InterfaceItData : IDeviceSerial
 {
-    public ComponentInfo Switch { get; private set; } = new(0,0);
-    public event EventHandler<InputChangedEventArgs>? InputChanged;
-    public ComponentInfo Led { get; private set; } = new(0,0);
-    public ComponentInfo Dataline { get; private set; } = new(0,0);
-    public ComponentInfo SevenSegment { get; private set; } = new(0,0);
+    public ComponentInfo Switch { get; private set; } = new(0, 0);
+    public ComponentInfo AnalogIn { get; private set; } = new(0, 0);
+    public event EventHandler<SwitchPositionChangedEventArgs>? SwitchPositionChanged;
+    public event EventHandler<AnalogInValueChangedEventArgs>? AnalogInValueChanged;
+    public ComponentInfo Led { get; private set; } = new(0, 0);
+    public ComponentInfo Dataline { get; private set; } = new(0, 0);
+    public ComponentInfo SevenSegment { get; private set; } = new(0, 0);
+    public ComponentInfo AnalogOut { get; private set; } = new(0, 0);
 
     public Task SetLedAsync(string? position, bool isEnabled)
     {
@@ -35,6 +38,16 @@ public partial class InterfaceItData : IDeviceSerial
     public Task SetSevenSegmentAsync(string? position, string data)
     {
         CheckError(interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position)));
+        return Task.CompletedTask;
+    }
+
+    public Task SetAnalogAsync(string? position, int value)
+    {
+        if (_features.HasFlag(Features.SpecialBrightness))
+        {
+            CheckError(interfaceIT_Brightness_Set(_session, value));
+        }
+        
         return Task.CompletedTask;
     }
 
@@ -70,10 +83,7 @@ public partial class InterfaceItData : IDeviceSerial
 
             interfaceIT_GetBoardInfo(_session, out BoardInfo boardInfo);
             InterfaceItBoardId boardId = GetInterfaceItBoardId(boardInfo.BoardType);
-            if (boardId != InterfaceItBoardId.FDS_A320_FCU &&
-                boardId != InterfaceItBoardId.JetMAX_737_MCP && 
-                boardId != InterfaceItBoardId.JetMAX_777_MCP &&
-                boardId != InterfaceItBoardId.IIT_HIO_128_256)
+            if (Switch.Count > 64)
             {
                 CheckError(interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64));
             }
@@ -82,10 +92,18 @@ public partial class InterfaceItData : IDeviceSerial
             DeviceName = boardId.ToString().Replace('_', ' ');
             _features = boardInfo.Features;
             Switch = new ComponentInfo(boardInfo.SwitchFirst, boardInfo.SwitchLast);
+            if (_features.HasFlag(Features.SpecialAnalogInput))
+            {
+                AnalogIn = new ComponentInfo(1, 1);
+            }
             Led = new ComponentInfo(boardInfo.LedFirst, boardInfo.LedLast);
             Dataline = new ComponentInfo(boardInfo.DatalineFirst, boardInfo.DatalineLast);
             SevenSegment = new ComponentInfo(boardInfo.SevenSegmentFirst, boardInfo.SevenSegmentLast);
-
+            if (_features.HasFlag(Features.SpecialBrightness))
+            {
+                AnalogOut = new ComponentInfo(1, 1);
+            }
+            
             EnableDeviceFeatures();
             _keyNotifyCallback = KeyPressedProc;
             CheckError(interfaceIT_Switch_Enable_Callback(_session, true, _keyNotifyCallback));
@@ -123,7 +141,7 @@ public partial class InterfaceItData : IDeviceSerial
     {
         bool isPressed = direction == (int)SwitchDirection.Down;
         Switch.UpdatePosition(key, isPressed);
-        InputChanged?.Invoke(this, new InputChangedEventArgs(key, isPressed));
+        SwitchPositionChanged?.Invoke(this, new SwitchPositionChangedEventArgs(key, isPressed));
     }
 
     //
@@ -196,7 +214,7 @@ public partial class InterfaceItData : IDeviceSerial
     private static partial ErrorCode interfaceIT_LED_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
 
     // [LibraryImport("interfaceITAPI x64.dll")]
-    // private static partial ErrorCodes interfaceIT_LED_Test(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
+    // private static partial ErrorCode interfaceIT_LED_Test(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
 
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCode interfaceIT_LED_Set(uint session, int led, [MarshalAs(UnmanagedType.Bool)] bool on);
@@ -244,15 +262,15 @@ public partial class InterfaceItData : IDeviceSerial
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCode interfaceIT_Analog_Enable(uint session, [MarshalAs(UnmanagedType.Bool)] bool enable);
 
+    [LibraryImport("interfaceITAPI x64.dll")]
+    private static partial ErrorCode interfaceIT_Analog_GetValue(uint session, int reserved, out int value);
+    
     // [LibraryImport("interfaceITAPI x64.dll")]
-    // private static partial ErrorCodes interfaceIT_Analog_GetValue(uint session, int reserved, out int pos);
-    //
-    // [LibraryImport("interfaceITAPI x64.dll")]
-    // private static partial ErrorCodes interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
+    // private static partial ErrorCode interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
     //
     // //Misc Functions
     // [LibraryImport("interfaceITAPI x64.dll")]
-    // private static partial ErrorCodes interfaceIT_GetAPIVersion(byte[]? buffer, ref uint bufferSize);
+    // private static partial ErrorCode interfaceIT_GetAPIVersion(byte[]? buffer, ref uint bufferSize);
     //
     //
     // private static string interfaceIT_GetAPIVersion()
@@ -265,7 +283,7 @@ public partial class InterfaceItData : IDeviceSerial
     // }
     //
     // [LibraryImport("interfaceITAPI x64.dll")]
-    // private static partial ErrorCodes interfaceIT_EnableLogging([MarshalAs(UnmanagedType.Bool)] bool enable);
+    // private static partial ErrorCode interfaceIT_EnableLogging([MarshalAs(UnmanagedType.Bool)] bool enable);
     
     private enum SwitchDirection : byte
     {
@@ -320,21 +338,21 @@ public partial class InterfaceItData : IDeviceSerial
         None = 0x00000000,
 
         InputSwitches = 0x00000001,
-        InputRc = 0x00000002,
-        InputSpi = 0x00000004,
-        InputDataLine = 0x00000008,
-        InputIic = 0x00000010,
+        InputReserved2 = 0x00000002,
+        InputReserved3 = 0x00000004,
+        InputReserved4 = 0x00000008,
+        InputReserved5 = 0x00000010,
         InputReserved6 = 0x00000020,
         InputReserved7 = 0x00000040,
         InputReserved8 = 0x00000080,
 
         OutputLed = 0x00000100,
-        OutputLcd = 0x00000200,
+        OutputReserved11 = 0x00000200,
         Output7Segment = 0x00000400,
-        OutputSpi = 0x00000800,
-        OutputIic = 0x00001000,
+        OutputReserved12 = 0x00000800,
+        OutputReserved13 = 0x00001000,
         OutputDataLine = 0x00002000,
-        OutputServo = 0x00004000,
+        OutputReserved15 = 0x00004000,
         OutputReserved16 = 0x00008000,
 
         SpecialBrightness = 0x00010000,
@@ -361,11 +379,7 @@ public partial class InterfaceItData : IDeviceSerial
         public readonly int DatalineFirst;
         public readonly int DatalineLast;
 
-        public readonly int ServoControllerCount;
-        public readonly int ServoControllerFirst;
-        public readonly int ServoControllerLast;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 9)]
         public readonly int[] Reserved;
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 5)]
@@ -389,6 +403,8 @@ public partial class InterfaceItData : IDeviceSerial
         if (HasFeature(Features.SpecialBrightness))
         {
             CheckError(interfaceIT_Brightness_Enable(_session, true));
+            _cancellationTokenSource = new CancellationTokenSource();
+            Task.Run(() => GetAnalogValueAsync(_cancellationTokenSource.Token));
         }
 
         if (HasFeature(Features.OutputDataLine))
@@ -405,6 +421,20 @@ public partial class InterfaceItData : IDeviceSerial
         {
             CheckError(interfaceIT_LED_Enable(_session, true));
         }
+    }
+
+    private CancellationTokenSource? _cancellationTokenSource;
+
+    private async Task GetAnalogValueAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            CheckError(interfaceIT_Analog_GetValue(_session, 0, out int value));
+            AnalogIn.UpdatePosition(AnalogIn.First, value);
+            AnalogInValueChanged?.Invoke(this, new AnalogInValueChangedEventArgs(AnalogIn.First, value));
+            await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+        }
+        // ReSharper disable once FunctionNeverReturns
     }
 
     private void DisableDeviceFeatures()
@@ -452,6 +482,7 @@ public partial class InterfaceItData : IDeviceSerial
 
         if (HasFeature(Features.SpecialAnalogInput) || HasFeature(Features.SpecialAnalog16Input))
         {
+            _cancellationTokenSource?.Cancel();
             CheckError(interfaceIT_Analog_Enable(_session, false));
         }
     }
