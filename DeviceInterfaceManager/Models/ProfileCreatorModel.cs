@@ -31,11 +31,13 @@ public partial class ProfileCreatorModel : ObservableObject
 
     //Inputs
     public const string Switch = "Switch";
+    public const string AnalogIn = "AnalogIn";
 
     //Outputs
     public const string Led = "LED";
     public const string SevenSegment = "7 Segment";
     public const string Dataline = "Dataline";
+    public const string AnalogOut = "AnalogOut";
 
     [ObservableProperty]
     private string? _profileName;
@@ -43,7 +45,8 @@ public partial class ProfileCreatorModel : ObservableObject
     [ObservableProperty]
     private string? _description;
 
-    public string? DeviceName { get; set; }
+	[ObservableProperty]
+    private string? _deviceName;
 
     [ObservableProperty]
     private ObservableCollection<InputCreator> _inputCreators = [];
