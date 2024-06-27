@@ -37,7 +37,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             SearchPmdgEvent = GetPmdgEventName();
         }
 
-        InputOutputDevice.InputChanged += InputOutputDeviceOnInputChanged;
+        InputOutputDevice.SwitchPositionChanged += SwitchPositionOutputDeviceOnSwitchPositionChanged;
     }
 
 #if DEBUG
@@ -58,12 +58,12 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     public void OnClosed()
     {
-        InputOutputDevice.InputChanged -= InputOutputDeviceOnInputChanged;
+        InputOutputDevice.SwitchPositionChanged -= SwitchPositionOutputDeviceOnSwitchPositionChanged;
     }
 
     private int _currentPosition;
 
-    private void InputOutputDeviceOnInputChanged(object? sender, InputChangedEventArgs e)
+    private void SwitchPositionOutputDeviceOnSwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
         if (e.IsPressed)
         {
