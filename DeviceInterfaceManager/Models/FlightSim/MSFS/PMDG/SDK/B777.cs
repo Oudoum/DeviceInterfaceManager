@@ -1,13 +1,12 @@
 //------------------------------------------------------------------------------
 //
-//  PMDG 777X external connection SDK
-//  Copyright (c) 2013 Precision Manuals Development Group
+//  PMDG 777 external connection SDK
+//  Copyright (c) 2024 Precision Manuals Development Group
 //
 //  Converted from unmanaged to managed code by Oudoum
 // 
 //------------------------------------------------------------------------------
 
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
@@ -37,87 +36,16 @@ public static class B777
         Cdu1 = 0x4E477839,
         Cdu2 = 0x4E47783A
     }
-
-    public static void SetMcp(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "MCP_Altitude" when value[0] != '0':
-                value.Insert(0, " ", 5 - value.Length);
-                return;
-
-            case "MCP_Altitude" when value[0] == '0':
-                value.Insert(0, " 000");
-                return;
-
-            case "MCP_VertSpeed" when value[0] == '0' || value.ToString() == "-16960":
-                value.Clear();
-                value.Append(' ', 5);
-                return;
-
-            case "FMC_LandingAltitude" when value.ToString() == "-32767":
-                value.Clear();
-                value.Append(' ', 5);
-                return;
-
-            case "ADF_StandbyFrequency":
-                value.Insert(value.Length - 1, ".");
-                value.Insert(0, " ", 6 - value.Length);
-                return;
-        }
-
-        if (name != "MCP_VertSpeed" || !int.TryParse(value.ToString(), out int intValue))
-        {
-            return;
-        }
-
-        switch (intValue)
-        {
-            case < 0:
-                value.Clear();
-                value.Append('-');
-                value.Append($"{intValue.ToString("D3").TrimStart('-'),4}");
-                break;
-
-            case > 0:
-                value.Clear();
-                value.Append('+');
-                value.Append($"{intValue.ToString("D3"),4}");
-                break;
-        }
-    }
-
-    public static void SetIrsDisplay(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "IRS_DisplayLeft" when value.Length > 0 && value[0] == 'w':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayLeft":
-                value.Append(' ', 6 - value.Length);
-                break;
-
-            case "IRS_DisplayRight" when value.Length > 0 && value[0] == 'n':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayRight":
-                value.Append(' ', 7 - value.Length);
-                break;
-        }
-    }
     
-    // NOTE - add these lines to the 777X_Options.ini file: 
+    // NOTE - add these lines to the 777_Options.ini file: 
     //
     //[SDK]
     //EnableDataBroadcast=1
     //
-    // to enable the aircraft data sending from the 777X.
+    // to enable the aircraft data sending from the 777.
     //
     //
-    // Add any of these lines to the [SDK] section of the 777X_Options.ini file: 
+    // Add any of these lines to the [SDK] section of the 777_Options.ini file: 
     //
     //EnableCDUBroadcast.0=1 
     //EnableCDUBroadcast.1=1 
@@ -126,7 +54,7 @@ public static class B777
     // to enable the contents of the corresponding CDU screen to be sent to external programs.
 
 
-    // 777X data structure
+    // 777 data structure
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct Data
     {
@@ -143,12 +71,14 @@ public static class B777
         // Standby Power
         public byte ELEC_StandbyPowerSw;              // 0: OFF  1: AUTO  2: BAT
 
-        // Flight Controls Hydraulic Valve Power			
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_WingHydValve_Sw_SHUT_OFF;  // left/right/center	
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_TailHydValve_Sw_SHUT_OFF;  // left/right/center	
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_annunTailHydVALVE_CLOSED;  // left/right/center	
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_annunWingHydVALVE_CLOSED;  // left/right/center	
-
+        // Flight Controls			
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_WingHydValve_Sw_SHUT_OFF; // left/right/center	
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_TailHydValve_Sw_SHUT_OFF; // left/right/center	
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_annunTailHydVALVE_CLOSED; // left/right/center	
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 3)] public bool[] FCTL_annunWingHydVALVE_CLOSED; // left/right/center	
+        [MarshalAs(UnmanagedType.I1)] public bool FCTL_PrimFltComputersSw_AUTO;                                                            // true: AUTO  false: DISC
+        [MarshalAs(UnmanagedType.I1)] public bool FCTL_annunPrimFltComputersDISC;
+        
         // APU MAINT
         [MarshalAs(UnmanagedType.I1)] public bool APU_Power_Sw_TEST;
 
@@ -160,8 +90,11 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunTowingPowerON_BATT;
 
         // CARGO TEMP SELECTORS
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] AIR_CargoTemp_Selector;            // aft / bulk  0=OFF  1=LOW  2=HIGH   AFT/BULK
-
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] AIR_CargoTemp_Selector; // aft / bulk  0=OFF  1=LOW  2=HIGH   AFT/BULK
+        public byte AIR_CargoTemp_MainDeckFwd_Sel;                                                 // 0: C ... 60: W
+        public byte AIR_CargoTemp_MainDeckAft_Sel;                                                 // 0: C ... 60: W
+        public byte AIR_CargoTemp_LowerFwd_Sel;                                                    // 0: C ... 60: W
+        public byte AIR_CargoTemp_LowerAft_Sel;                                                    // 0: C ... 60: W  67: HEAT H  70: HEAT OFF  73: HEAT L
 
         // Overhead Panel
         //------------------------------------------
@@ -181,6 +114,8 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_IFEPassSeatsSw;
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunIFEPassSeatsOFF;
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_Battery_Sw_ON;
+        [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunBattery_OFF;
+        [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunAPU_GEN_OFF;
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_APUGen_Sw_ON;
         public byte ELEC_APU_Selector;                    // 0: OFF  1: ON  2: START	
         [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunAPU_FAULT;
@@ -231,14 +166,14 @@ public static class B777
         public byte SIGNS_SeatBeltsSelector;          // 0: OFF  1: AUTO   2: ON
 
         // Flight Deck Lights
-        public byte LTS_DomeLightKnob;                    // Position 0...150
-        public byte LTS_CircuitBreakerKnob;               // Position 0...150
-        public byte LTS_OvereadPanelKnob;             // Position 0...150
-        public byte LTS_GlareshieldPNLlKnob;          // Position 0...150
-        public byte LTS_GlareshieldFLOODKnob;         // Position 0...150
+        public byte LTS_DomeLightKnob;                    // Position 0...100
+        public byte LTS_CircuitBreakerKnob;               // Position 0...100
+        public byte LTS_OvereadPanelKnob;             // Position 0...100
+        public byte LTS_GlareshieldPNLlKnob;          // Position 0...100
+        public byte LTS_GlareshieldFLOODKnob;         // Position 0...100
         [MarshalAs(UnmanagedType.I1)] public bool LTS_Storm_Sw_ON;
         [MarshalAs(UnmanagedType.I1)] public bool LTS_MasterBright_Sw_ON;
-        public byte LTS_MasterBrigntKnob;             // Position 0...150
+        public byte LTS_MasterBrigntKnob;             // Position 0...100
         public byte LTS_IndLightsTestSw;              // 0: TEST  1: BRT  2: DIM
 
         // Exterior Lights
@@ -251,7 +186,7 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool LTS_Taxi_Sw_ON;
         [MarshalAs(UnmanagedType.I1)] public bool LTS_Strobe_Sw_ON;
 
-        // APU and Cargo Fire
+        // Engine, APU and Cargo Fire
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_CargoFire_Sw_Arm;          // FWD/AFT
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_annunCargoFire;                // FWD/AFT
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_CargoFireDisch_Sw;                // MOMENTARY SWITCH
@@ -260,6 +195,12 @@ public static class B777
         public byte FIRE_APUHandle;                       // 0: IN (NORMAL)  1: PULLED OUT  2: TURNED LEFT  3: TURNED RIGHT  (2 & 3 ane momnentary positions)
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleUnlock_Sw;           // MOMENTARY SWITCH resets when handle pulled
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunAPU_BTL_DISCH;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleIlluminated;
+        [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleIlluminated;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleIsUnlocked;
+        [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleIsUnlocked;
+        [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunMainDeckCargoFire;
+        [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunCargoDEPR;               // DEPR light in DEPR/DISCH guarded switch
 
         // Engine
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] ENG_EECMode_Sw_NORM;                // left / right
@@ -302,6 +243,9 @@ public static class B777
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] AIR_annunPackOFF;
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] AIR_annunTrimAirFAULT;
         [MarshalAs(UnmanagedType.I1)] public bool AIR_annunEquipCoolingOVRD;
+        [MarshalAs(UnmanagedType.I1)] public bool AIR_AltnVentSw_ON;
+        [MarshalAs(UnmanagedType.I1)] public bool AIR_annunAltnVentFAULT;
+        [MarshalAs(UnmanagedType.I1)] public bool AIR_MainDeckFlowSw_NORM;           // M/D FLOW  true: NORM  false: HIGH
 
         // Bleed Air
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] AIR_EngBleedAir_Sw_AUTO;            // left engine / right engine
@@ -333,6 +277,7 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_FlapInhibitSw_OVRD;
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_GearInhibitSw_OVRD;
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_TerrInhibitSw_OVRD;
+        [MarshalAs(UnmanagedType.I1)] public bool GPWS_RunwayOvrdSw_OVRD;
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_GSInhibit_Sw;
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_annunGND_PROX_top;
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_annunGND_PROX_bottom;
@@ -364,17 +309,17 @@ public static class B777
         public byte DSP_InbdDspl_R_Selector;          //0: EICAS  1: MFD   2: ND  3: PFD
 
         // Left & Right Sidewalls
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] AIR_ShoulderHeaterKnob;            // Left / Right  Position 0...150
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] AIR_ShoulderHeaterKnob;            // Left / Right  Position 0...100
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] AIR_FootHeaterSelector;            // Left / Right  0: OFF  1: LOW  2: HIGH
-        public byte LTS_LeftFwdPanelPNLKnob;          // Position 0...150
-        public byte LTS_LeftFwdPanelFLOODKnob;            // Position 0...150
-        public byte LTS_LeftOutbdDsplBRIGHTNESSKnob;  // Position 0...150
-        public byte LTS_LeftInbdDsplBRIGHTNESSKnob;       // Position 0...150
+        public byte LTS_LeftFwdPanelPNLKnob;          // Position 0...100
+        public byte LTS_LeftFwdPanelFLOODKnob;            // Position 0...100
+        public byte LTS_LeftOutbdDsplBRIGHTNESSKnob;  // Position 0...100
+        public byte LTS_LeftInbdDsplBRIGHTNESSKnob;       // Position 0...100
 
-        public byte LTS_RightFwdPanelPNLKnob;         // Position 0...150
-        public byte LTS_RightFwdPanelFLOODKnob;           // Position 0...150	
-        public byte LTS_RightInbdDsplBRIGHTNESSKnob;  // Position 0...150
-        public byte LTS_RightOutbdDsplBRIGHTNESSKnob; // Position 0...150
+        public byte LTS_RightFwdPanelPNLKnob;         // Position 0...100
+        public byte LTS_RightFwdPanelFLOODKnob;           // Position 0...100	
+        public byte LTS_RightInbdDsplBRIGHTNESSKnob;  // Position 0...100
+        public byte LTS_RightOutbdDsplBRIGHTNESSKnob; // Position 0...100
 
 
         // Chronometers (Left / Right)
@@ -497,8 +442,8 @@ public static class B777
         //------------------------------------------
 
         [MarshalAs(UnmanagedType.I1)] public bool ISP_DsplCtrl_C_Sw_Altn;
-        public byte LTS_UpperDsplBRIGHTNESSKnob;      // Position 0...150
-        public byte LTS_LowerDsplBRIGHTNESSKnob;      // Position 0...150
+        public byte LTS_UpperDsplBRIGHTNESSKnob;      // Position 0...100
+        public byte LTS_LowerDsplBRIGHTNESSKnob;      // Position 0...100
         [MarshalAs(UnmanagedType.I1)] public bool EICAS_EventRcd_Sw_Pushed;          // MOMENTARY action		
 
         // CDU (Left/Right/Center)
@@ -529,7 +474,7 @@ public static class B777
 
         // Audio Control Panels								// Comm Systems: 0=VHFL 1=VHFC 2=VHFR 3=FLT 4=CAB 5=PA 6=HFL 7=HFR 8=SAT1 9=SAT2 10=SPKR 11=VOR/ADF 12=APP
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public byte[] COMM_SelectedMic;              // array: 0=capt, 1=F/O, 2=observer  values: 0..9 (VHF..SAT2) as listed above; -1 if no MIC is selected
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public byte[] obsolete_COMM_ReceiverSwitches;    // Use COMM_ReceiverSwitches[3] instead. 
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public ushort[] COMM_ReceiverSwitches;            // array: 0=capt, 1=F/O, 2=observer.  Bit mask for selected receivers with bits indicating: 0=VHFL 1=VHFC 2=VHFR 3=FLT 4=CAB 5=PA 6=HFL 7=HFR 8=SAT1 9=SAT2 10=SPKR 11=VOR/ADF 12=APP
         public byte COMM_OBSAudio_Selector;               // 0: CAPT  1: NORMAL  2: F/O
 
         // Radio Control Panels								// arrays: 0=capt, 1=F/O, 2=observer
@@ -562,8 +507,8 @@ public static class B777
 
 
         // Aisle Stand PNL/FLOOD & Floor lights
-        public byte LTS_AisleStandPNLKnob;                // Position 0...150
-        public byte LTS_AisleStandFLOODKnob;          // Position 0...150
+        public byte LTS_AisleStandPNLKnob;                // Position 0...100
+        public byte LTS_AisleStandFLOODKnob;          // Position 0...100
         public byte LTS_FloorLightsSw;                    // 0: BRT  1: OFF  2: DIM
 
 
@@ -587,7 +532,8 @@ public static class B777
         // 14: Avionics Access,
         // 15: EE Access
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] DOOR_state;
-
+        [MarshalAs(UnmanagedType.I1)] public bool DOOR_CockpitDoorOpen;
+        
         // Additional variables
         //------------------------------------------
 
@@ -598,53 +544,96 @@ public static class B777
         public float FUEL_QtyRight;                        // LBS
         public float FUEL_QtyAux;                      // LBS
         [MarshalAs(UnmanagedType.I1)] public bool IRS_aligned;                       // at least one IRU is aligned
+        
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] EFIS_BaroMinimumsSet;			// left/right control panel. Note: check EFIS_MinsSelBARO[2] to determine if the active minimums is BARO or RADIO
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public int[] EFIS_BaroMinimums;
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] EFIS_RadioMinimumsSet;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public int[] EFIS_RadioMinimums;
+
+        // Display formats selected on the display units
+        // Values are:
+        // 	0:	Off,
+        // 	1:	Blank,
+        // 	2:	PFD,
+        // 	3:	ND,
+        // 	4:	EICAS,
+        // 	5:	ENG,
+        // 	6:	STAT,
+        // 	7:	CHKL,
+        // 	8:	COMM,
+        // 	9:	CAM,
+        // 10:	ELEC,
+        // 11:	HYD,
+        // 12:	FUEL,
+        // 13:	AIR,
+        // 14:	DOOR,
+        // 15:	GEAR,
+        // 16:	FCTL
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)] public byte[] EFIS_Display;					// Display units:  0: Capt outboard, 1: Capt inboard, 2: Upper, 3: Lower, 4: FO Inboard, 5: FO Outboard
+        
         public byte AircraftModel;                        // 1: -200  2: -200ER  3: -300  4: -200LR  5: 777F  6: -300ER
         [MarshalAs(UnmanagedType.I1)] public bool WeightInKg;                            // false: LBS  true: KG
         [MarshalAs(UnmanagedType.I1)] public bool GPWS_V1CallEnabled;                    // GPWS V1 call-out option enabled
         [MarshalAs(UnmanagedType.I1)] public bool GroundConnAvailable;               // can connect/disconnect ground air/electrics
 
-        public byte FMC_TakeoffFlaps;                 // degrees, 0 if not set
-        public byte FMC_V1;                               // knots, 0 if not set
-        public byte FMC_VR;                               // knots, 0 if not set
-        public byte FMC_V2;                               // knots, 0 if not set
-        public byte FMC_LandingFlaps;                 // degrees, 0 if not set
-        public byte FMC_LandingVREF;                  // knots, 0 if not set
-        public ushort FMC_CruiseAlt;                       // ft, 0 if not set
-        public short FMC_LandingAltitude;              // ft; -32767 if not available
-        public ushort FMC_TransitionAlt;                   // ft
-        public ushort FMC_TransitionLevel;             // ft
+        public byte FMC_TakeoffFlaps;        // degrees, 0 if not set
+        public byte FMC_V1;                  // knots, 0 if not set
+        public byte FMC_VR;                  // knots, 0 if not set
+        public byte FMC_V2;                  // knots, 0 if not set
+        public ushort FMC_ThrustRedAlt;      // 1: FLAPS 1,  5: FLAPS 5,  otherwise altitude in ft
+        public ushort FMC_AccelerationAlt;   // ft
+        public ushort FMC_EOAccelerationAlt; // ft
+        public byte FMC_LandingFlaps;        // degrees, 0 if not set
+        public byte FMC_LandingVREF;         // knots, 0 if not set
+        public ushort FMC_CruiseAlt;         // ft, 0 if not set
+        public short FMC_LandingAltitude;    // ft; -32767 if not available
+        public ushort FMC_TransitionAlt;     // ft
+        public ushort FMC_TransitionLevel;   // ft
         [MarshalAs(UnmanagedType.I1)] public bool FMC_PerfInputComplete;
         public float FMC_DistanceToTOD;                    // nm; 0.0 if passed, negative if n/a
         public float FMC_DistanceToDest;                   // nm; negative if n/a
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 9)] public string FMC_flightNumber;
-
-        // More additional variables
-        //------------------------------------------
-        [MarshalAs(UnmanagedType.I1)] public bool AIR_AltnVentSw_ON;
-        [MarshalAs(UnmanagedType.I1)] public bool AIR_annunAltnVentFAULT;
-        public byte AIR_CargoTemp_MainDeckFwd_Sel;        // 0: C ... 60: W
-        public byte AIR_CargoTemp_MainDeckAft_Sel;        // 0: C ... 60: W
-        public byte AIR_CargoTemp_LowerFwd_Sel;           // 0: C ... 60: W
-        public byte AIR_CargoTemp_LowerAft_Sel;           // 0: C ... 60: W  67: HEAT H  70: HEAT OFF  73: HEAT L
-        [MarshalAs(UnmanagedType.I1)] public bool AIR_MainDeckFlowSw_NORM;           // M/D FLOW  true: NORM  false: HIGH
-        [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunAPU_GEN_OFF;
-        [MarshalAs(UnmanagedType.I1)] public bool ELEC_annunBattery_OFF;
-        [MarshalAs(UnmanagedType.I1)] public bool FCTL_PrimFltComputersSw_AUTO;      // true: AUTO  false: DISC
-        [MarshalAs(UnmanagedType.I1)] public bool FCTL_annunPrimFltComputersDISC;
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleIlluminated;
-        [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleIlluminated;
-        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleIsUnlocked;
-        [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleIsUnlocked;
-        [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunMainDeckCargoFire;
-        [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunCargoDEPR;               // DEPR light in DEPR/DISCH guarded switch
-        [MarshalAs(UnmanagedType.I1)] public bool GPWS_RunwayOvrdSw_OVRD;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public ushort[] COMM_ReceiverSwitches;            // array: 0=capt, 1=F/O, 2=observer.  Bit mask for selected receivers with bits indicating: 0=VHFL 1=VHFC 2=VHFR 3=FLT 4=CAB 5=PA 6=HFL 7=HFR 8=SAT1 9=SAT2 10=SPKR 11=VOR/ADF 12=APP
-
         [MarshalAs(UnmanagedType.I1)] public bool WheelChocksSet;
         [MarshalAs(UnmanagedType.I1)] public bool APURunning;
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 168)] public byte[] reserved;
+        // FMC thrust limit mode
+        // Values are:
+        //  0:  TO,
+        //  1:  TO 1,
+        //  2:  TO 2,
+        //  3:  TO B,
+        //  4:  CLB,
+        //  5:  CLB 1,
+        //  6:  CLB 2,
+        //  7:  CRZ,
+        //  8:  CON,
+        //  9:  G/A,
+        // 10:  D-TO,
+        // 11:  D-TO 1,
+        // 12:  D-TO 2,
+        // 13:  A-TO,
+        // 14:  A-TO 1,
+        // 15:  A-TO 2,
+        // 16:  A-TO B
+        public byte FMC_ThrustLimitMode;
+
+        // Normal checklist completion status
+        // Array elements are:
+        // 	0:  PREFLIGHT,
+        // 	1:  BEFORE_START,
+        // 	2:  BEFORE_TAXI,
+        // 	3:  BEFORE_TAKEOFF,
+        // 	4:  AFTER_TAKEOFF,
+        // 	5:  DESCENT,
+        // 	6:  APPROACH,
+        // 	7:  LANDING,
+        // 	8:  SHUTDOWN,
+        // 	9:  SECURE
+
+        [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 10)] public bool[] ECL_ChecklistComplete;
+
+        
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 84)] public byte[] reserved;
     }
 
 
@@ -655,20 +644,12 @@ public static class B777
     }
     
     
-    // Control Events
-    //---------------------------------------------------------
     // ReSharper disable InconsistentNaming
-    
-    // 777X EFB Screen Dimensions
-    public const int EFB_SCREEN_WIDTH = 512;
-    public const int EFB_SCREEN_HEIGHT = 645;
-    public const int EFB_SCREEN_BUFF_SIZE = EFB_SCREEN_WIDTH * EFB_SCREEN_HEIGHT * 2;
-    
-    // 777X EFB Screen Mapping 
-    public const string EFB_L_SCREEN_CONTENTS = "Global\\PMDG_EFB_L_CONTENTS";
-    public const string EFB_R_SCREEN_CONTENTS = "Global\\PMDG_EFB_R_CONTENTS";
-    public const string EFB_L_OUTPUTCHANGED_EVENT = "Global\\PMDG_EFB_L_OUTPUTCHANGED_EVENT";
-    public const string EFB_R_OUTPUTCHANGED_EVENT = "Global\\PMDG_EFB_R_OUTPUTCHANGED_EVENT";
+    //////////////////////////////////////////////////////////////////
+    //
+    //  777 EVENTS 
+    //
+    //////////////////////////////////////////////////////////////////
     
     private const int THIRD_PARTY_EVENT_ID_MIN = 0x00011000; // equals to 69632
     private const int EVT_EFB_L_START = THIRD_PARTY_EVENT_ID_MIN + 1700;
@@ -721,7 +702,7 @@ public static class B777
         EVT_OH_FUEL_JETTISON_NOZZLE_R = THIRD_PARTY_EVENT_ID_MIN + 99,
         EVT_OH_FUEL_JETTISON_NOZZLE_R_GUARD = THIRD_PARTY_EVENT_ID_MIN + 100,
         EVT_OH_FUEL_TO_REMAIN_ROTATE = THIRD_PARTY_EVENT_ID_MIN + 101,
-        EVT_OH_FUEL_TO_REMAIN_PULL = THIRD_PARTY_EVENT_ID_MIN + 10100, // 101B	
+        EVT_OH_FUEL_TO_REMAIN_PULL = THIRD_PARTY_EVENT_ID_MIN + 1011,	
         EVT_OH_FUEL_JETTISON_ARM = THIRD_PARTY_EVENT_ID_MIN + 102,
         EVT_OH_FUEL_PUMP_1_FORWARD = THIRD_PARTY_EVENT_ID_MIN + 103,
         EVT_OH_FUEL_PUMP_2_FORWARD = THIRD_PARTY_EVENT_ID_MIN + 104,
@@ -766,8 +747,9 @@ public static class B777
         // Overhead - Cabin Press
         EVT_OH_PRESS_VALVE_SWITCH_MANUAL_1 = THIRD_PARTY_EVENT_ID_MIN + 124,
         EVT_OH_PRESS_VALVE_SWITCH_MANUAL_2 = THIRD_PARTY_EVENT_ID_MIN + 125,
+        EVT_OH_PRESS_VALVE_SWITCHES_MANUAL = THIRD_PARTY_EVENT_ID_MIN + 1251,
         EVT_OH_PRESS_LAND_ALT_KNOB_ROTATE = THIRD_PARTY_EVENT_ID_MIN + 126,
-        EVT_OH_PRESS_LAND_ALT_KNOB_PULL = THIRD_PARTY_EVENT_ID_MIN + 12600, // 126B
+        EVT_OH_PRESS_LAND_ALT_KNOB_PULL = THIRD_PARTY_EVENT_ID_MIN + 1261,
         EVT_OH_PRESS_VALVE_SWITCH_1 = THIRD_PARTY_EVENT_ID_MIN + 127,
         EVT_OH_PRESS_VALVE_SWITCH_2 = THIRD_PARTY_EVENT_ID_MIN + 128,
 
@@ -788,6 +770,7 @@ public static class B777
         EVT_OH_LIGHTS_LANDING_L = THIRD_PARTY_EVENT_ID_MIN + 22,
         EVT_OH_LIGHTS_LANDING_NOSE = THIRD_PARTY_EVENT_ID_MIN + 23,
         EVT_OH_LIGHTS_LANDING_R = THIRD_PARTY_EVENT_ID_MIN + 24,
+        EVT_OH_LIGHTS_LANDING_LNR = THIRD_PARTY_EVENT_ID_MIN + 2341,
         EVT_OH_LIGHTS_STORM = THIRD_PARTY_EVENT_ID_MIN + 27,
         EVT_OH_LIGHTS_BEACON = THIRD_PARTY_EVENT_ID_MIN + 114,
         EVT_OH_LIGHTS_NAV = THIRD_PARTY_EVENT_ID_MIN + 115,
@@ -796,6 +779,7 @@ public static class B777
         EVT_OH_LIGHTS_IND_LTS_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 118,
         EVT_OH_LIGHTS_L_TURNOFF = THIRD_PARTY_EVENT_ID_MIN + 119,
         EVT_OH_LIGHTS_R_TURNOFF = THIRD_PARTY_EVENT_ID_MIN + 120,
+        EVT_OH_LIGHTS_LR_TURNOFF = THIRD_PARTY_EVENT_ID_MIN + 1201,
         EVT_OH_LIGHTS_TAXI = THIRD_PARTY_EVENT_ID_MIN + 121,
         EVT_OH_LIGHTS_STROBE = THIRD_PARTY_EVENT_ID_MIN + 122,
         EVT_OH_NO_SMOKING_LIGHT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 29,
@@ -912,20 +896,20 @@ public static class B777
         EVT_ISFD_BARO_PUSH = THIRD_PARTY_EVENT_ID_MIN + 816,
 
         // Forward Panel - non-ISFD standby instruments
-        EVT_STANDBY_ASI_KNOB = THIRD_PARTY_EVENT_ID_MIN + 1058,
-        EVT_STANDBY_ASI_KNOB_PUSH = THIRD_PARTY_EVENT_ID_MIN + 1059,
-        EVT_STANDBY_ALTIMETER_KNOB = THIRD_PARTY_EVENT_ID_MIN + 1060,
-        EVT_STANDBY_ALTIMETER_KNOB_PUSH = THIRD_PARTY_EVENT_ID_MIN + 1061,
+        EVT_STANDBY_ASI_KNOB = THIRD_PARTY_EVENT_ID_MIN + 308,
+        EVT_STANDBY_ASI_KNOB_PUSH = THIRD_PARTY_EVENT_ID_MIN + 3080,
+        EVT_STANDBY_ALTIMETER_KNOB = THIRD_PARTY_EVENT_ID_MIN + 311,
+        EVT_STANDBY_ALTIMETER_KNOB_PUSH = THIRD_PARTY_EVENT_ID_MIN + 3110,
 
         // Forward Panel - Chronometers
         EVT_CHRONO_L_CHR = THIRD_PARTY_EVENT_ID_MIN + 171,
         EVT_CHRONO_L_TIME_DATE_SELECT = THIRD_PARTY_EVENT_ID_MIN + 172,
-        EVT_CHRONO_L_TIME_DATE_PUSH = THIRD_PARTY_EVENT_ID_MIN + 175,
+        EVT_CHRONO_L_TIME_DATE_PUSH = THIRD_PARTY_EVENT_ID_MIN + 1721,
         EVT_CHRONO_L_ET = THIRD_PARTY_EVENT_ID_MIN + 173,
         EVT_CHRONO_L_SET = THIRD_PARTY_EVENT_ID_MIN + 174,
         EVT_CHRONO_R_CHR = THIRD_PARTY_EVENT_ID_MIN + 279,
         EVT_CHRONO_R_TIME_DATE_SELECT = THIRD_PARTY_EVENT_ID_MIN + 280,
-        EVT_CHRONO_R_TIME_DATE_PUSH = THIRD_PARTY_EVENT_ID_MIN + 2802, // 2801 is in use	
+        EVT_CHRONO_R_TIME_DATE_PUSH = THIRD_PARTY_EVENT_ID_MIN + 2802,
         EVT_CHRONO_R_ET = THIRD_PARTY_EVENT_ID_MIN + 281,
         EVT_CHRONO_R_SET = THIRD_PARTY_EVENT_ID_MIN + 282,
 
@@ -1059,26 +1043,24 @@ public static class B777
         EVT_DATA_LINK_ACPT_LEFT = THIRD_PARTY_EVENT_ID_MIN + 178,
         EVT_DATA_LINK_CANC_LEFT = THIRD_PARTY_EVENT_ID_MIN + 179,
         EVT_DATA_LINK_RJCT_LEFT = THIRD_PARTY_EVENT_ID_MIN + 180,
-        EVT_PVD_DIMMER_L = THIRD_PARTY_EVENT_ID_MIN + 5141,
-        EVT_PVD_ON_OFF_L = THIRD_PARTY_EVENT_ID_MIN + 10514,
         EVT_DATA_LINK_ACPT_RIGHT = THIRD_PARTY_EVENT_ID_MIN + 269,
         EVT_DATA_LINK_CANC_RIGHT = THIRD_PARTY_EVENT_ID_MIN + 270,
         EVT_DATA_LINK_RJCT_RIGHT = THIRD_PARTY_EVENT_ID_MIN + 271,
-        EVT_PVD_DIMMER_R = THIRD_PARTY_EVENT_ID_MIN + 6141,
-        EVT_PVD_ON_OFF_R = THIRD_PARTY_EVENT_ID_MIN + 10614,
 
 
         // Glareshield - Map/Chart/Worktable Lights, MIC & Clock Switches
         EVT_CLOCK_L = THIRD_PARTY_EVENT_ID_MIN + 165,
         EVT_MAP_LIGHT_L = THIRD_PARTY_EVENT_ID_MIN + 166,
+        EVT_MAP_LIGHT_L_PULL = THIRD_PARTY_EVENT_ID_MIN + 1661,
         EVT_GLARESHIELD_MIC_L = THIRD_PARTY_EVENT_ID_MIN + 167,
         EVT_GLARESHIELD_MIC_R = THIRD_PARTY_EVENT_ID_MIN + 273,
         EVT_MAP_LIGHT_R = THIRD_PARTY_EVENT_ID_MIN + 274,
+        EVT_MAP_LIGHT_R_PULL = THIRD_PARTY_EVENT_ID_MIN + 2741,
         EVT_CLOCK_R = THIRD_PARTY_EVENT_ID_MIN + 275,
         EVT_CHART_LIGHT_L = THIRD_PARTY_EVENT_ID_MIN + 1107,
         EVT_CHART_LIGHT_R = THIRD_PARTY_EVENT_ID_MIN + 1108,
-        EVT_WORKTABLE_LIGHT_R = THIRD_PARTY_EVENT_ID_MIN + 1105,
-        EVT_WORKTABLE_LIGHT_L = THIRD_PARTY_EVENT_ID_MIN + 1106,
+        EVT_WORKTABLE_LIGHT_L = THIRD_PARTY_EVENT_ID_MIN + 1105,
+        EVT_WORKTABLE_LIGHT_R = THIRD_PARTY_EVENT_ID_MIN + 1106,
 
         // Pedestal - Fwd Aisle Stand - CDUs
         EVT_CDU_L_L1 = THIRD_PARTY_EVENT_ID_MIN + 328,
@@ -1310,11 +1292,13 @@ public static class B777
         EVT_PED_R_CCD_SIDE = THIRD_PARTY_EVENT_ID_MIN + 491,
 
         // Pedestal - Control Stand - Fire protection panel
+        // Engine 1
         EVT_FIRE_HANDLE_ENGINE_1_TOP = THIRD_PARTY_EVENT_ID_MIN + 651,
         EVT_FIRE_HANDLE_ENGINE_1_BOTTOM = THIRD_PARTY_EVENT_ID_MIN + 6511,
+        EVT_FIRE_UNLOCK_SWITCH_ENGINE_1 = THIRD_PARTY_EVENT_ID_MIN + 6512,
+        // Engine 2
         EVT_FIRE_HANDLE_ENGINE_2_TOP = THIRD_PARTY_EVENT_ID_MIN + 652,
         EVT_FIRE_HANDLE_ENGINE_2_BOTTOM = THIRD_PARTY_EVENT_ID_MIN + 6521,
-        EVT_FIRE_UNLOCK_SWITCH_ENGINE_1 = THIRD_PARTY_EVENT_ID_MIN + 6512,
         EVT_FIRE_UNLOCK_SWITCH_ENGINE_2 = THIRD_PARTY_EVENT_ID_MIN + 6522,
 
         // Pedestal - Control Stand - Flaps
@@ -1361,8 +1345,8 @@ public static class B777
 
         //EVT_COM3_START_RANGE = EVT_COM3_HF_SENSOR_KNOB,
         EVT_COM3_TRANSFER_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 597,
-        EVT_COM3_OUTER_SELECTOR = THIRD_PARTY_EVENT_ID_MIN + 598,
-        EVT_COM3_INNER_SELECTOR = THIRD_PARTY_EVENT_ID_MIN + 599,
+        EVT_COM3_OUTER_SELECTOR = THIRD_PARTY_EVENT_ID_MIN + 599,
+        EVT_COM3_INNER_SELECTOR = THIRD_PARTY_EVENT_ID_MIN + 598,
         EVT_COM3_VHFL_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 600,
         EVT_COM3_VHFC_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 601,
         EVT_COM3_VHFR_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 602,
@@ -1486,6 +1470,12 @@ public static class B777
 
         // Pedestal - Aft Aisle Stand - TCAS panel
         EVT_TCAS_ALTSOURCE = THIRD_PARTY_EVENT_ID_MIN + 743,
+        /* For the new XPDR with ABV/BLW and ABS/REL selectors -----------------------------------*/
+        EVT_TCAS_L_ABV_BLW = THIRD_PARTY_EVENT_ID_MIN + 7431,
+        EVT_TCAS_L_ABS_REL = THIRD_PARTY_EVENT_ID_MIN + 7432,
+        EVT_TCAS_R_ABV_BLW = THIRD_PARTY_EVENT_ID_MIN + 7433,
+        EVT_TCAS_R_ABS_REL = THIRD_PARTY_EVENT_ID_MIN + 7434,
+        /* -------------------------------------------------------------------------------------- */
         EVT_TCAS_KNOB_L_OUTER = THIRD_PARTY_EVENT_ID_MIN + 744,
         EVT_TCAS_KNOB_L_INNER = THIRD_PARTY_EVENT_ID_MIN + 745,
         EVT_TCAS_IDENT = THIRD_PARTY_EVENT_ID_MIN + 746,
@@ -1570,196 +1560,13 @@ public static class B777
         EVT_CLICKSPOT_STBY_ASI = THIRD_PARTY_EVENT_ID_MIN + 1103,
         EVT_CLICKSPOT_STBY_ALTIMETER = THIRD_PARTY_EVENT_ID_MIN + 1104,
         EVT_CLICKSPOT_GMCS_ZOOM = THIRD_PARTY_EVENT_ID_MIN + 1112,
-
-        // EFB
-        //EVT_EFB_L_START = THIRD_PARTY_EVENT_ID_MIN + 1700,
-        EVT_EFB_L_MENU = EVT_EFB_L_START + 0,
-        EVT_EFB_L_BACK = EVT_EFB_L_START + 1,
-        EVT_EFB_L_PAGE_UP = EVT_EFB_L_START + 2,
-        EVT_EFB_L_PAGE_DOWN = EVT_EFB_L_START + 3,
-        EVT_EFB_L_XFR = EVT_EFB_L_START + 4,
-        EVT_EFB_L_ENTER = EVT_EFB_L_START + 5,
-        EVT_EFB_L_ZOOM_IN = EVT_EFB_L_START + 6,
-        EVT_EFB_L_ZOOM_OUT = EVT_EFB_L_START + 7,
-        EVT_EFB_L_ARROW_UP = EVT_EFB_L_START + 8,
-        EVT_EFB_L_ARROW_DOWN = EVT_EFB_L_START + 9,
-        EVT_EFB_L_ARROW_LEFT = EVT_EFB_L_START + 10,
-        EVT_EFB_L_ARROW_RIGHT = EVT_EFB_L_START + 11,
-        EVT_EFB_L_LSK_1L = EVT_EFB_L_START + 12,
-        EVT_EFB_L_LSK_2L = EVT_EFB_L_START + 13,
-        EVT_EFB_L_LSK_3L = EVT_EFB_L_START + 14,
-        EVT_EFB_L_LSK_4L = EVT_EFB_L_START + 15,
-        EVT_EFB_L_LSK_5L = EVT_EFB_L_START + 16,
-        EVT_EFB_L_LSK_6L = EVT_EFB_L_START + 17,
-        EVT_EFB_L_LSK_7L = EVT_EFB_L_START + 18,
-        EVT_EFB_L_LSK_8L = EVT_EFB_L_START + 19,
-        EVT_EFB_L_LSK_1R = EVT_EFB_L_START + 20,
-        EVT_EFB_L_LSK_2R = EVT_EFB_L_START + 21,
-        EVT_EFB_L_LSK_3R = EVT_EFB_L_START + 22,
-        EVT_EFB_L_LSK_4R = EVT_EFB_L_START + 23,
-        EVT_EFB_L_LSK_5R = EVT_EFB_L_START + 24,
-        EVT_EFB_L_LSK_6R = EVT_EFB_L_START + 25,
-        EVT_EFB_L_LSK_7R = EVT_EFB_L_START + 26,
-        EVT_EFB_L_LSK_8R = EVT_EFB_L_START + 27,
-        EVT_EFB_L_BRIGHTNESS = EVT_EFB_L_START + 28,
-        EVT_EFB_L_POWER = EVT_EFB_L_START + 29,
-
-        //EVT_EFB_L_KEY_START = EVT_EFB_L_START + 30,
-        EVT_EFB_L_KEY_A = EVT_EFB_L_KEY_START + 0,
-        EVT_EFB_L_KEY_B = EVT_EFB_L_KEY_START + 1,
-        EVT_EFB_L_KEY_C = EVT_EFB_L_KEY_START + 2,
-        EVT_EFB_L_KEY_D = EVT_EFB_L_KEY_START + 3,
-        EVT_EFB_L_KEY_E = EVT_EFB_L_KEY_START + 4,
-        EVT_EFB_L_KEY_F = EVT_EFB_L_KEY_START + 5,
-        EVT_EFB_L_KEY_G = EVT_EFB_L_KEY_START + 6,
-        EVT_EFB_L_KEY_H = EVT_EFB_L_KEY_START + 7,
-        EVT_EFB_L_KEY_I = EVT_EFB_L_KEY_START + 8,
-        EVT_EFB_L_KEY_J = EVT_EFB_L_KEY_START + 9,
-        EVT_EFB_L_KEY_K = EVT_EFB_L_KEY_START + 10,
-        EVT_EFB_L_KEY_L = EVT_EFB_L_KEY_START + 11,
-        EVT_EFB_L_KEY_M = EVT_EFB_L_KEY_START + 12,
-        EVT_EFB_L_KEY_N = EVT_EFB_L_KEY_START + 13,
-        EVT_EFB_L_KEY_O = EVT_EFB_L_KEY_START + 14,
-        EVT_EFB_L_KEY_P = EVT_EFB_L_KEY_START + 15,
-        EVT_EFB_L_KEY_Q = EVT_EFB_L_KEY_START + 16,
-        EVT_EFB_L_KEY_R = EVT_EFB_L_KEY_START + 17,
-        EVT_EFB_L_KEY_S = EVT_EFB_L_KEY_START + 18,
-        EVT_EFB_L_KEY_T = EVT_EFB_L_KEY_START + 19,
-        EVT_EFB_L_KEY_U = EVT_EFB_L_KEY_START + 20,
-        EVT_EFB_L_KEY_V = EVT_EFB_L_KEY_START + 21,
-        EVT_EFB_L_KEY_W = EVT_EFB_L_KEY_START + 22,
-        EVT_EFB_L_KEY_X = EVT_EFB_L_KEY_START + 23,
-        EVT_EFB_L_KEY_Y = EVT_EFB_L_KEY_START + 24,
-        EVT_EFB_L_KEY_Z = EVT_EFB_L_KEY_START + 25,
-        EVT_EFB_L_KEY_0 = EVT_EFB_L_KEY_START + 26,
-        EVT_EFB_L_KEY_1 = EVT_EFB_L_KEY_START + 27,
-        EVT_EFB_L_KEY_2 = EVT_EFB_L_KEY_START + 28,
-        EVT_EFB_L_KEY_3 = EVT_EFB_L_KEY_START + 29,
-        EVT_EFB_L_KEY_4 = EVT_EFB_L_KEY_START + 30,
-        EVT_EFB_L_KEY_5 = EVT_EFB_L_KEY_START + 31,
-        EVT_EFB_L_KEY_6 = EVT_EFB_L_KEY_START + 32,
-        EVT_EFB_L_KEY_7 = EVT_EFB_L_KEY_START + 33,
-        EVT_EFB_L_KEY_8 = EVT_EFB_L_KEY_START + 34,
-        EVT_EFB_L_KEY_9 = EVT_EFB_L_KEY_START + 35,
-        EVT_EFB_L_KEY_SPACE = EVT_EFB_L_KEY_START + 36,
-        EVT_EFB_L_KEY_PLUS = EVT_EFB_L_KEY_START + 37,
-        EVT_EFB_L_KEY_MINUS = EVT_EFB_L_KEY_START + 38,
-        EVT_EFB_L_KEY_DOT = EVT_EFB_L_KEY_START + 39,
-        EVT_EFB_L_KEY_SLASH = EVT_EFB_L_KEY_START + 40,
-        EVT_EFB_L_KEY_BACKSPACE = EVT_EFB_L_KEY_START + 41,
-        EVT_EFB_L_KEY_DEL = EVT_EFB_L_KEY_START + 42,
-        EVT_EFB_L_KEY_EQUAL = EVT_EFB_L_KEY_START + 43,
-        EVT_EFB_L_KEY_MULTIPLY = EVT_EFB_L_KEY_START + 44,
-        EVT_EFB_L_KEY_LEFT_PAR = EVT_EFB_L_KEY_START + 45,
-        EVT_EFB_L_KEY_RIGHT_PAR = EVT_EFB_L_KEY_START + 46,
-        EVT_EFB_L_KEY_QUEST = EVT_EFB_L_KEY_START + 47,
-        EVT_EFB_L_KEY_QUOTE = EVT_EFB_L_KEY_START + 48,
-        EVT_EFB_L_KEY_COMMA = EVT_EFB_L_KEY_START + 49,
-        EVT_EFB_L_KEY_PAGE_UP = EVT_EFB_L_KEY_START + 50,
-        EVT_EFB_L_KEY_PAGE_DOWN = EVT_EFB_L_KEY_START + 51,
-        EVT_EFB_L_KEY_ENTER = EVT_EFB_L_KEY_START + 52,
-        EVT_EFB_L_KEY_ARROW_UP = EVT_EFB_L_KEY_START + 53,
-        EVT_EFB_L_KEY_ARROW_DOWN = EVT_EFB_L_KEY_START + 54,
-        //EVT_EFB_L_KEY_END = EVT_EFB_L_KEY_START + 54,
-        //EVT_EFB_L_END = EVT_EFB_L_KEY_START + 54,
-
-        //EVT_EFB_R_START = EVT_EFB_L_END + 1,
-        EVT_EFB_R_MENU = EVT_EFB_R_START + 0,
-        EVT_EFB_R_BACK = EVT_EFB_R_START + 1,
-        EVT_EFB_R_PAGE_UP = EVT_EFB_R_START + 2,
-        EVT_EFB_R_PAGE_DOWN = EVT_EFB_R_START + 3,
-        EVT_EFB_R_XFR = EVT_EFB_R_START + 4,
-        EVT_EFB_R_ENTER = EVT_EFB_R_START + 5,
-        EVT_EFB_R_ZOOM_IN = EVT_EFB_R_START + 6,
-        EVT_EFB_R_ZOOM_OUT = EVT_EFB_R_START + 7,
-        EVT_EFB_R_ARROW_UP = EVT_EFB_R_START + 8,
-        EVT_EFB_R_ARROW_DOWN = EVT_EFB_R_START + 9,
-        EVT_EFB_R_ARROW_LEFT = EVT_EFB_R_START + 10,
-        EVT_EFB_R_ARROW_RIGHT = EVT_EFB_R_START + 11,
-        EVT_EFB_R_LSK_1L = EVT_EFB_R_START + 12,
-        EVT_EFB_R_LSK_2L = EVT_EFB_R_START + 13,
-        EVT_EFB_R_LSK_3L = EVT_EFB_R_START + 14,
-        EVT_EFB_R_LSK_4L = EVT_EFB_R_START + 15,
-        EVT_EFB_R_LSK_5L = EVT_EFB_R_START + 16,
-        EVT_EFB_R_LSK_6L = EVT_EFB_R_START + 17,
-        EVT_EFB_R_LSK_7L = EVT_EFB_R_START + 18,
-        EVT_EFB_R_LSK_8L = EVT_EFB_R_START + 19,
-        EVT_EFB_R_LSK_1R = EVT_EFB_R_START + 20,
-        EVT_EFB_R_LSK_2R = EVT_EFB_R_START + 21,
-        EVT_EFB_R_LSK_3R = EVT_EFB_R_START + 22,
-        EVT_EFB_R_LSK_4R = EVT_EFB_R_START + 23,
-        EVT_EFB_R_LSK_5R = EVT_EFB_R_START + 24,
-        EVT_EFB_R_LSK_6R = EVT_EFB_R_START + 25,
-        EVT_EFB_R_LSK_7R = EVT_EFB_R_START + 26,
-        EVT_EFB_R_LSK_8R = EVT_EFB_R_START + 27,
-        EVT_EFB_R_BRIGHTNESS = EVT_EFB_R_START + 28,
-        EVT_EFB_R_POWER = EVT_EFB_R_START + 29,
-
-        //EVT_EFB_R_KEY_START = EVT_EFB_R_START + 30,
-        EVT_EFB_R_KEY_A = EVT_EFB_R_KEY_START + 0,
-        EVT_EFB_R_KEY_B = EVT_EFB_R_KEY_START + 1,
-        EVT_EFB_R_KEY_C = EVT_EFB_R_KEY_START + 2,
-        EVT_EFB_R_KEY_D = EVT_EFB_R_KEY_START + 3,
-        EVT_EFB_R_KEY_E = EVT_EFB_R_KEY_START + 4,
-        EVT_EFB_R_KEY_F = EVT_EFB_R_KEY_START + 5,
-        EVT_EFB_R_KEY_G = EVT_EFB_R_KEY_START + 6,
-        EVT_EFB_R_KEY_H = EVT_EFB_R_KEY_START + 7,
-        EVT_EFB_R_KEY_I = EVT_EFB_R_KEY_START + 8,
-        EVT_EFB_R_KEY_J = EVT_EFB_R_KEY_START + 9,
-        EVT_EFB_R_KEY_K = EVT_EFB_R_KEY_START + 10,
-        EVT_EFB_R_KEY_L = EVT_EFB_R_KEY_START + 11,
-        EVT_EFB_R_KEY_M = EVT_EFB_R_KEY_START + 12,
-        EVT_EFB_R_KEY_N = EVT_EFB_R_KEY_START + 13,
-        EVT_EFB_R_KEY_O = EVT_EFB_R_KEY_START + 14,
-        EVT_EFB_R_KEY_P = EVT_EFB_R_KEY_START + 15,
-        EVT_EFB_R_KEY_Q = EVT_EFB_R_KEY_START + 16,
-        EVT_EFB_R_KEY_R = EVT_EFB_R_KEY_START + 17,
-        EVT_EFB_R_KEY_S = EVT_EFB_R_KEY_START + 18,
-        EVT_EFB_R_KEY_T = EVT_EFB_R_KEY_START + 19,
-        EVT_EFB_R_KEY_U = EVT_EFB_R_KEY_START + 20,
-        EVT_EFB_R_KEY_V = EVT_EFB_R_KEY_START + 21,
-        EVT_EFB_R_KEY_W = EVT_EFB_R_KEY_START + 22,
-        EVT_EFB_R_KEY_X = EVT_EFB_R_KEY_START + 23,
-        EVT_EFB_R_KEY_Y = EVT_EFB_R_KEY_START + 24,
-        EVT_EFB_R_KEY_Z = EVT_EFB_R_KEY_START + 25,
-        EVT_EFB_R_KEY_0 = EVT_EFB_R_KEY_START + 26,
-        EVT_EFB_R_KEY_1 = EVT_EFB_R_KEY_START + 27,
-        EVT_EFB_R_KEY_2 = EVT_EFB_R_KEY_START + 28,
-        EVT_EFB_R_KEY_3 = EVT_EFB_R_KEY_START + 29,
-        EVT_EFB_R_KEY_4 = EVT_EFB_R_KEY_START + 30,
-        EVT_EFB_R_KEY_5 = EVT_EFB_R_KEY_START + 31,
-        EVT_EFB_R_KEY_6 = EVT_EFB_R_KEY_START + 32,
-        EVT_EFB_R_KEY_7 = EVT_EFB_R_KEY_START + 33,
-        EVT_EFB_R_KEY_8 = EVT_EFB_R_KEY_START + 34,
-        EVT_EFB_R_KEY_9 = EVT_EFB_R_KEY_START + 35,
-        EVT_EFB_R_KEY_SPACE = EVT_EFB_R_KEY_START + 36,
-        EVT_EFB_R_KEY_PLUS = EVT_EFB_R_KEY_START + 37,
-        EVT_EFB_R_KEY_MINUS = EVT_EFB_R_KEY_START + 38,
-        EVT_EFB_R_KEY_DOT = EVT_EFB_R_KEY_START + 39,
-        EVT_EFB_R_KEY_SLASH = EVT_EFB_R_KEY_START + 40,
-        EVT_EFB_R_KEY_BACKSPACE = EVT_EFB_R_KEY_START + 41,
-        EVT_EFB_R_KEY_DEL = EVT_EFB_R_KEY_START + 42,
-        EVT_EFB_R_KEY_EQUAL = EVT_EFB_R_KEY_START + 43,
-        EVT_EFB_R_KEY_MULTIPLY = EVT_EFB_R_KEY_START + 44,
-        EVT_EFB_R_KEY_LEFT_PAR = EVT_EFB_R_KEY_START + 45,
-        EVT_EFB_R_KEY_RIGHT_PAR = EVT_EFB_R_KEY_START + 46,
-        EVT_EFB_R_KEY_QUEST = EVT_EFB_R_KEY_START + 47,
-        EVT_EFB_R_KEY_QUOTE = EVT_EFB_R_KEY_START + 48,
-        EVT_EFB_R_KEY_COMMA = EVT_EFB_R_KEY_START + 49,
-        EVT_EFB_R_KEY_PAGE_UP = EVT_EFB_R_KEY_START + 50,
-        EVT_EFB_R_KEY_PAGE_DOWN = EVT_EFB_R_KEY_START + 51,
-        EVT_EFB_R_KEY_ENTER = EVT_EFB_R_KEY_START + 52,
-        EVT_EFB_R_KEY_ARROW_UP = EVT_EFB_R_KEY_START + 53,
-        EVT_EFB_R_KEY_ARROW_DOWN = EVT_EFB_R_KEY_START + 54,
-        //EVT_EFB_R_KEY_END = EVT_EFB_R_KEY_START + 54,
-        //EVT_EFB_R_END = EVT_EFB_R_KEY_START + 54,
-
-        // Parameter: 1000000 x (action code) + 1000 x (X Coordinate) + (Y Coordinate)
-        // action codes: 0 = mouse move, 1 = mouse click,  2= mouse release, 3 = mouse wheel up, 4 = mouse wheel down
-        // X / Y Coordinates: 0..1000 of EFB_SCREEN_WIDTH / EFB_SCREEN_HEIGHT (not required for action codes 3 & 4)
-        EVT_EFB_L_SCREEN_ACTION = THIRD_PARTY_EVENT_ID_MIN + 1900,
-        EVT_EFB_R_SCREEN_ACTION = THIRD_PARTY_EVENT_ID_MIN + 1901,
-
+        
+        // CA and FO Armrests
+        EVT_CA_ARMREST_LEFT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 1006,
+        EVT_CA_ARMREST_RIGHT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 1007,
+        EVT_FO_ARMREST_LEFT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 1008,
+        EVT_FO_ARMREST_RIGHT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 1009,
+        
         //
         // Custom shortcut special events
         //
@@ -1786,10 +1593,20 @@ public static class B777
         EVT_DOOR_FWD_ACCESS = THIRD_PARTY_EVENT_ID_MIN + 14025,
         EVT_DOOR_EE_ACCESS = THIRD_PARTY_EVENT_ID_MIN + 14026,
         EVT_AT_ARM_SWITCHES = THIRD_PARTY_EVENT_ID_MIN + 14027,
+        
+        //
+        // Window handle, crank and clipboard events
+        //
+        EVT_DOOR_WINDOW_CA = THIRD_PARTY_EVENT_ID_MIN + 1012,
+        EVT_DOOR_WINDOW_FO = THIRD_PARTY_EVENT_ID_MIN + 1013,
+        EVT_WINDOW_CA_HANDLE = THIRD_PARTY_EVENT_ID_MIN + 1014,
+        EVT_WINDOW_CA_CLIPBOARD = THIRD_PARTY_EVENT_ID_MIN + 1015,
+        EVT_WINDOW_FO_HANDLE = THIRD_PARTY_EVENT_ID_MIN + 1016,
+        EVT_WINDOW_FO_CLIPBOARD = THIRD_PARTY_EVENT_ID_MIN + 1017,
 
         // MCP Direct Control 
         EVT_MCP_IAS_SET = THIRD_PARTY_EVENT_ID_MIN + 14502,    // Sets MCP IAS, if IAS mode is active
-        EVT_MCP_MACH_SET = THIRD_PARTY_EVENT_ID_MIN + 14503,   // Sets MCP MACH (if active) to parameter*0.01 (e.g. send 78 to set M0.78)
+        EVT_MCP_MACH_SET = THIRD_PARTY_EVENT_ID_MIN + 14503,   // Sets MCP MACH (if active) to parameter*0.001 (e.g. send 780 to set M0.780)
         EVT_MCP_HDGTRK_SET = THIRD_PARTY_EVENT_ID_MIN + 14504, // Sets new heading  or track, commands the shortest turn
         EVT_MCP_ALT_SET = THIRD_PARTY_EVENT_ID_MIN + 14505,
         EVT_MCP_VS_SET = THIRD_PARTY_EVENT_ID_MIN + 14506,  // Sets MCP VS (if VS window open) to parameter-10000 (e.g. send 8200 for -1800fpm)
