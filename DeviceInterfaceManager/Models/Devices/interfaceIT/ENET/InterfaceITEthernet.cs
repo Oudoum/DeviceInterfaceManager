@@ -15,11 +15,14 @@ namespace DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
 
 public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 {
-    public ComponentInfo Switch { get; private set; } = new(0,0);
-    public event EventHandler<InputChangedEventArgs>? InputChanged;
-    public ComponentInfo Led { get; private set; } = new(0,0);
-    public ComponentInfo Dataline { get; private set; } = new(0,0);
-    public ComponentInfo SevenSegment { get; private set; } = new(0,0);
+    public ComponentInfo Switch { get; private set; } = new(0, 0);
+    public ComponentInfo AnalogIn { get; private set; } = new(0, 0);
+    public event EventHandler<SwitchPositionChangedEventArgs>? SwitchPositionChanged;
+    public event EventHandler<AnalogInValueChangedEventArgs>? AnalogInValueChanged;
+    public ComponentInfo Led { get; private set; } = new(0, 0);
+    public ComponentInfo Dataline { get; private set; } = new(0, 0);
+    public ComponentInfo SevenSegment { get; private set; } = new(0, 0);
+    public ComponentInfo AnalogOut { get; } = new(0, 0);
 
     public async Task SetLedAsync(string? position, bool isEnabled)
     {
@@ -43,6 +46,12 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
     }
 
     public Task SetSevenSegmentAsync(string? position, string data)
+    {
+        //Add
+        return Task.CompletedTask;
+    }
+
+    public Task SetAnalogAsync(string? position, int value)
     {
         //Add
         return Task.CompletedTask;
@@ -76,7 +85,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
     public async void Disconnect()
     {
-       await CloseStream();
+        await CloseStream();
     }
 
     private const int TcpPort = 10346;
@@ -84,7 +93,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
     private TcpClient? _tcpClient;
 
     private NetworkStream? _networkStream;
-    
+
     public static async Task<string> ReceiveControllerDiscoveryDataAsync()
     {
         UdpClient client = new() { EnableBroadcast = true };
@@ -178,7 +187,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
                         case "STATE=3":
                             isSwitchIdentifying = true;
-                            
+
                             break;
 
                         case "STATE=4":
@@ -207,7 +216,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 sb.Clear();
             }
         }, cancellationToken);
-        
+
         await tcs.Task;
     }
 
@@ -228,7 +237,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         bool isPressed = splitSwitchData[1] == "ON";
 
         Switch.UpdatePosition(position, isPressed);
-        InputChanged?.Invoke(this, new InputChangedEventArgs(position, isPressed));
+        SwitchPositionChanged?.Invoke(this, new SwitchPositionChangedEventArgs(position, isPressed));
     }
 
     private void GetInterfaceItEthernetInfoData(string ethernetData)
@@ -255,7 +264,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
     private void GetConfigData(string value)
     {
         string[] config = value.Split(":");
-        
+
         switch (config[1])
         {
             case "LED":
@@ -279,7 +288,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 break;
 
             case "ANALOG IN":
-                //Add
+                AnalogIn = GetComponentInfo(config);
                 break;
 
             case "PULSE WIDTH":
