@@ -47,6 +47,20 @@ public partial class HomeViewModel : ObservableRecipient
             OnPropertyChanged(nameof(FilteredProfileCreatorModels));
         };
     }
+    
+    // private readonly FlightSimulatorDataServer _flightSimulatorDataServer = new();
+
+    // [RelayCommand]
+    // private async Task Connect()
+    // {
+    //     await _flightSimulatorDataServer.StartAsync("192.168.199.19");
+    // }
+    //
+    // [RelayCommand]
+    // private async Task SendData()
+    // {
+    //     await _flightSimulatorDataServer.SendPmdgCduDataAsync(new Cdu.Screen {Columns = [new Cdu.Screen.Row() { Rows = new Cdu.Screen.Row.Cell[12]}] });
+    // }
 
     protected override void OnActivated()
     {
@@ -60,6 +74,19 @@ public partial class HomeViewModel : ObservableRecipient
         if (DeviceProfileList is null && File.Exists(App.MappingsFile))
         {
             DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
+            
+            DeviceProfileList.CollectionChanged += (sender, args) =>
+            {
+                DeviceProfileListHasChanged = true;
+            };
+
+            foreach (ProfileMapping profileMapping in DeviceProfileList)
+            {
+                profileMapping.PropertyChanged += (sender, args) =>
+                {
+                    DeviceProfileListHasChanged = true;
+                };
+            }
         }
 
         string[] jsonFilePaths = Directory.GetFiles(App.ProfilesPath, "*.json");
@@ -117,7 +144,12 @@ public partial class HomeViewModel : ObservableRecipient
     private void Add()
     {
         DeviceProfileList ??= [];
-        DeviceProfileList.Add(new ProfileMapping());
+        ProfileMapping profileMapping = new();
+        profileMapping.PropertyChanged += (sender, args) =>
+        {
+            DeviceProfileListHasChanged = true;
+        };
+        DeviceProfileList.Add(profileMapping);
     }
 
     [RelayCommand]
@@ -126,11 +158,20 @@ public partial class HomeViewModel : ObservableRecipient
         DeviceProfileList?.Remove(profileMapping);
     }
 
+    [ObservableProperty]
+    private bool _deviceProfileListHasChanged;
+
     [RelayCommand]
     public void SaveMappings()
     {
+        if (DeviceProfileList is null)
+        {
+            return;
+        }
+        
         string serialize = JsonSerializer.Serialize(DeviceProfileList);
         File.WriteAllText(App.MappingsFile, serialize);
+        DeviceProfileListHasChanged = false;
     }
 
     [ObservableProperty]
