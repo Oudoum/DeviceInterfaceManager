@@ -13,6 +13,7 @@ using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
+using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -47,20 +48,6 @@ public partial class HomeViewModel : ObservableRecipient
             OnPropertyChanged(nameof(FilteredProfileCreatorModels));
         };
     }
-    
-    // private readonly FlightSimulatorDataServer _flightSimulatorDataServer = new();
-
-    // [RelayCommand]
-    // private async Task Connect()
-    // {
-    //     await _flightSimulatorDataServer.StartAsync("192.168.199.19");
-    // }
-    //
-    // [RelayCommand]
-    // private async Task SendData()
-    // {
-    //     await _flightSimulatorDataServer.SendPmdgCduDataAsync(new Cdu.Screen {Columns = [new Cdu.Screen.Row() { Rows = new Cdu.Screen.Row.Cell[12]}] });
-    // }
 
     protected override void OnActivated()
     {
@@ -194,9 +181,9 @@ public partial class HomeViewModel : ObservableRecipient
             return;
         }
 
-        await _simConnectClient.ConnectAsync(token);
+        SimConnect? simConnect = await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested && _simConnectClient.SimConnect is not null)
+        if (!token.IsCancellationRequested && simConnect is not null)
         {
             if (DeviceProfileList is null)
             {
@@ -224,7 +211,7 @@ public partial class HomeViewModel : ObservableRecipient
                     continue;
                 }
                 
-                Profile profile = new(_simConnectClient, profileCreatorModel, inputOutputDevice);
+                Profile profile = new(_simConnectClient, simConnect, profileCreatorModel, inputOutputDevice, App.SettingsViewModel.Settings.Server);
                 _profiles.Add(profile);
             }
 
