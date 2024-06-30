@@ -35,11 +35,6 @@ public static class Cdu
         public bool Powered; // true if CDU is powered
     }
 
-    public interface ICduScreen
-    {
-        public Screen Screen { get; set; }
-    }
-
     // CDU Screen Cell Colors
     public enum Color : byte
     {
