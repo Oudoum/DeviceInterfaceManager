@@ -7,7 +7,6 @@
 // 
 //------------------------------------------------------------------------------
 
-using System.Text;
 using System.Runtime.InteropServices;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
@@ -33,77 +32,6 @@ public static class B737
         Control = 0x4E473334,
         Cdu0 = 0x4E473338,
         Cdu1 = 0x4E473339
-    }
-
-    public static void SetMcp(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "MCP_Altitude" when value[0] != '0':
-                value.Insert(0, " ", 5 - value.Length);
-                return;
-
-            case "MCP_Altitude" when value[0] == '0':
-                value.Insert(0, " 000");
-                return;
-
-            case "MCP_VertSpeed" when value[0] == '0' || value.ToString() == "-16960":
-                value.Clear();
-                value.Append(' ', 5);
-                return;
-
-            case "FMC_LandingAltitude" when value.ToString() == "-32767":
-                value.Clear();
-                value.Append(' ', 5);
-                return;
-
-            case "ADF_StandbyFrequency":
-                value.Insert(value.Length - 1, ".");
-                value.Insert(0, " ", 6 - value.Length);
-                return;
-        }
-
-        if (name != "MCP_VertSpeed" || !int.TryParse(value.ToString(), out int intValue))
-        {
-            return;
-        }
-
-        switch (intValue)
-        {
-            case < 0:
-                value.Clear();
-                value.Append('-');
-                value.Append($"{intValue.ToString("D3").TrimStart('-'),4}");
-                break;
-
-            case > 0:
-                value.Clear();
-                value.Append('+');
-                value.Append($"{intValue.ToString("D3"),4}");
-                break;
-        }
-    }
-
-    public static void SetIrsDisplay(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "IRS_DisplayLeft" when value.Length > 0 && value[0] == 'w':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayLeft":
-                value.Append(' ', 6 - value.Length);
-                break;
-
-            case "IRS_DisplayRight" when value.Length > 0 && value[0] == 'n':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayRight":
-                value.Append(' ', 7 - value.Length);
-                break;
-        }
     }
     
     // NOTE - add these lines to the 737NG3_Options.ini file: 
@@ -613,15 +541,7 @@ public static class B737
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 255)] public byte[] reserved;
     }
-
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
-    public struct Cdu : FlightSim.MSFS.PMDG.SDK.Cdu.ICduScreen
-    {
-        public FlightSim.MSFS.PMDG.SDK.Cdu.Screen Screen { get; set; }
-    }
-
-
+    
     // ReSharper disable InconsistentNaming
     //////////////////////////////////////////////////////////////////
     //
