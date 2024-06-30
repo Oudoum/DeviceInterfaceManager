@@ -59,11 +59,6 @@
                 </Button.Styles>
             </Button>
 
-            <!-- <StackPanel Grid.Row="0" Grid.Column="0"> -->
-            <!--     <Button Content="Start" Command="{Binding ConnectCommand}" /> -->
-            <!--     <Button Content="Send" Command="{Binding SendDataCommand}" /> -->
-            <!-- </StackPanel> -->
-
             <Border Grid.Column="0" Grid.Row="1"
                     IsEnabled="{Binding !IsStarted}"
                     Margin=" 0 25 25 0"
