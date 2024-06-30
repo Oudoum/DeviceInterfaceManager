@@ -8,8 +8,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
@@ -23,6 +21,7 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia.Fluent;
 using HanumanInstitute.MvvmDialogs.FileSystem;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
+using Microsoft.FlightSimulator.SimConnect;
 using IDialogService = HanumanInstitute.MvvmDialogs.IDialogService;
 
 namespace DeviceInterfaceManager.ViewModels;
@@ -710,15 +709,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isStarted;
-
-    partial void OnIsStartedChanged(bool value)
-    {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: not null } desktop)
-        {
-            desktop.MainWindow.Topmost = value;
-        }
-    }
-
+    
     private Profile? _profile;
 
     [RelayCommand(CanExecute = nameof(CanEditProfile), IncludeCancelCommand = true)]
@@ -742,11 +733,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return;
         }
 
-        await _simConnectClient.ConnectAsync(token);
+        SimConnect? simConnect = await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested && _simConnectClient.SimConnect is not null)
+        if (!token.IsCancellationRequested && simConnect is not null)
         {
-            _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
+            _profile = new Profile(_simConnectClient, simConnect, ProfileCreatorModel, InputOutputDevice, App.SettingsViewModel.Settings.Server);
             SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
             return;
         }
