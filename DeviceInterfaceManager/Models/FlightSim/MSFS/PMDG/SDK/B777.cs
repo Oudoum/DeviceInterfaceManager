@@ -635,14 +635,6 @@ public static class B777
         
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 84)] public byte[] reserved;
     }
-
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
-    public struct Cdu : FlightSim.MSFS.PMDG.SDK.Cdu.ICduScreen
-    {
-        public FlightSim.MSFS.PMDG.SDK.Cdu.Screen Screen { get; set; }
-    }
-    
     
     // ReSharper disable InconsistentNaming
     //////////////////////////////////////////////////////////////////
