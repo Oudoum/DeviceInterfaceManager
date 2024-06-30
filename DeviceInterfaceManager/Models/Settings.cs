@@ -18,6 +18,15 @@ public sealed partial class Settings : ObservableObject
     private bool _checkForUpdates;
 
     [ObservableProperty]
+    private bool _server;
+
+    [ObservableProperty]
+    private string? _ipAddress;
+
+    [ObservableProperty]
+    private int? _port;
+
+    [ObservableProperty]
     private bool _isP3D;
 
     [ObservableProperty]
