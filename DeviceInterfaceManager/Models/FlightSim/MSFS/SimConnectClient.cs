@@ -285,19 +285,6 @@ public class SimConnectClient
                 0);
         }
     }
-    
-    private void TransmitEvent(Enum eventId)
-    {
-        lock (_lockObject)
-        {
-            _simConnect?.TransmitClientEvent(
-                0,
-                (EventId)eventId,
-                0,
-                SimConnectGroupPriority.Standard,
-                SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
-        }
-    }
 
     public void SendWasmEvent(string eventId)
     {
