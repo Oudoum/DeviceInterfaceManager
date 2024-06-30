@@ -9,7 +9,7 @@
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
 
@@ -90,6 +90,12 @@
                             <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
+
+                    <ui:CommandBarToggleButton Label="Always On Top" IsCheckedChanged="ToggleButtonOnIsCheckedChanged">
+                        <ui:CommandBarToggleButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource ArrowUpBoldBoxOutline}" />
+                        </ui:CommandBarToggleButton.IconSource>
+                    </ui:CommandBarToggleButton>
 
                     <ui:CommandBarButton Classes.start="{Binding !IsStarted}"
                                          Classes.stop="{Binding IsStarted}"
@@ -426,12 +432,11 @@
                                 <DataGridTextColumn
                                     Header="PMDG Event"
                                     SortMemberPath="PmdgEvent"
-                                    
                                     IsReadOnly="True" >
                                     <DataGridTextColumn.Binding>
                                         <MultiBinding Converter="{StaticResource PmdgEventToStringConverter}">
-                                            <Binding Path="EventType"/>
-                                            <Binding Path="PmdgEvent"/>
+                                            <Binding Path="EventType" />
+                                            <Binding Path="PmdgEvent" />
                                         </MultiBinding>
                                     </DataGridTextColumn.Binding>
                                 </DataGridTextColumn>
