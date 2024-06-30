@@ -25,6 +25,8 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 #endif
 
     public Settings Settings { get; } = Settings.CreateSettings();
+    
+    public FlightSimulatorDataServer? FlightSimulatorDataServer { get; private set; }
 
     public async Task Startup()
     {
@@ -45,6 +47,11 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         if (Settings.FdsEthernet)
         {
             ToggleFdsEthernetCommand.Execute(null);
+        }
+
+        if (Settings.Server)
+        {
+            StartServerCommand.Execute(null);
         }
     }
 
@@ -109,6 +116,18 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             inputOutputDevice.Disconnect();
             inputOutputDevices.Remove(inputOutputDevice);
         }
+    }
+
+    [RelayCommand]
+    private async Task StartServer()
+    {
+        if (FlightSimulatorDataServer is not null)
+        {
+            return;    
+        }
+        
+        FlightSimulatorDataServer = new FlightSimulatorDataServer();
+        await FlightSimulatorDataServer.StartAsync(Settings.IpAddress, Settings.Port);
     }
 
     #region FdsUsb
