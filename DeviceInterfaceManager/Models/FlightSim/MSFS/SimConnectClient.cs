@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +15,7 @@ using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS;
 
-public class SimConnectClient : IFlightSimConnection
+public class SimConnectClient
 {
     private nint _lpPrevWndFunc;
     private WNDPROC _hWndProc = null!;
@@ -25,7 +24,7 @@ public class SimConnectClient : IFlightSimConnection
     private const int MessageSize = 1024;
     private const string ClientDataNameCommand = "DIM.Command";
 
-    public SimConnect? SimConnect { get; private set; }
+    private SimConnect? _simConnect;
 
     public bool IsConnected { get; private set; }
     public Helper PmdgHelper { get; private set; } = new();
@@ -43,7 +42,7 @@ public class SimConnectClient : IFlightSimConnection
             {
                 try
                 {
-                    SimConnect?.ReceiveMessage();
+                    _simConnect?.ReceiveMessage();
                 }
                 catch (COMException)
                 {
@@ -55,29 +54,35 @@ public class SimConnectClient : IFlightSimConnection
         return CallWindowProc(_lpPrevWndFunc, hWnd, message, wParam, lParam);
     }
 
-    public async Task ConnectAsync(CancellationToken token)
+    public async Task<SimConnect?> ConnectAsync(CancellationToken token)
     {
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
-            IPlatformHandle? platformHandle = desktop.MainWindow?.TryGetPlatformHandle();
-            if (platformHandle is not null)
-            {
-                nint handle = platformHandle.Handle;
-
-                if (_lpPrevWndFunc == default)
-                {
-                    HWND hWnd = new(handle);
-                    _lpPrevWndFunc = PInvoke.GetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC);
-                    _hWndProc = HandleSimConnectEvents;
-                    PInvoke.SetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_hWndProc));
-                }
-
-                await CreateSimConnect(handle, token);
-            }
+            return null;
         }
+
+        IPlatformHandle? platformHandle = desktop.MainWindow?.TryGetPlatformHandle();
+        if (platformHandle is null)
+        {
+            return null;
+        }
+
+        nint handle = platformHandle.Handle;
+
+        if (_lpPrevWndFunc != default)
+        {
+            return await CreateSimConnect(handle, token);
+        }
+
+        HWND hWnd = new(handle);
+        _lpPrevWndFunc = PInvoke.GetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC);
+        _hWndProc = HandleSimConnectEvents;
+        PInvoke.SetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_hWndProc));
+
+        return await CreateSimConnect(handle, token);
     }
 
-    private async Task CreateSimConnect(nint handle, CancellationToken token)
+    private async Task<SimConnect?> CreateSimConnect(nint handle, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
@@ -88,15 +93,15 @@ public class SimConnectClient : IFlightSimConnection
                 {
                     try
                     {
-                        SimConnect = new SimConnect("Device-Interface-Manager", handle, WmUserSimConnect, null, 0);
-                        if (SimConnect is null)
+                        _simConnect = new SimConnect("Device-Interface-Manager", handle, WmUserSimConnect, null, 0);
+                        if (_simConnect is null)
                         {
                             throw new Exception("SimConnect object could not be created");
                         }
 
-                        SimConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
-                        SimConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
-                        SimConnect.OnRecvException += SimConnectOnOnRecvException;
+                        _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
+                        _simConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
+                        _simConnect.OnRecvException += SimConnectOnOnRecvException;
                         tcs.SetResult(true);
                     }
                     catch (Exception)
@@ -118,17 +123,19 @@ public class SimConnectClient : IFlightSimConnection
             {
             }
         }
+
+        return _simConnect;
     }
 
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
     {
-        if (SimConnect is null)
+        if (_simConnect is null)
         {
             return;
         }
         
-        SimConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
-        SimConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
+        _simConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
+        _simConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
 
         RegisterSimVar("CAMERA STATE", "Enum");
 
@@ -140,39 +147,46 @@ public class SimConnectClient : IFlightSimConnection
         //     _simConnect.TransmitClientEvent_EX1(0, (EventId)id, SimConnectGroupPriority.Standard, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY, 2, 8,0,0,0 );
         // }
         
-        SimConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
-        SimConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
+        _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
+        _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
 
         IsConnected = true;
     }
+    
 
     private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
     {
-        if ((uint)Helper.DataRequestId.Data != data.dwRequestID)
+        Helper.DataRequestId dataRequestId = (Helper.DataRequestId)data.dwRequestID;
+        switch (dataRequestId)
         {
-            return;
+            case Helper.DataRequestId.Data:
+                PmdgHelper.ReceivePmdgData(data.dwData[0]);
+                break;
+
+            case Helper.DataRequestId.Cdu0:
+            case Helper.DataRequestId.Cdu1:
+            case Helper.DataRequestId.Cdu2:
+                PmdgHelper.ReceivePmdgCduData(data.dwData[0], dataRequestId);
+                break;
         }
-        
-        PmdgHelper.ReceivePmdgData(data.dwData[0]);
     }
 
     //Test
-    private void SimConnectOnOnRecvEnumerateInputEvents(SimConnect sender, SIMCONNECT_RECV_ENUMERATE_INPUT_EVENTS data)
-    {
-        for (int i = 0; i < data.dwArraySize; i++)
-        {
-            SIMCONNECT_INPUT_EVENT_DESCRIPTOR descriptor = (SIMCONNECT_INPUT_EVENT_DESCRIPTOR)data.rgData[i];
-            _inputEvents.Add(descriptor.Name, descriptor.Hash);
-        }
-
-        SimConnect?.SetInputEvent(_inputEvents["FMC_AS01B_1_Keyboard_N"], 1);
-    }
-
+    // private void SimConnectOnOnRecvEnumerateInputEvents(SimConnect sender, SIMCONNECT_RECV_ENUMERATE_INPUT_EVENTS data)
+    // {
+    //     for (int i = 0; i < data.dwArraySize; i++)
+    //     {
+    //         SIMCONNECT_INPUT_EVENT_DESCRIPTOR descriptor = (SIMCONNECT_INPUT_EVENT_DESCRIPTOR)data.rgData[i];
+    //         _inputEvents.Add(descriptor.Name, descriptor.Hash);
+    //     }
+    //
+    //     _simConnect?.SetInputEvent(_inputEvents["FMC_AS01B_1_Keyboard_N"], 1);
+    // }
     //Test
-    private void Test()
-    {
-        SimConnect?.EnumerateInputEvents((RequestId)100);
-    }
+    // private void Test()
+    // {
+    //     _simConnect?.EnumerateInputEvents((RequestId)100);
+    // }
 
     private void SimConnectOnOnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
     {
@@ -194,18 +208,18 @@ public class SimConnectClient : IFlightSimConnection
 
     public void Disconnect()
     {
-        if (SimConnect is null)
+        if (_simConnect is null)
         {
             return;
         }
-
-        SimConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
-        SimConnect.OnRecvSimobjectData -= SimConnectOnOnRecvSimobjectData;
-        SimConnect.OnRecvException -= SimConnectOnOnRecvException;
-        SimConnect.OnRecvQuit -= SimConnectOnOnRecvQuit;
-        SimConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
-        SimConnect.Dispose();
-        SimConnect = null;
+        
+        _simConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
+        _simConnect.OnRecvSimobjectData -= SimConnectOnOnRecvSimobjectData;
+        _simConnect.OnRecvException -= SimConnectOnOnRecvException;
+        _simConnect.OnRecvQuit -= SimConnectOnOnRecvQuit;
+        _simConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
+        _simConnect.Dispose();
+        _simConnect = null;
 
         _simVars.Clear();
         _simEvents.Clear();
@@ -231,24 +245,22 @@ public class SimConnectClient : IFlightSimConnection
         simVar.Data = dwData;
         OnSimVarChanged?.Invoke(this, simVar);
     }
-
-    // CHANGE TO INTERFACE?!?!
+    
     public event EventHandler<SimVar>? OnSimVarChanged;
 
-    private const int Offset = 4;
+    private const int Offset = 8;
 
     private readonly List<SimVar> _simVars = [];
 
     private readonly Dictionary<string, int> _simEvents = [];
 
     private readonly object _lockObject = new();
-
-    // CHANGE TO INTERFACE?!?!
+    
     public void TransmitEvent(uint data, Enum eventId)
     {
         lock (_lockObject)
         {
-            SimConnect?.TransmitClientEvent(
+            _simConnect?.TransmitClientEvent(
                 0,
                 eventId,
                 data,
@@ -261,7 +273,7 @@ public class SimConnectClient : IFlightSimConnection
     {
         lock (_lockObject)
         {
-            SimConnect?.TransmitClientEvent_EX1(
+            _simConnect?.TransmitClientEvent_EX1(
                 0,
                 (EventId)eventId,
                 SimConnectGroupPriority.Standard,
@@ -273,12 +285,25 @@ public class SimConnectClient : IFlightSimConnection
                 0);
         }
     }
+    
+    private void TransmitEvent(Enum eventId)
+    {
+        lock (_lockObject)
+        {
+            _simConnect?.TransmitClientEvent(
+                0,
+                (EventId)eventId,
+                0,
+                SimConnectGroupPriority.Standard,
+                SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
+        }
+    }
 
     public void SendWasmEvent(string eventId)
     {
         lock (_lockObject)
         {
-            SimConnect?.SetClientData(
+            _simConnect?.SetClientData(
                 ClientDataId.Command,
                 DefineId.Command,
                 SIMCONNECT_CLIENT_DATA_SET_FLAG.DEFAULT,
@@ -307,18 +332,12 @@ public class SimConnectClient : IFlightSimConnection
 
         lock (_lockObject)
         {
-            SimConnect?.SetDataOnSimObject(
+            _simConnect?.SetDataOnSimObject(
                 (DefineId)simVar.Id,
                 SimConnect.SIMCONNECT_OBJECT_ID_USER,
                 SIMCONNECT_DATA_SET_FLAG.DEFAULT,
                 simVarValue);
         }
-    }
-
-    public double? GetSimVar(string simVarName)
-    {
-        SimVar? simVar = _simVars.FirstOrDefault(x => x.Name == simVarName);
-        return simVar?.Data;
     }
 
     public void RegisterSimVar(string simVarName)
@@ -341,7 +360,7 @@ public class SimConnectClient : IFlightSimConnection
         SimVar simVar = new((uint)(_simVars.Count + Offset + 1), simVarName, simVarUnit);
         _simVars.Add(simVar);
 
-        SimConnect?.AddToDataDefinition(
+        _simConnect?.AddToDataDefinition(
             (DefineId)simVar.Id,
             simVar.Name,
             simVar.Unit,
@@ -349,11 +368,11 @@ public class SimConnectClient : IFlightSimConnection
             0,
             0);
 
-        SimConnect?.RegisterDataDefineStruct<double>((DefineId)simVar.Id);
+        _simConnect?.RegisterDataDefineStruct<double>((DefineId)simVar.Id);
 
         if (request)
         {
-            SimConnect?.RequestDataOnSimObject(
+            _simConnect?.RequestDataOnSimObject(
                 (RequestId)simVar.Id,
                 (DefineId)simVar.Id,
                 SimConnect.SIMCONNECT_OBJECT_ID_USER,
@@ -375,7 +394,7 @@ public class SimConnectClient : IFlightSimConnection
         int id = _simEvents.Count + 1;
         _simEvents.Add(simEventName, id);
 
-        SimConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
+        _simConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
     }
 
     public void TransmitSimEvent(uint data0, uint data1, string simEventName)
@@ -385,7 +404,14 @@ public class SimConnectClient : IFlightSimConnection
             TransmitEvent(data0, data1, (EventId)id);
         }
     }
-    //
+
+    public void TransmitSimEvent(string simEventName)
+    {
+        if (_simEvents.TryGetValue(simEventName, out int id))
+        {
+            TransmitEvent(0, (EventId)id);
+        }
+    }
 
     public class SimVar(uint id, string name, string? unit)
     {
@@ -430,29 +456,5 @@ public class SimConnectClient : IFlightSimConnection
         Standard = 1900000000u,
         Default = 2000000000u,
         Lowest = 4000000000u
-    }
-
-    private enum CameraState
-    {
-        Cockpit = 2,
-        ExternalChase = 3,
-        Drone = 4,
-        FixedOnPlane = 5,
-        Environment = 6,
-        SixDoF = 7,
-        Gameplay = 8,
-        Showcase = 9,
-        DroneAircraft = 10,
-        Waiting = 11,
-        WorldMap = 12,
-        HangarRtc = 13,
-        HangarCustom = 14,
-        MenuRtc = 15,
-        InGameRtc = 16,
-        Replay = 17,
-        DroneTopDown = 19,
-        Hangar = 21,
-        Ground = 24,
-        FollowTrafficAircraft = 25
     }
 }
