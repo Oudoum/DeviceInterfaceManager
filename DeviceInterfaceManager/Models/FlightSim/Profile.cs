@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim;
 
@@ -20,18 +21,13 @@ public class Profile : IAsyncDisposable
 
     private const double Tolerance = 0.000001;
 
-    public Profile(SimConnectClient simConnectClient, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice)
+    public Profile(SimConnectClient simConnectClient, SimConnect simConnect, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice, bool serverEnabled)
     {
         _simConnectClient = simConnectClient;
         _profileCreatorModel = profileCreatorModel;
         _inputOutputDevice = inputOutputDevice;
-        
-        if (_simConnectClient.SimConnect is null)
-        {
-            return;
-        }
-        
-        _simConnectClient.PmdgHelper.Init(_simConnectClient.SimConnect, profileCreatorModel);
+
+        _simConnectClient.PmdgHelper.Init(simConnect, profileCreatorModel);
 
         _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
 
@@ -49,9 +45,7 @@ public class Profile : IAsyncDisposable
         }
 
         foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
-                     x.DataType == ProfileCreatorModel.MsfsSimConnect &&
-                     !string.IsNullOrEmpty(x.Data) &&
-                     x.IsActive))
+                     x is { IsActive: true, DataType: ProfileCreatorModel.MsfsSimConnect, Data: not null }))
         {
             if (!string.IsNullOrEmpty(outputCreator.Unit))
             {
@@ -63,9 +57,7 @@ public class Profile : IAsyncDisposable
         }
 
         foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x =>
-                     x.EventType == ProfileCreatorModel.KEvent &&
-                     !string.IsNullOrEmpty(x.Event) &&
-                     x.IsActive))
+                     x is { IsActive: true, EventType: ProfileCreatorModel.KEvent, Event: not null }))
         {
             _simConnectClient.RegisterSimEvent(inputCreator.Event!);
         }
@@ -73,13 +65,19 @@ public class Profile : IAsyncDisposable
 
     private void SimConnectClientOnOnSimVarChanged(object? sender, SimConnectClient.SimVar simVar)
     {
+        if (simVar is { Name: "CAMERA STATE", Data: <= 6 })
+        {
+            foreach (Component component in _inputOutputDevice.Switch.Components)
+            {
+                SendEvent(component.Position, component.IsSet);
+            }
+        }
+
         foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
-                     x.DataType == ProfileCreatorModel.MsfsSimConnect &&
-                     x.Data == simVar.Name &&
-                     x.IsActive))
+                     x is { IsActive: true, DataType: ProfileCreatorModel.MsfsSimConnect } &&
+                     x.Data == simVar.Name))
         {
             ProfileEntryIteration(outputCreator, simVar);
-            PrecomparisonIteration(outputCreator);
         }
     }
 
@@ -91,6 +89,8 @@ public class Profile : IAsyncDisposable
         {
             return;
         }
+        
+        PrecomparisonIteration(outputCreator);
 
         switch (outputCreator.OutputType)
         {
@@ -128,10 +128,7 @@ public class Profile : IAsyncDisposable
     private void PrecomparisonIteration(OutputCreator outputCreator)
     {
         foreach (OutputCreator precondition in _profileCreatorModel.OutputCreators.Where(x =>
-                     x.FlightSimValue is not null &&
-                     x.Preconditions is not null &&
-                     x.Preconditions.Length > 0 &&
-                     x.IsActive &&
+                     x is { IsActive: true, FlightSimValue: not null, Preconditions.Length: > 0 } &&
                      x.Preconditions.Any(l => l.ReferenceId == outputCreator.Id)))
         {
             switch (precondition.DataType)
@@ -151,6 +148,7 @@ public class Profile : IAsyncDisposable
                     {
                         ProfileEntryIteration(precondition, new PmdgDataFieldChangedEventArgs(propertyName, precondition.FlightSimValue!));
                     }
+
                     break;
             }
         }
@@ -158,13 +156,11 @@ public class Profile : IAsyncDisposable
 
     private void PmdgHelperOnFieldChanged(object? sender, PmdgDataFieldChangedEventArgs e)
     {
-        foreach (OutputCreator item in _profileCreatorModel.OutputCreators.Where(x =>
-                     (x is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, IsActive: true, PmdgDataArrayIndex: not null } &&
-                      x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName) ||
-                     x.PmdgData == e.PmdgDataName))
+        foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x => 
+                    x is { IsActive: true, DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 } && 
+                    (x.PmdgData == e.PmdgDataName || x.PmdgDataArrayIndex is not null && x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName)))
         {
-            ProfileEntryIteration(item, e);
-            PrecomparisonIteration(item);
+            ProfileEntryIteration(outputCreator, e);
         }
     }
 
@@ -176,6 +172,8 @@ public class Profile : IAsyncDisposable
         {
             return;
         }
+        
+        PrecomparisonIteration(outputCreator);
 
         switch (e.Value)
         {
@@ -203,7 +201,7 @@ public class Profile : IAsyncDisposable
 
             //float
             case float:
-                double valueDouble = Convert.ToDouble(e.Value);
+                double valueDouble = Convert.ToDouble(e.Value, Helper.EnglishCulture);
                 if (outputCreator.ComparisonValue is not null)
                 {
                     SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, valueDouble));
@@ -292,7 +290,7 @@ public class Profile : IAsyncDisposable
             not null when comparisonValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
             _ => comparisonValue
         };
-        
+
         string? sValue = value switch
         {
             null => string.Empty,
@@ -306,7 +304,7 @@ public class Profile : IAsyncDisposable
             not null when sValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
             _ => sValue
         };
-        
+
         return CheckComparison(sComparisonValue, charOperator, sValue);
     }
 
@@ -416,10 +414,11 @@ public class Profile : IAsyncDisposable
 
                 while (sb.Length < outputCreator.DigitCount + dotCount) _ = sb.Insert(0, outputCreator.PaddingCharacter);
             }
-            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737, PaddingCharacter: null, DigitCount: null })
+
+            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, PaddingCharacter: null, DigitCount: null })
             {
-                B737.SetMcp(ref sb, name);
-                B737.SetIrsDisplay(ref sb, name);
+                Helper.SetMcp(ref sb, name);
+                Helper.SetIrsDisplay(ref sb, name);
             }
         }
 
@@ -505,7 +504,12 @@ public class Profile : IAsyncDisposable
 
     private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
-        foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.Input?.Position == e.Position && x.IsActive))
+        SendEvent(e.Position, e.IsPressed);
+    }
+
+    private void SendEvent(int position, bool isPressed)
+    {
+        foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.IsActive && x.Input?.Position == position))
         {
             //Precondition
             if (inputCreator.Preconditions is null && !CheckPrecomparison(inputCreator.Preconditions))
@@ -513,15 +517,22 @@ public class Profile : IAsyncDisposable
                 continue;
             }
 
-            //HTML Event(H:Event), Reverse Polish Notation (RPN)
-            if (inputCreator.EventType == ProfileCreatorModel.Rpn && !string.IsNullOrEmpty(inputCreator.Event) && e.IsPressed == !inputCreator.OnRelease)
+            switch (inputCreator.EventType)
             {
-                _simConnectClient.SendWasmEvent(inputCreator.Event);
-                continue;
+                //HTML Event(H:Event), Reverse Polish Notation (RPN)
+                case ProfileCreatorModel.Rpn when !string.IsNullOrEmpty(inputCreator.Event) && isPressed == !inputCreator.OnRelease:
+                    _simConnectClient.SendWasmEvent(inputCreator.Event);
+                    continue;
+
+                //Key Event ID (K:Event[K]) with one parameter
+                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && ((isPressed && inputCreator is { DataPress: null, OnRelease: false }) 
+                                                                                        || (!isPressed && inputCreator is { DataRelease: null, OnRelease: true })):
+                    _simConnectClient.TransmitSimEvent(inputCreator.Event);
+                    continue;
             }
 
             //Direction
-            uint firstParameter = Convert.ToUInt32(e.IsPressed);
+            uint firstParameter = Convert.ToUInt32(isPressed);
             uint secondParameter = 0;
             switch (firstParameter)
             {
@@ -557,24 +568,25 @@ public class Profile : IAsyncDisposable
 
             switch (inputCreator.EventType)
             {
-                //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]), Key Event ID (K:Event[K])
-                case ProfileCreatorModel.MsfsSimConnect when !string.IsNullOrEmpty(inputCreator.Event):
+                //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]))
+                case ProfileCreatorModel.MsfsSimConnect when inputCreator.Event is not null:
                     _simConnectClient.SetSimVar(firstParameter, inputCreator.Event);
                     continue;
 
-                case ProfileCreatorModel.KEvent when !string.IsNullOrEmpty(inputCreator.Event):
+                //Key Event ID (K:Event[K]) with one or more parameters
+                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && (inputCreator.DataPress is not null || inputCreator.DataRelease is not null):
                     _simConnectClient.TransmitSimEvent(firstParameter, secondParameter, inputCreator.Event);
                     continue;
 
                 //PMDG 737
                 case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
                     _simConnectClient.TransmitEvent(firstParameter, (B737.Event)inputCreator.PmdgEvent.Value);
-                    break;
+                    continue;
 
                 //PMDG 777
                 case ProfileCreatorModel.Pmdg777 when inputCreator.PmdgEvent is not null:
                     _simConnectClient.TransmitEvent(firstParameter, (B777.Event)inputCreator.PmdgEvent.Value);
-                    break;
+                    continue;
             }
         }
     }
