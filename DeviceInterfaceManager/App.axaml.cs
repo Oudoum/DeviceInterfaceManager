@@ -114,7 +114,7 @@ public class App : Application
     }
 
     public static MainWindowViewModel MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>()!;
-    private static SettingsViewModel SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>()!;
+    public static SettingsViewModel SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>()!;
     private static IDialogService DialogService => Ioc.Default.GetService<IDialogService>()!;
     private static ObservableCollection<IInputOutputDevice> InputOutputDevices => Ioc.Default.GetService<ObservableCollection<IInputOutputDevice>>()!;
     
