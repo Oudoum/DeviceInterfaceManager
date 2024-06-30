@@ -37,7 +37,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             SearchPmdgEvent = GetPmdgEventName();
         }
 
-        InputOutputDevice.SwitchPositionChanged += SwitchPositionOutputDeviceOnSwitchPositionChanged;
+        InputOutputDevice.SwitchPositionChanged += SwitchPositionChanged;
     }
 
 #if DEBUG
@@ -58,16 +58,16 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     public void OnClosed()
     {
-        InputOutputDevice.SwitchPositionChanged -= SwitchPositionOutputDeviceOnSwitchPositionChanged;
+        InputOutputDevice.SwitchPositionChanged -= SwitchPositionChanged;
     }
 
-    private int _currentPosition;
+    public bool GetPosition { get; set; }
 
-    private void SwitchPositionOutputDeviceOnSwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
+    private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
-        if (e.IsPressed)
+        if (GetPosition && e.IsPressed)
         {
-            _currentPosition = e.Position;
+            Input = Components.FirstOrDefault(i => i?.Position == e.Position);
         }
     }
 
@@ -339,12 +339,20 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     [ObservableProperty]
     private string? _event;
 
+    partial void OnEventChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Event = null;
+        }
+    }
+
     [ObservableProperty]
     private bool _onRelease;
-
+    
     [ObservableProperty]
     private uint? _dataPress;
-
+    
     [ObservableProperty]
     private uint? _dataPress2;
 
@@ -353,10 +361,4 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private uint? _dataRelease2;
-
-    [RelayCommand]
-    private void GetSwitch()
-    {
-        Input = Components.FirstOrDefault(i => i?.Position == _currentPosition);
-    }
 }
