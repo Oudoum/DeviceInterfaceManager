@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -364,6 +365,14 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [ObservableProperty]
     private string? _comparisonValue;
 
+    partial void OnComparisonValueChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            ComparisonValue = null;
+        }
+    }
+
     [ObservableProperty]
     private double? _trueValue;
 
@@ -373,14 +382,38 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [ObservableProperty]
     private string? _data;
 
+    partial void OnDataChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Data = null;
+        }
+    }
+
     [ObservableProperty]
     private string? _unit;
+
+    partial void OnUnitChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Unit = null;
+        }
+    }
 
     [ObservableProperty]
     private bool _isInverted;
 
     [ObservableProperty]
     private string? _numericFormat;
+
+    partial void OnNumericFormatChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            NumericFormat = null;
+        }
+    }
 
     [ObservableProperty]
     private bool? _isPadded;
