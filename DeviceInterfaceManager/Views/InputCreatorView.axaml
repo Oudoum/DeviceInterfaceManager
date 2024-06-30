@@ -25,13 +25,13 @@
                 <StackPanel Margin="20" Spacing="20">
                     <StackPanel.Styles>
                         <Style Selector="TextBox.normalParameter">
-                            <Setter Property="Watermark" Value="Parameter"/>
+                            <Setter Property="Watermark" Value="Parameter" />
                         </Style>
                         <Style Selector="TextBox.secondParameter">
-                            <Setter Property="Watermark" Value="Parameter 1"/>
+                            <Setter Property="Watermark" Value="Parameter 1" />
                         </Style>
                     </StackPanel.Styles>
-                    
+
                     <StackPanel Spacing="10">
                         <StackPanel Spacing="25" Orientation="Horizontal">
                             <RadioButton Content="SimVar / L:Var"
@@ -72,10 +72,10 @@
                                       DisplayMemberBinding="{Binding Position}"
                                       SelectedItem="{Binding Input}"
                                       ItemsSource="{Binding Components}" />
-                            <Button Content="?"
-                                    FontWeight="Bold"
-                                    HorizontalAlignment="Left"
-                                    Command="{Binding GetSwitchCommand}" />
+                            <ToggleButton Content="?"
+                                          FontWeight="Bold"
+                                          HorizontalAlignment="Left"
+                                          IsChecked="{Binding GetPosition}" />
                             <Button Classes="clear"
                                     Command="{Binding #InputComboBox.Clear}"
                                     IsVisible="{Binding #InputComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
@@ -122,8 +122,19 @@
                     </Grid>
 
                     <!-- On Release -->
-                    <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsRpn}">
+                    <Grid ColumnDefinitions="*,2*">
+                        <Grid.IsEnabled>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="DataPress" Converter="{x:Static ObjectConverters.IsNull}" />
+                                <Binding Path="DataRelease" Converter="{x:Static ObjectConverters.IsNull}" />
+                            </MultiBinding>
+                        </Grid.IsEnabled>
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                <Binding Path="IsRpn" />
+                                <Binding Path="IsKEvent" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="OnRelease" />
@@ -157,16 +168,22 @@
                                    VerticalAlignment="Center"
                                    Text="Data Press" />
                         <StackPanel Grid.Column="1"
+                                    IsEnabled="{Binding !OnRelease}"
                                     Spacing="10">
                             <TextBox Classes="clearButton"
                                      Classes.normalParameter="{Binding !IsKEvent}"
                                      Classes.secondParameter="{Binding IsKEvent}"
-                                     Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" >
-                            </TextBox>
-                            <TextBox IsVisible="{Binding IsKEvent}"
-                                     Classes="clearButton"
+                                     Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" />
+                            <TextBox Classes="clearButton"
                                      Watermark="Parameter 2"
-                                     Text="{Binding DataPress2, Converter={StaticResource NullableConverter}}" />
+                                     Text="{Binding DataPress2, Converter={StaticResource NullableConverter}}">
+                                <TextBox.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="IsKEvent" />
+                                        <Binding Path="DataPress" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                                    </MultiBinding>
+                                </TextBox.IsVisible>
+                            </TextBox>
                         </StackPanel>
                     </Grid>
 
@@ -195,15 +212,22 @@
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
                         <StackPanel Grid.Column="1"
+                                    IsEnabled="{Binding !OnRelease}"
                                     Spacing="10">
                             <TextBox Classes="clearButton"
                                      Classes.normalParameter="{Binding !IsKEvent}"
                                      Classes.secondParameter="{Binding IsKEvent}"
                                      Text="{Binding DataRelease, Converter={StaticResource NullableConverter}}" />
-                            <TextBox IsVisible="{Binding IsKEvent}"
-                                     Classes="clearButton"
+                            <TextBox Classes="clearButton"
                                      Watermark="Parameter 2"
-                                     Text="{Binding DataRelease2, Converter={StaticResource NullableConverter}}" />
+                                     Text="{Binding DataRelease2, Converter={StaticResource NullableConverter}}">
+                                <TextBox.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="IsKEvent" />
+                                        <Binding Path="DataRelease" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                                    </MultiBinding>
+                                </TextBox.IsVisible>
+                            </TextBox>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
