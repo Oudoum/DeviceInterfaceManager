@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,6 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.Modifiers;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -21,26 +23,28 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         : base(inputOutputDevice, outputCreators, preconditions)
     {
         _outputCreator = outputCreator;
+        Description = outputCreator.Description;
         OutputType = outputCreator.OutputType;
         Components = GetComponents(OutputType);
-        Output = Components.FirstOrDefault(x => x?.Position == outputCreator.Output?.Position);
+        if (outputCreator.Outputs?.Length > 1)
+        {
+            OutputsCollection = new ObservableCollection<int>(outputCreator.Outputs);
+            Position = 0;
+        }
+        if (outputCreator.Outputs?.Length > 0)
+        {
+            Output = Components.FirstOrDefault(x => x?.Position == outputCreator.Outputs[^1]);
+        }
         DataType = outputCreator.DataType;
-        PmdgData = outputCreator.PmdgData;
-        PmdgDataArrayIndex = outputCreator.PmdgDataArrayIndex;
-        Operator = outputCreator.Operator;
-        ComparisonValue = outputCreator.ComparisonValue;
-        TrueValue = outputCreator.TrueValue;
-        FalseValue = outputCreator.FalseValue;
         Data = outputCreator.Data;
         Unit = outputCreator.Unit;
-        IsInverted = outputCreator.IsInverted;
-        NumericFormat = outputCreator.NumericFormat;
+        PmdgData = outputCreator.PmdgData;
+        PmdgDataArrayIndex = outputCreator.PmdgDataArrayIndex;
+        ModifiersCollection = new ObservableCollection<IModifier>(outputCreator.Modifiers ?? []);
         IsPadded = outputCreator.IsPadded;
         PaddingCharacter = outputCreator.PaddingCharacter;
         Digits = CreateDigits(outputCreator.DigitCount, outputCreator.DigitCheckedSum, outputCreator.DecimalPointCheckedSum);
         DigitCount = outputCreator.DigitCount;
-        SubstringStart = outputCreator.SubstringStart;
-        SubstringEnd = outputCreator.SubstringEnd;
 
         SearchPmdgData = PmdgData;
     }
@@ -48,41 +52,108 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 #if DEBUG
     public OutputCreatorViewModel()
     {
+        OutputsCollection =
+        [
+            1,
+            2,
+            3
+        ];
+
         _outputCreator = new OutputCreator
         {
             IsActive = true,
             Preconditions = [new Precondition()],
             Description = "Description",
             OutputType = ProfileCreatorModel.Led,
-            Output = new Component(1)
+            Outputs = OutputsCollection.ToArray()
         };
-        Components = new List<Component>();
+        Components =
+        [
+            new Component(1),
+            new Component(2),
+            new Component(3),
+            new Component(4)
+        ];
         Digits = CreateDigits(3, 1, 1);
+
+        ModifiersCollection =
+        [
+            new Transformation(),
+            new Comparison(),
+            new Interpolation(),
+            new Padding(),
+            new Substring()
+        ];
     }
 #endif
 
     public override Precondition[]? Copy()
     {
+        _outputCreator.Description = GetDescription();
         _outputCreator.OutputType = OutputType;
-        _outputCreator.Output = Output;
+        _outputCreator.Outputs = OutputsCollection.Count switch
+        {
+            > 0 => OutputsCollection.ToArray(),
+            0 => GetOutputs(),
+            _ => _outputCreator.Outputs
+        };
         _outputCreator.DataType = DataType;
-        _outputCreator.PmdgData = PmdgData;
-        _outputCreator.PmdgDataArrayIndex = PmdgDataArrayIndex;
-        _outputCreator.Operator = Operator;
-        _outputCreator.ComparisonValue = ComparisonValue;
-        _outputCreator.TrueValue = TrueValue;
-        _outputCreator.FalseValue = FalseValue;
         _outputCreator.Data = Data;
         _outputCreator.Unit = Unit;
-        _outputCreator.IsInverted = IsInverted;
-        _outputCreator.NumericFormat = NumericFormat;
+        _outputCreator.PmdgData = PmdgData;
+        _outputCreator.PmdgDataArrayIndex = PmdgDataArrayIndex;
+        _outputCreator.Modifiers = ModifiersCollection.Count switch
+        {
+            > 0 => ModifiersCollection.ToArray(),
+            0 => null,
+            _ => _outputCreator.Modifiers
+        };
+
         _outputCreator.IsPadded = IsPadded;
         _outputCreator.PaddingCharacter = PaddingCharacter;
         _outputCreator.DigitCount = DigitCount;
         SetCheckedSum();
-        _outputCreator.SubstringStart = SubstringStart;
-        _outputCreator.SubstringEnd = SubstringEnd;
         return base.Copy();
+    }
+
+    private int[]? GetOutputs()
+    {
+        if (Output is null)
+        {
+            return null;
+        }
+
+        return [Output.Position];
+    }
+
+    private string? GetDescription()
+    {
+        if (!string.IsNullOrEmpty(Description))
+        {
+            return Description;
+        }
+
+        if (Data is not null)
+        {
+            if (Unit is not null)
+            {
+                return Data + " [" + Unit + "]";
+            }
+
+            return Data;
+        }
+
+        if (PmdgData is null)
+        {
+            return null;
+        }
+
+        if (PmdgDataArrayIndex is not null)
+        {
+            return PmdgData + " [" + PmdgDataArrayIndex + "]";
+        }
+            
+        return PmdgData;
     }
 
     private void SetCheckedSum()
@@ -100,8 +171,9 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         _outputCreator.DecimalPointCheckedSum = DecimalPointCheckedSum;
     }
 
+    public string? Description { get; set; }
+
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private string? _outputType;
 
     partial void OnOutputTypeChanged(string? value)
@@ -120,18 +192,13 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 Components = GetComponents(value);
                 IsDisplay = true;
                 IsPadded = false;
-                IsInverted = false;
-                SwitchDataType();
                 return;
         }
 
         IsDisplay = false;
-        NumericFormat = null;
         IsPadded = null;
         PaddingCharacterPair = null;
         DigitCount = null;
-        SubstringStart = null;
-        SubstringEnd = null;
     }
 
     private IEnumerable<Component?> GetComponents(string? value)
@@ -158,6 +225,11 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
     partial void OnOutputChanged(Component? value)
     {
+        if (Position is not null)
+        {
+            Position = value?.Position;
+        }
+
         switch (OutputType)
         {
             case ProfileCreatorModel.Led:
@@ -174,6 +246,42 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         }
     }
 
+    public int[]? Outputs { get; set; }
+
+    [ObservableProperty]
+    private ObservableCollection<int> _outputsCollection = [];
+
+    [RelayCommand]
+    private void RemoveOutputs(IList list)
+    {
+       List<int> outputs = [..list.Cast<int>()];
+       foreach (int output in outputs)
+       {
+           OutputsCollection.Remove(output);
+       }
+       
+       if (OutputsCollection.Count > 0)
+       {
+           Position = OutputsCollection[^1];
+       }
+    }
+
+    [ObservableProperty]
+    private int? _position;
+
+    [RelayCommand]
+    private void AddOutput()
+    {
+        if (Output is null || OutputsCollection.Contains(Output.Position))
+        {
+            return;
+        }
+
+        OutputsCollection.Add(Output.Position);
+        OutputsCollection = new ObservableCollection<int>(OutputsCollection.Order());
+        Position = Output.Position;
+    }
+
     private string? _dataType;
 
     public string? DataType
@@ -186,6 +294,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 ProfileCreatorModel.MsfsSimConnect => true,
                 ProfileCreatorModel.Pmdg737 => false,
                 ProfileCreatorModel.Pmdg777 => false,
+                ProfileCreatorModel.Dim => false,
                 _ => IsMsfsSimConnect
             };
 
@@ -202,15 +311,17 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 case ProfileCreatorModel.Pmdg777:
                     IsPmdg777 = true;
                     break;
+                
+                case ProfileCreatorModel.Dim:
+                    IsDim = true;
+                    break;
             }
 
             _dataType = value;
-            SwitchDataType();
         }
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private bool _isMsfsSimConnect;
 
     partial void OnIsMsfsSimConnectChanged(bool value)
@@ -221,15 +332,20 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         }
 
         DataType = ProfileCreatorModel.MsfsSimConnect;
+        OnMsfsSimConnectChanged();
+    }
+
+    private void OnMsfsSimConnectChanged()
+    {
         IsPmdg737 = false;
         IsPmdg777 = false;
         IsPmdg = false;
+        IsDim = false;
         SearchPmdgData = null;
         PmdgData = null;
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
     private bool _isPmdg;
 
     [ObservableProperty]
@@ -265,119 +381,31 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     private void OnPmdgChanged()
     {
         IsMsfsSimConnect = false;
+        IsDim = false;
         IsPmdg = true;
         Data = null;
         Unit = null;
+        SearchPmdgData = null;
         PmdgData = null;
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInvertedEnabled))]
-    private string? _pmdgData;
+    private bool _isDim;
 
-    partial void OnPmdgDataChanged(string? value)
+    partial void OnIsDimChanged(bool value)
     {
-        OnPropertyChanged(nameof(PmdgDataArrayIndices));
-        PmdgDataArrayIndex = PmdgDataArrayIndices.FirstOrDefault();
-        SwitchDataType();
+        if (!value)
+        {
+            return;
+        }
+
+        DataType = ProfileCreatorModel.Dim;
+        IsMsfsSimConnect = false;
+        OnMsfsSimConnectChanged();
+        Data = null;
+        Unit = null;
     }
 
-    private void SwitchDataType()
-    {
-        Operator = null;
-        ComparisonValue = null;
-        TrueValue = null;
-        FalseValue = null;
-    }
-
-    [ObservableProperty]
-    private string? _searchPmdgData;
-
-    [ObservableProperty]
-    private IEnumerable<string?>? _pmdgDataEnumerable;
-
-    [ObservableProperty]
-    private int? _pmdgDataArrayIndex;
-
-    public int?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
-
-    private int?[] GetPmdgDataArrayIndices()
-    {
-        if (string.IsNullOrEmpty(PmdgData))
-        {
-            return [];
-        }
-
-        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute1 && attribute1.Value != UnmanagedType.ByValTStr && attribute1.SizeConst is var size1)
-        {
-            return new int?[size1].Select((_, i) => i).Cast<int?>().ToArray();
-        }
-        
-        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute2 && attribute2.Value != UnmanagedType.ByValTStr && attribute2.SizeConst is var size2)
-        {
-            return new int?[size2].Select((_, i) => i).Cast<int?>().ToArray();
-        }
-
-        return [];
-    }
-
-    public bool IsInvertedEnabled => GetIsInvertedEnabled();
-
-    private bool GetIsInvertedEnabled()
-    {
-        if (IsDisplay)
-        {
-            return false;
-        }
-        
-        if (!IsPmdg)
-        {
-            return true;
-        }
-        
-        if (string.IsNullOrEmpty(PmdgData))
-        {
-            return false;
-        }
-
-        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B737.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
-        {
-            return true;
-        }
-        
-        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.FieldType == typeof(bool) || typeof(B777.Data).GetField(PmdgData)?.FieldType == typeof(bool[]))
-        {
-            return true;
-        }
-
-        return false;
-    }
-    
-    [ObservableProperty]
-    private char? _operator;
-
-    [RelayCommand]
-    private void ClearOperator()
-    {
-        Operator = null;
-    }
-
-    [ObservableProperty]
-    private string? _comparisonValue;
-
-    partial void OnComparisonValueChanged(string? value)
-    {
-        if (value == string.Empty)
-        {
-            ComparisonValue = null;
-        }
-    }
-
-    [ObservableProperty]
-    private double? _trueValue;
-
-    [ObservableProperty]
-    private double? _falseValue;
 
     [ObservableProperty]
     private string? _data;
@@ -402,17 +430,80 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isInverted;
+    private string? _pmdgData;
+
+    partial void OnPmdgDataChanged(string? value)
+    {
+        OnPropertyChanged(nameof(PmdgDataArrayIndices));
+        PmdgDataArrayIndex = PmdgDataArrayIndices.FirstOrDefault();
+    }
 
     [ObservableProperty]
-    private string? _numericFormat;
+    private string? _searchPmdgData;
 
-    partial void OnNumericFormatChanged(string? value)
+    [ObservableProperty]
+    private IEnumerable<string?>? _pmdgDataEnumerable;
+
+    [ObservableProperty]
+    private int? _pmdgDataArrayIndex;
+
+    public int?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
+
+    private int?[] GetPmdgDataArrayIndices()
     {
-        if (value == string.Empty)
+        if (string.IsNullOrEmpty(PmdgData))
         {
-            NumericFormat = null;
+            return [];
         }
+
+        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute1 && attribute1.Value != UnmanagedType.ByValTStr && attribute1.SizeConst is var size1)
+        {
+            return new int?[size1].Select((_, i) => i).Cast<int?>().ToArray();
+        }
+
+        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute2 && attribute2.Value != UnmanagedType.ByValTStr && attribute2.SizeConst is var size2)
+        {
+            return new int?[size2].Select((_, i) => i).Cast<int?>().ToArray();
+        }
+
+        return [];
+    }
+
+    public IModifier[]? Modifiers { get; set; }
+
+    public ObservableCollection<IModifier> ModifiersCollection { get; set; }
+
+    [RelayCommand]
+    private void AddModifier(string type)
+    {
+        switch (type)
+        {
+            case nameof(Transformation):
+                ModifiersCollection.Add(new Transformation());
+                break;
+
+            case nameof(Comparison):
+                ModifiersCollection.Add(new Comparison());
+                break;
+
+            case nameof(Interpolation):
+                ModifiersCollection.Add(new Interpolation());
+                break;
+
+            case nameof(Padding):
+                ModifiersCollection.Add(new Padding());
+                break;
+
+            case nameof(Substring):
+                ModifiersCollection.Add(new Substring());
+                break;
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveModifier(IModifier modifier)
+    {
+        ModifiersCollection.Remove(modifier);
     }
 
     [ObservableProperty]
@@ -503,13 +594,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
     public byte? DecimalPointCheckedSum { get; set; }
 
-    [ObservableProperty]
-    private byte? _substringStart;
-
-    [ObservableProperty]
-    private byte? _substringEnd;
-
-    private async Task SetOutputPosition(string? position, bool isEnabled)
+    private async Task SetOutputPosition(int position, bool isEnabled)
     {
         switch (OutputType)
         {
@@ -530,12 +615,12 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [RelayCommand]
     private async Task PointerEnteredComboBox(string? position)
     {
-        await SetOutputPosition(position, true);
+        await SetOutputPosition(Convert.ToInt32(position), true);
     }
 
     [RelayCommand]
     private async Task PointerExitedComboBox(string? position)
     {
-        await SetOutputPosition(position, false);
+        await SetOutputPosition(Convert.ToInt32(position), false);
     }
 }
