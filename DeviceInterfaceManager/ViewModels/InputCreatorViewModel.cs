@@ -18,19 +18,20 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         : base(inputOutputDevice, outputCreators, preconditions)
     {
         _inputCreator = inputCreator;
+        Description = _inputCreator.Description;
         InputType = inputCreator.InputType;
         Components = GetComponents(InputType);
         Input = Components.FirstOrDefault(x => x?.Position == inputCreator.Input?.Position);
         EventType = inputCreator.EventType;
-        PmdgEvent = inputCreator.PmdgEvent;
-        PmdgMousePress = inputCreator.PmdgMousePress;
-        PmdgMouseRelease = inputCreator.PmdgMouseRelease;
         Event = inputCreator.Event;
-        OnRelease = inputCreator.OnRelease;
         DataPress = inputCreator.DataPress;
         DataPress2 = inputCreator.DataPress2;
         DataRelease = inputCreator.DataRelease;
         DataRelease2 = inputCreator.DataRelease2;
+        PmdgEvent = inputCreator.PmdgEvent;
+        PmdgMousePress = inputCreator.PmdgMousePress;
+        PmdgMouseRelease = inputCreator.PmdgMouseRelease;
+        OnRelease = inputCreator.OnRelease;
 
         if (PmdgEvent is not null)
         {
@@ -73,6 +74,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     public override Precondition[]? Copy()
     {
+        _inputCreator.Description = GetDescription();
         _inputCreator.InputType = InputType;
         _inputCreator.Input = Input;
         _inputCreator.EventType = EventType;
@@ -87,6 +89,23 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         _inputCreator.DataRelease2 = DataRelease2;
         return base.Copy();
     }
+    
+    private string? GetDescription()
+    {
+        if (!string.IsNullOrEmpty(Description))
+        {
+            return Description;
+        }
+
+        if (Event is not null)
+        {
+            return Event;
+        }
+
+        return PmdgEventName ?? null;
+    }
+    
+    public string? Description { get; set; }
 
     [ObservableProperty]
     private string? _inputType;
@@ -257,6 +276,29 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         ClearPmdgMouseRelease();
         OnRelease = false;
     }
+    
+    [ObservableProperty]
+    private string? _event;
+
+    partial void OnEventChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Event = null;
+        }
+    }
+        
+    [ObservableProperty]
+    private long? _dataPress;
+    
+    [ObservableProperty]
+    private long? _dataPress2;
+
+    [ObservableProperty]
+    private long? _dataRelease;
+
+    [ObservableProperty]
+    private long? _dataRelease2;
 
     public int? PmdgEvent { get; set; }
     
@@ -337,28 +379,5 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private string? _event;
-
-    partial void OnEventChanged(string? value)
-    {
-        if (value == string.Empty)
-        {
-            Event = null;
-        }
-    }
-
-    [ObservableProperty]
     private bool _onRelease;
-    
-    [ObservableProperty]
-    private uint? _dataPress;
-    
-    [ObservableProperty]
-    private uint? _dataPress2;
-
-    [ObservableProperty]
-    private uint? _dataRelease;
-
-    [ObservableProperty]
-    private uint? _dataRelease2;
 }
