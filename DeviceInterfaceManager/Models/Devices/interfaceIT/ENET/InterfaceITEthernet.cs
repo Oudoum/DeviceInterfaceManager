@@ -24,7 +24,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
     public ComponentInfo SevenSegment { get; private set; } = new(0, 0);
     public ComponentInfo AnalogOut { get; } = new(0, 0);
 
-    public async Task SetLedAsync(string? position, bool isEnabled)
+    public async Task SetLedAsync(int position, bool isEnabled)
     {
         try
         {
@@ -39,19 +39,19 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         }
     }
 
-    public Task SetDatalineAsync(string? position, bool isEnabled)
+    public Task SetDatalineAsync(int position, bool isEnabled)
     {
         //Add
         return Task.CompletedTask;
     }
 
-    public Task SetSevenSegmentAsync(string? position, string data)
+    public Task SetSevenSegmentAsync(int position, string data)
     {
         //Add
         return Task.CompletedTask;
     }
 
-    public Task SetAnalogAsync(string? position, int value)
+    public Task SetAnalogAsync(int position, int value)
     {
         //Add
         return Task.CompletedTask;
@@ -199,6 +199,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                             if (isSwitchIdentifying || !isInitializing)
                             {
                                 ProcessSwitchData(ethernetData);
+                                ProcessAnalogInData(ethernetData);
                             }
                             else if (isInitializing && !isSwitchIdentifying)
                             {
@@ -220,24 +221,45 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         await tcs.Task;
     }
 
+    private const string SwitchData = "B1=SW:";
+    
     private void ProcessSwitchData(string ethernetData)
     {
-        if (!ethernetData.StartsWith("B1="))
+        if (!ethernetData.StartsWith(SwitchData))
         {
             return;
         }
 
-        string[] splitSwitchData = ethernetData.Replace("B1=SW:", string.Empty).Split(':');
+        string[] splitData = ethernetData.Replace(SwitchData, string.Empty).Split(':');
 
-        if (!int.TryParse(splitSwitchData[0], out int position))
+        if (!int.TryParse(splitData[0], out int position))
         {
             return;
         }
 
-        bool isPressed = splitSwitchData[1] == "ON";
-
+        bool isPressed = splitData[1] == "ON";
         Switch.UpdatePosition(position, isPressed);
         SwitchPositionChanged?.Invoke(this, new SwitchPositionChangedEventArgs(position, isPressed));
+    }
+
+    private const string AnalogData = "B1=ANALOG:";
+
+    private void ProcessAnalogInData(string ethernetData)
+    {
+        if (!ethernetData.StartsWith(AnalogData))
+        {
+            return;
+        }
+
+        string data = ethernetData.Replace(AnalogData, string.Empty);
+        
+        if (!int.TryParse(data, out int value))
+        {
+            return;
+        }
+        
+        AnalogIn.UpdatePosition(1, value);
+        AnalogInValueChanged?.Invoke(this, new AnalogInValueChangedEventArgs(1, value));
     }
 
     private void GetInterfaceItEthernetInfoData(string ethernetData)
