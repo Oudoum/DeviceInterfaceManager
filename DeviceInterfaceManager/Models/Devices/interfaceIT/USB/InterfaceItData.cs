@@ -23,25 +23,25 @@ public partial class InterfaceItData : IDeviceSerial
     public ComponentInfo SevenSegment { get; private set; } = new(0, 0);
     public ComponentInfo AnalogOut { get; private set; } = new(0, 0);
 
-    public Task SetLedAsync(string? position, bool isEnabled)
+    public Task SetLedAsync(int position, bool isEnabled)
     {
-        CheckError(interfaceIT_LED_Set(_session, Convert.ToInt32(position), isEnabled));
+        CheckError(interfaceIT_LED_Set(_session, position, isEnabled));
         return Task.CompletedTask;
     }
 
-    public Task SetDatalineAsync(string? position, bool isEnabled)
+    public Task SetDatalineAsync(int position, bool isEnabled)
     {
-        CheckError(interfaceIT_Dataline_Set(_session, Convert.ToInt32(position), isEnabled));
+        CheckError(interfaceIT_Dataline_Set(_session, position, isEnabled));
         return Task.CompletedTask;
     }
 
-    public Task SetSevenSegmentAsync(string? position, string data)
+    public Task SetSevenSegmentAsync(int position, string data)
     {
-        CheckError(interfaceIT_7Segment_Display(_session, data, Convert.ToInt32(position)));
+        CheckError(interfaceIT_7Segment_Display(_session, data, position));
         return Task.CompletedTask;
     }
 
-    public Task SetAnalogAsync(string? position, int value)
+    public Task SetAnalogAsync(int position, int value)
     {
         if (_features.HasFlag(Features.SpecialBrightness))
         {
