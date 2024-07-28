@@ -30,15 +30,6 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
     public async Task Startup()
     {
-        UpdateManager updateManager = CreateUpdateManager();
-
-        CurrentVersion = updateManager.CurrentVersion?.ToFullString();
-
-        if (Settings.CheckForUpdates)
-        {
-            await CheckForUpdatesAsync(updateManager);
-        }
-
         if (Settings.FdsUsb)
         {
             ToggleFdsUsbCommand.Execute(null);
@@ -52,6 +43,15 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         if (Settings.Server)
         {
             StartServerCommand.Execute(null);
+        }
+        
+        UpdateManager updateManager = CreateUpdateManager();
+
+        CurrentVersion = updateManager.CurrentVersion?.ToFullString();
+
+        if (Settings.CheckForUpdates)
+        {
+            await CheckForUpdatesAsync(updateManager);
         }
     }
 
