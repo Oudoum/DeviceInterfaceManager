@@ -17,7 +17,7 @@
         <Setter Property="Padding" Value="{StaticResource HelperButtonThemePadding}"/>
         <Setter Property="IsTabStop" Value="False"/>
         <Setter Property="Focusable" Value="False"/>
-        <Setter Property="Margin" Value="0 0 30 0"/>
+        <Setter Property="Margin" Value="0 0 35 0"/>
         <Setter Property="HorizontalAlignment" Value="Right"/>
         <Setter Property="Width" Value="30"/>
     </Style>
