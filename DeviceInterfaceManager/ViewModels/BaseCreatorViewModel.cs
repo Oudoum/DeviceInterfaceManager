@@ -38,7 +38,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
                 Preconditions = [new Precondition()],
                 Description = "Description 1",
                 OutputType = ProfileCreatorModel.Led,
-                Output = new Component(1)
+                Outputs = [1, 2, 3]
             },
             new OutputCreator
             {
@@ -46,7 +46,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
             Preconditions = [new Precondition()],
             Description = "Description 2",
             OutputType = ProfileCreatorModel.Led,
-            Output = new Component(1)
+            Outputs = [1, 2, 3]
             }
         ];
     }
@@ -92,7 +92,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
         SelectedOutputCreator = OutputCreators.FirstOrDefault(x => value is not null && x.Id == value.ReferenceId);
     }
 
-    public static char[] Operators => ['=', '≠', '<', '>', '≤', '≥'];
+    public static char[] Operators => Models.Modifiers.Comparison.Operators;
     
     [RelayCommand]
     private void AddPrecondition()
