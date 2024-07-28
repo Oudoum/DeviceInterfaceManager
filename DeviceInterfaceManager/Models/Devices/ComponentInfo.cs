@@ -37,11 +37,11 @@ public class ComponentInfo(int first, int last)
         }
     }
     
-    public async Task PerformOperationOnAllComponents(Func<string?, Task> operationOnElement)
+    public async Task PerformOperationOnAllComponents(Func<int, Task> operationOnElement)
     {
         for (int i = First; i <= Last; i++)
         {
-            await operationOnElement(i.ToString());
+            await operationOnElement(i);
         }
     }
 }
