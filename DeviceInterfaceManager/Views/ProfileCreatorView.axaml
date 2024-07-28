@@ -9,6 +9,7 @@
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
@@ -20,6 +21,7 @@
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
         <converters:PmdgEventToStringConverter x:Key="PmdgEventToStringConverter" />
+        <converters:LengthToBooleanConverter x:Key="LengthToBooleanConverter" />
         <b:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
         <b:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
     </UserControl.Resources>
@@ -32,6 +34,9 @@
                 <ui:CommandBar.PrimaryCommands>
 
                     <ui:CommandBarButton Label="Change" Command="{Binding ChangeDeviceCommand }">
+                        <ui:CommandBarButton.CommandParameter>
+                            <sys:Boolean>true</sys:Boolean>
+                        </ui:CommandBarButton.CommandParameter>
                         <ui:CommandBarButton.IconSource>
                             <ui:PathIconSource Data="{StaticResource Devices}" />
                         </ui:CommandBarButton.IconSource>
@@ -195,12 +200,6 @@
                     <Setter Property="BorderThickness" Value="5" />
                     <Setter Property="BorderBrush" Value="Gray" />
                     <Setter Property="HeadersVisibility" Value="All" />
-                </Style>
-                <Style Selector="DataGrid /template/ ScrollBar#PART_HorizontalScrollbar">
-                    <Setter Property="AllowAutoHide" Value="False" />
-                </Style>
-                <Style Selector="DataGrid /template/ ScrollBar#PART_VerticalScrollbar">
-                    <Setter Property="AllowAutoHide" Value="False" />
                 </Style>
                 <Style Selector="DataGrid DataGridCell:current:focus /template/ Grid#FocusVisual">
                     <Setter Property="IsVisible" Value="False" />
@@ -432,7 +431,7 @@
                                 <DataGridTextColumn
                                     Header="PMDG Event"
                                     SortMemberPath="PmdgEvent"
-                                    IsReadOnly="True" >
+                                    IsReadOnly="True">
                                     <DataGridTextColumn.Binding>
                                         <MultiBinding Converter="{StaticResource PmdgEventToStringConverter}">
                                             <Binding Path="EventType" />
@@ -506,17 +505,14 @@
                 </TabItem.Content>
             </TabItem>
 
-            <TabItem Header="Output">
+            <TabItem Header="Output"
+                     IsSelected="True">
                 <TabItem.Content>
                     <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
                         <DataGrid
                             ItemsSource="{Binding ProfileCreatorModel.OutputCreators,
                             FallbackValue={x:Null}}">
                             <DataGrid.Styles>
-                                <Style Selector="DataGridCell.Tip" x:DataType="m:OutputCreator">
-                                    <Setter Property="ToolTip.Tip"
-                                            Value="{Binding Path=Output, Converter={StaticResource NullableKeyValuePairConverter}}" />
-                                </Style>
                                 <Style Selector="DataGrid">
                                     <Setter Property="(i:Interaction.Behaviors)">
                                         <i:BehaviorCollectionTemplate>
@@ -595,12 +591,48 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Header="Output"
-                                    SortMemberPath="Output.Position"
-                                    Binding="{Binding Output.Position, FallbackValue=''}"
-                                    IsReadOnly="True"
-                                    CellStyleClasses="Tip" />
+                                <DataGridTemplateColumn Header="Output"
+                                                        SortMemberPath="Output"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid
+                                                Classes.showToolTip="{Binding !!Outputs.Length}"
+                                                ToolTip.Placement="Bottom"
+                                                ToolTip.VerticalOffset="0">
+                                                <TextBlock
+                                                    Classes.hasMultiple="{Binding Outputs.Length, FallbackValue=0 ,Converter={StaticResource LengthToBooleanConverter}}"
+                                                    Margin="12"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Outputs[0], FallbackValue=''}">
+                                                    <TextBlock.Styles>
+                                                        <Style Selector="TextBlock.hasMultiple">
+                                                            <Setter Property="Foreground" Value="Red" />
+                                                        </Style>
+                                                    </TextBlock.Styles>
+                                                </TextBlock>
+                                                <ToolTip.Tip>
+                                                    <ScrollViewer MaxHeight="200"
+                                                                  Width="65">
+                                                        <ui:ItemsRepeater ItemsSource="{Binding Outputs}">
+                                                            <ui:ItemsRepeater.Layout>
+                                                                <ui:StackLayout Orientation="Vertical" />
+                                                            </ui:ItemsRepeater.Layout>
+                                                        </ui:ItemsRepeater>
+                                                    </ScrollViewer>
+                                                </ToolTip.Tip>
+                                                <Grid.Styles>
+                                                    <Style Selector="Grid">
+                                                        <Setter Property="Background" Value="{x:Null}" />
+                                                    </Style>
+                                                    <Style Selector="Grid.showToolTip">
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                    </Style>
+                                                </Grid.Styles>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Header="Data Type"
@@ -613,7 +645,7 @@
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0}{1}">
+                                                    <MultiBinding StringFormat="{}{0} {1}">
                                                         <Binding Path="PmdgData" />
                                                         <Binding Path="PmdgDataArrayIndex"
                                                                  StringFormat="{}[{0}]"
@@ -630,7 +662,7 @@
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0}{1}">
+                                                    <MultiBinding StringFormat="{}{0} {1}">
                                                         <Binding Path="Data" />
                                                         <Binding Path="Unit"
                                                                  StringFormat="{}[{0}]"
@@ -642,27 +674,10 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="Comparison" IsReadOnly="True">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Classes.inverted="{Binding IsInverted}"
-                                                       Margin="12"
-                                                       VerticalAlignment="Center">
-                                                <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0} {1}">
-                                                        <Binding Path="Operator" />
-                                                        <Binding Path="ComparisonValue" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                                <TextBlock.Styles>
-                                                    <Style Selector="TextBlock.inverted">
-                                                        <Setter Property="Foreground" Value="Red" />
-                                                    </Style>
-                                                </TextBlock.Styles>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+                                <DataGridTextColumn
+                                    Header="Modifiers"
+                                    Binding="{Binding Modifiers.Length, FallbackValue=''}"
+                                    IsReadOnly="True" />
 
                                 <DataGridTemplateColumn Header="Flight Sim Value" SortMemberPath="Value"
                                                         IsReadOnly="True">
