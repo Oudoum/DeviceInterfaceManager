@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.Modifiers;
 using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim;
@@ -18,8 +19,6 @@ public class Profile : IAsyncDisposable
     private readonly ProfileCreatorModel _profileCreatorModel;
 
     private readonly IInputOutputDevice _inputOutputDevice;
-
-    private const double Tolerance = 0.000001;
 
     public Profile(SimConnectClient simConnectClient, SimConnect simConnect, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice, bool serverEnabled)
     {
@@ -45,8 +44,15 @@ public class Profile : IAsyncDisposable
         }
 
         foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
-                     x is { IsActive: true, DataType: ProfileCreatorModel.MsfsSimConnect, Data: not null }))
+                     x is { IsActive: true, DataType: ProfileCreatorModel.MsfsSimConnect, Data: not null } || x.DataType == ProfileCreatorModel.Dim))
         {
+            if (outputCreator.DataType == ProfileCreatorModel.Dim)
+            {
+                outputCreator.FlightSimValue = "1";
+                ProfileIteration(outputCreator);
+                continue;
+            }
+            
             if (!string.IsNullOrEmpty(outputCreator.Unit))
             {
                 _simConnectClient.RegisterSimVar(outputCreator.Data!, outputCreator.Unit);
@@ -83,49 +89,12 @@ public class Profile : IAsyncDisposable
 
     private void ProfileEntryIteration(OutputCreator outputCreator, SimConnectClient.SimVar simVar)
     {
-        outputCreator.FlightSimValue = simVar.Data;
-        outputCreator.OutputValue = null;
-        if (!CheckPrecomparison(outputCreator.Preconditions))
-        {
-            return;
-        }
-        
-        PrecomparisonIteration(outputCreator);
+        outputCreator.FlightSimValue = simVar.Data.ToString(Helper.EnglishCulture);
 
-        switch (outputCreator.OutputType)
-        {
-            case ProfileCreatorModel.Led or ProfileCreatorModel.Dataline when outputCreator.ComparisonValue is null:
-                SetSendOutput(outputCreator, Convert.ToBoolean(simVar.Data));
-                break;
-
-            case ProfileCreatorModel.Led or ProfileCreatorModel.Dataline:
-                SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, simVar.Data));
-                break;
-
-            case ProfileCreatorModel.SevenSegment when outputCreator.ComparisonValue is null:
-                try
-                {
-                    SetStringValue(simVar.Data.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), simVar.Name, outputCreator);
-                }
-                catch (Exception)
-                {
-                    SetNumericFormatError(outputCreator);
-                }
-
-                break;
-
-            case ProfileCreatorModel.SevenSegment:
-                SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, simVar.Data));
-                break;
-        }
+        ProfileIteration(outputCreator);
     }
 
-    private static void SetNumericFormatError(OutputCreator outputCreator)
-    {
-        outputCreator.OutputValue = "NumericFormat Error";
-    }
-
-    private void PrecomparisonIteration(OutputCreator outputCreator)
+    private void PreconditionIteration(OutputCreator outputCreator)
     {
         foreach (OutputCreator precondition in _profileCreatorModel.OutputCreators.Where(x =>
                      x is { IsActive: true, FlightSimValue: not null, Preconditions.Length: > 0 } &&
@@ -156,9 +125,9 @@ public class Profile : IAsyncDisposable
 
     private void PmdgHelperOnFieldChanged(object? sender, PmdgDataFieldChangedEventArgs e)
     {
-        foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x => 
-                    x is { IsActive: true, DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 } && 
-                    (x.PmdgData == e.PmdgDataName || x.PmdgDataArrayIndex is not null && x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName)))
+        foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
+                     x is { IsActive: true, DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 } &&
+                     (x.PmdgData == e.PmdgDataName || (x.PmdgDataArrayIndex is not null && x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName))))
         {
             ProfileEntryIteration(outputCreator, e);
         }
@@ -166,79 +135,56 @@ public class Profile : IAsyncDisposable
 
     private void ProfileEntryIteration(OutputCreator outputCreator, PmdgDataFieldChangedEventArgs e)
     {
-        outputCreator.FlightSimValue = e.Value;
+        switch (e.Value)
+        {
+            case string eValue:
+                outputCreator.FlightSimValue = eValue;
+                break;
+
+            //bool, byte, ushort, short, uint, int, float
+            default:
+                double doubleValue = Convert.ToDouble(e.Value, Helper.EnglishCulture);
+                outputCreator.FlightSimValue = doubleValue.ToString(Helper.EnglishCulture);
+                break;
+        }
+
+        ProfileIteration(outputCreator);
+    }
+
+    private void ProfileIteration(OutputCreator outputCreator)
+    {
         outputCreator.OutputValue = null;
         if (!CheckPrecomparison(outputCreator.Preconditions))
         {
             return;
         }
-        
-        PrecomparisonIteration(outputCreator);
 
-        switch (e.Value)
+        PreconditionIteration(outputCreator);
+
+        if (outputCreator.OutputType is null)
         {
-            //bool
-            case bool valueBool:
-                if (outputCreator.ComparisonValue is not null)
-                {
-                    SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, valueBool));
-                    break;
-                }
-
-                SetSendOutput(outputCreator, valueBool);
-                break;
-
-            //string
-            case string valueString:
-                if (outputCreator.ComparisonValue is not null)
-                {
-                    SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, valueString));
-                    break;
-                }
-
-                SetStringValue(valueString, e.PmdgDataName, outputCreator);
-                break;
-
-            //float
-            case float:
-                double valueDouble = Convert.ToDouble(e.Value, Helper.EnglishCulture);
-                if (outputCreator.ComparisonValue is not null)
-                {
-                    SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, valueDouble));
-                    break;
-                }
-
-                try
-                {
-                    SetStringValue(valueDouble.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
-                }
-                catch (Exception)
-                {
-                    SetNumericFormatError(outputCreator);
-                }
-
-                break;
-
-            //byte, ushort, short, uint, int
-            default:
-                if (outputCreator.ComparisonValue is not null)
-                {
-                    SetSendOutput(outputCreator, CheckComparison(outputCreator.ComparisonValue, outputCreator.Operator, Convert.ToDouble(e.Value)));
-                    break;
-                }
-
-                long valueLong = Convert.ToInt64(e.Value);
-                try
-                {
-                    SetStringValue(valueLong.ToString(outputCreator.NumericFormat, CultureInfo.InvariantCulture), e.PmdgDataName, outputCreator);
-                }
-                catch (Exception)
-                {
-                    SetNumericFormatError(outputCreator);
-                }
-
-                break;
+            return;
         }
+
+        if (outputCreator.FlightSimValue is null)
+        {
+            return;
+        }
+
+        StringBuilder stringBuilder = new(outputCreator.FlightSimValue);
+        if (outputCreator.Modifiers is not null)
+        {
+            foreach (IModifier modifier in outputCreator.Modifiers)
+            {
+                if (modifier.IsActive)
+                {
+                    modifier.Apply(ref stringBuilder);
+                }
+            }
+        }
+
+        SetDisplayValue(outputCreator, ref stringBuilder);
+        SetSendOutput(outputCreator, stringBuilder);
     }
 
     private bool CheckPrecomparison(IReadOnlyList<Precondition>? preconditions)
@@ -261,7 +207,7 @@ public class Profile : IAsyncDisposable
             bool comparisonResult = true;
             if (precondition.IsActive)
             {
-                comparisonResult = CheckComparison(precondition.ComparisonValue, precondition.Operator, matchingOutputCreator.FlightSimValue);
+                comparisonResult = CheckComparison(matchingOutputCreator.FlightSimValue, precondition.ComparisonValue, precondition.Operator);
             }
 
             if (i == 0)
@@ -282,118 +228,82 @@ public class Profile : IAsyncDisposable
         return result;
     }
 
-    private static bool CheckComparison(string? comparisonValue, char? charOperator, object? value)
+    private static bool CheckComparison(string? sSimValue, string? sComparisonValue, char? charOperator)
     {
-        string? sComparisonValue = comparisonValue switch
+        if (double.TryParse(sSimValue, CultureInfo.InvariantCulture, out double simValue) && double.TryParse(sComparisonValue, CultureInfo.InvariantCulture, out double comparisonValue))
         {
-            not null when comparisonValue.Equals("true", System.StringComparison.CurrentCultureIgnoreCase) => "1",
-            not null when comparisonValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
-            _ => comparisonValue
-        };
-
-        string? sValue = value switch
-        {
-            null => string.Empty,
-            bool boolValue => boolValue ? "1" : "0",
-            _ => value.ToString()
-        };
-
-        sValue = sValue switch
-        {
-            not null when sValue.Equals("true", System.StringComparison.CurrentCultureIgnoreCase) => "1",
-            not null when sValue.Equals("false", System.StringComparison.CurrentCultureIgnoreCase) => "0",
-            _ => sValue
-        };
-
-        return CheckComparison(sComparisonValue, charOperator, sValue);
-    }
-
-    private static bool CheckComparison(string? sComparisonValue, char? charOperator, string? sValue)
-    {
-        if (double.TryParse(sComparisonValue, out double comparisonValue) && double.TryParse(sValue, out double value))
-        {
-            return NumericComparison(comparisonValue, charOperator, value);
+            return Comparison.CheckComparison(simValue, comparisonValue, charOperator);
         }
 
-        return StringComparison(sComparisonValue, charOperator, sValue);
+        return Comparison.CheckComparison(sSimValue, sComparisonValue, charOperator);
     }
 
-    private static bool NumericComparison(double comparisonValue, char? charOperator, double value)
+    private void SetSendOutput(OutputCreator outputCreator, StringBuilder stringBuilder)
     {
-        return charOperator switch
+        outputCreator.OutputValue = stringBuilder.ToString();
+
+        if (outputCreator.Outputs is null || string.IsNullOrEmpty(outputCreator.OutputValue))
         {
-            '=' => Math.Abs(value - comparisonValue) < Tolerance,
-            '≠' => Math.Abs(value - comparisonValue) > Tolerance,
-            '<' => value < comparisonValue,
-            '>' => value > comparisonValue,
-            '≤' => value <= comparisonValue,
-            '≥' => value >= comparisonValue,
-            _ => false
-        };
-    }
+            return;
+        }
 
-    private static bool StringComparison(string? sComparisonValue, char? charOperator, string? sValue)
-    {
-        return charOperator switch
-        {
-            '=' => sValue == sComparisonValue,
-            '≠' => sValue != sComparisonValue,
-            _ => false
-        };
-    }
+        bool boolValue = outputCreator.OutputValue != "0";
 
-    private void SetSendOutput(OutputCreator outputCreator, bool valueBool)
-    {
-        valueBool = outputCreator.IsInverted ? !valueBool : valueBool;
-        if (outputCreator.Output is not null)
+        foreach (int output in outputCreator.Outputs)
         {
             switch (outputCreator.OutputType)
             {
                 case ProfileCreatorModel.Led:
-                    _inputOutputDevice.SetLedAsync(outputCreator.Output.Position.ToString(), valueBool);
+                    _inputOutputDevice.SetLedAsync(output, boolValue);
                     break;
 
                 case ProfileCreatorModel.Dataline:
-                    _inputOutputDevice.SetDatalineAsync(outputCreator.Output.Position.ToString(), valueBool);
+                    _inputOutputDevice.SetDatalineAsync(output, boolValue);
+                    break;
+
+                case ProfileCreatorModel.SevenSegment:
+                    _inputOutputDevice.SetSevenSegmentAsync(output, outputCreator.OutputValue);
                     break;
             }
         }
-
-        outputCreator.OutputValue = valueBool;
     }
 
-    private void SetStringValue(string value, string name, OutputCreator outputCreator)
+    private static void SetDisplayValue(OutputCreator outputCreator, ref StringBuilder stringBuilder)
     {
-        StringBuilder sb = new(value);
+        if (outputCreator.OutputType != ProfileCreatorModel.SevenSegment)
+        {
+            return;
+        }
+
         if (outputCreator.DigitCount is not null)
         {
-            _ = sb.Replace(".", string.Empty);
-            if (sb.Length > outputCreator.DigitCount)
+            _ = stringBuilder.Replace(".", string.Empty);
+            if (stringBuilder.Length > outputCreator.DigitCount)
             {
                 byte digitCount = outputCreator.DigitCount.Value;
-                switch (sb[digitCount] - '0')
+                switch (stringBuilder[digitCount] - '0')
                 {
                     case > 5:
                     {
-                        sb.Length = digitCount;
+                        stringBuilder.Length = digitCount;
                         int carry = 1;
                         for (int i = digitCount - 1; i >= 0; i--)
                         {
-                            int digit = sb[i] - '0' + carry;
+                            int digit = stringBuilder[i] - '0' + carry;
                             carry = digit / 10;
-                            sb[i] = (char)(digit % 10 + '0');
+                            stringBuilder[i] = (char)(digit % 10 + '0');
                         }
 
                         if (carry > 0)
                         {
-                            _ = sb.Insert(0, carry);
+                            _ = stringBuilder.Insert(0, carry);
                         }
 
                         break;
                     }
 
                     case <= 5:
-                        sb.Length = digitCount;
+                        stringBuilder.Length = digitCount;
                         break;
                 }
             }
@@ -404,53 +314,34 @@ public class Profile : IAsyncDisposable
             if (outputCreator.PaddingCharacter is not null && outputCreator.DigitCount is not null)
             {
                 int dotCount = 0;
-                for (int i = 0; i < sb.Length; i++)
+                for (int i = 0; i < stringBuilder.Length; i++)
                 {
-                    if (sb[i] == '.')
+                    if (stringBuilder[i] == '.')
                     {
                         dotCount++;
                     }
                 }
 
-                while (sb.Length < outputCreator.DigitCount + dotCount) _ = sb.Insert(0, outputCreator.PaddingCharacter);
+                while (stringBuilder.Length < outputCreator.DigitCount + dotCount) _ = stringBuilder.Insert(0, outputCreator.PaddingCharacter);
             }
 
-            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, PaddingCharacter: null, DigitCount: null })
+            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, PmdgData: not null, PaddingCharacter: null, DigitCount: null })
             {
-                Helper.SetMcp(ref sb, name);
-                Helper.SetIrsDisplay(ref sb, name);
+                Helper.SetMcp(ref stringBuilder, outputCreator.PmdgData);
+                Helper.SetIrsDisplay(ref stringBuilder, outputCreator.PmdgData);
             }
         }
 
-        if (outputCreator.DigitCount is not null)
+        if (outputCreator.DigitCount is null)
         {
-            _ = sb.Append('0', outputCreator.DigitCount.Value - sb.Length);
-            FormatString(ref sb, outputCreator);
+            return;
         }
 
-        if (outputCreator.SubstringStart is null && outputCreator.SubstringEnd is not null)
-        {
-            sb.Length = outputCreator.SubstringEnd is not null ? (int)(outputCreator.SubstringEnd + 1) : sb.Length;
-        }
-        else if (outputCreator.SubstringStart is not null && outputCreator.SubstringStart <= sb.Length - 1)
-        {
-            _ = sb.Remove(0, (int)outputCreator.SubstringStart);
-            if (outputCreator.SubstringEnd is not null)
-            {
-                sb.Length = (int)(outputCreator.SubstringEnd - outputCreator.SubstringStart + 1);
-            }
-        }
-
-        string outputValue = sb.ToString();
-        if (outputCreator.Output is not null)
-        {
-            _inputOutputDevice.SetSevenSegmentAsync(outputCreator.Output.Position.ToString(), outputValue);
-        }
-
-        outputCreator.OutputValue = outputValue;
+        _ = stringBuilder.Append('0', outputCreator.DigitCount.Value - stringBuilder.Length);
+        FormatString(outputCreator, ref stringBuilder);
     }
 
-    private static void FormatString(ref StringBuilder sb, IOutputCreator outputCreator)
+    private static void FormatString(IOutputCreator outputCreator, ref StringBuilder stringBuilder)
     {
         if (outputCreator.DigitCheckedSum is null && outputCreator.DecimalPointCheckedSum is null)
         {
@@ -463,13 +354,13 @@ public class Profile : IAsyncDisposable
             {
                 if ((outputCreator.DigitCheckedSum & (1 << i)) == 0)
                 {
-                    sb[i] = ' ';
+                    stringBuilder[i] = ' ';
                     continue;
                 }
 
-                if (sb.Length <= i)
+                if (stringBuilder.Length <= i)
                 {
-                    _ = sb.Append(outputCreator.PaddingCharacter);
+                    _ = stringBuilder.Append(outputCreator.PaddingCharacter);
                 }
             }
         }
@@ -483,24 +374,26 @@ public class Profile : IAsyncDisposable
             byte decimalPointCount = 0;
             for (int i = 0; i < outputCreator.DigitCount + decimalPointCount; i++)
             {
-                if ((outputCreator.DecimalPointCheckedSum & (1 << (i - decimalPointCount))) == 0 || sb.Length <= i)
+                if ((outputCreator.DecimalPointCheckedSum & (1 << (i - decimalPointCount))) == 0 || stringBuilder.Length <= i)
                 {
                     continue;
                 }
 
-                if (sb.Length > i + 1 && sb[i + 1] == '.')
+                if (stringBuilder.Length > i + 1 && stringBuilder[i + 1] == '.')
                 {
                     i++;
                     decimalPointCount++;
                     continue;
                 }
 
-                _ = sb.Insert(i + 1, '.');
+                _ = stringBuilder.Insert(i + 1, '.');
                 i++;
                 decimalPointCount++;
             }
         }
     }
+
+    #region Inputs
 
     private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
@@ -512,7 +405,7 @@ public class Profile : IAsyncDisposable
         foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.IsActive && x.Input?.Position == position))
         {
             //Precondition
-            if (inputCreator.Preconditions is null && !CheckPrecomparison(inputCreator.Preconditions))
+            if (!CheckPrecomparison(inputCreator.Preconditions))
             {
                 continue;
             }
@@ -525,15 +418,15 @@ public class Profile : IAsyncDisposable
                     continue;
 
                 //Key Event ID (K:Event[K]) with one parameter
-                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && ((isPressed && inputCreator is { DataPress: null, OnRelease: false }) 
+                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && ((isPressed && inputCreator is { DataPress: null, OnRelease: false })
                                                                                         || (!isPressed && inputCreator is { DataRelease: null, OnRelease: true })):
                     _simConnectClient.TransmitSimEvent(inputCreator.Event);
                     continue;
             }
 
             //Direction
-            uint firstParameter = Convert.ToUInt32(isPressed);
-            uint secondParameter = 0;
+            long firstParameter = Convert.ToInt32(isPressed);
+            long secondParameter = 0;
             switch (firstParameter)
             {
                 case 0 when inputCreator.DataRelease is not null:
@@ -590,6 +483,8 @@ public class Profile : IAsyncDisposable
             }
         }
     }
+
+    #endregion
 
     public async ValueTask DisposeAsync()
     {
