@@ -256,20 +256,20 @@ public class SimConnectClient
 
     private readonly object _lockObject = new();
     
-    public void TransmitEvent(uint data, Enum eventId)
+    public void TransmitEvent(long data, Enum eventId)
     {
         lock (_lockObject)
         {
             _simConnect?.TransmitClientEvent(
                 0,
                 eventId,
-                data,
+                (uint)data,
                 SimConnectGroupPriority.Standard,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
         }
     }
 
-    private void TransmitEvent(uint data0, uint data1, Enum eventId)
+    private void TransmitEvent(long data0, long data1, Enum eventId)
     {
         lock (_lockObject)
         {
@@ -278,8 +278,8 @@ public class SimConnectClient
                 (EventId)eventId,
                 SimConnectGroupPriority.Standard,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY,
-                data0,
-                data1,
+                (uint)data0,
+                (uint)data1,
                 0,
                 0,
                 0);
@@ -299,7 +299,7 @@ public class SimConnectClient
         }
     }
 
-    public void SetSimVar(uint simVarValue, string simVarName)
+    public void SetSimVar(long simVarValue, string simVarName)
     {
         SetSimVars(simVarName, null, simVarValue);
     }
@@ -384,7 +384,7 @@ public class SimConnectClient
         _simConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
     }
 
-    public void TransmitSimEvent(uint data0, uint data1, string simEventName)
+    public void TransmitSimEvent(long data0, long data1, string simEventName)
     {
         if (_simEvents.TryGetValue(simEventName, out int id))
         {
