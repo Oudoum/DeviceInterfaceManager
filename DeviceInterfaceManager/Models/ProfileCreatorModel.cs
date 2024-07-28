@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.Modifiers;
 
 #pragma warning disable CS0657 // Not a valid attribute location for this declaration
 
@@ -25,6 +26,7 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Pmdg747 = "PMDG747";
     public const string Pmdg777 = "PMDG777";
     public const string KEvent = "K:Event";
+    public const string Dim = "DIMVar";
     public const string MsfsSimConnect = "MSFS/SimConnect/LVar";
     public const string Rpn = "RPN/H-Events";
     public const string XPlane = "XPlane";
@@ -65,6 +67,14 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
 
     [ObservableProperty]
     private string? _description;
+    
+    partial void OnDescriptionChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Description = null;
+        }
+    }
 
     [ObservableProperty]
     private string? _inputType;
@@ -76,13 +86,22 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     private string? _eventType;
 
     [ObservableProperty]
-    private int? _pmdgEvent;
-
-    [ObservableProperty]
     private string? _event;
 
     [ObservableProperty]
-    private bool _onRelease;
+    private long? _dataPress;
+
+    [ObservableProperty]
+    private long? _dataPress2;
+
+    [ObservableProperty]
+    private long? _dataRelease;
+    
+    [ObservableProperty]
+    private long? _dataRelease2;
+
+    [ObservableProperty]
+    private int? _pmdgEvent;
 
     [ObservableProperty]
     private Mouse? _pmdgMousePress;
@@ -91,16 +110,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     private Mouse? _pmdgMouseRelease;
 
     [ObservableProperty]
-    private uint? _dataPress;
-
-    [ObservableProperty]
-    private uint? _dataPress2;
-
-    [ObservableProperty]
-    private uint? _dataRelease;
-    
-    [ObservableProperty]
-    private uint? _dataRelease2;
+    private bool _onRelease;
 
     [ObservableProperty]
     private Precondition[]? _preconditions;
@@ -123,18 +133,23 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
 
     [ObservableProperty]
     private string? _description;
+    
+    partial void OnDescriptionChanged(string? value)
+    {
+        if (value == string.Empty)
+        {
+            Description = null;
+        }
+    }
 
     [ObservableProperty]
     private string? _outputType;
 
     [ObservableProperty]
-    private Component? _output;
+    private int[]? _outputs;
 
     [ObservableProperty]
     private string? _dataType;
-
-    [ObservableProperty]
-    private string? _pmdgData;
 
     [ObservableProperty]
     private string? _data;
@@ -143,25 +158,13 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
     private string? _unit;
 
     [ObservableProperty]
+    private string? _pmdgData;
+
+    [ObservableProperty]
     private int? _pmdgDataArrayIndex;
 
     [ObservableProperty]
-    private char? _operator;
-
-    [ObservableProperty]
-    private string? _comparisonValue;
-
-    [ObservableProperty]
-    private double? _trueValue;
-
-    [ObservableProperty]
-    private double? _falseValue;
-
-    [ObservableProperty]
-    private bool _isInverted;
-
-    [ObservableProperty]
-    private string? _numericFormat;
+    private IModifier[]? _modifiers;
 
     [ObservableProperty]
     private bool? _isPadded;
@@ -179,18 +182,12 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
     private byte? _decimalPointCheckedSum;
 
     [ObservableProperty]
-    private byte? _substringStart;
-
-    [ObservableProperty]
-    private byte? _substringEnd;
+    [property: JsonIgnore]
+    private string? _flightSimValue;
 
     [ObservableProperty]
     [property: JsonIgnore]
-    private object? _flightSimValue;
-
-    [ObservableProperty]
-    [property: JsonIgnore]
-    private object? _outputValue;
+    private string? _outputValue;
 
     [ObservableProperty]
     private Precondition[]? _preconditions;
