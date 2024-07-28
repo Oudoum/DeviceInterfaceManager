@@ -17,22 +17,22 @@ public class DeviceSerialBase : IDeviceSerial
     public ComponentInfo Dataline { get; } = new(1, 256);
     public ComponentInfo SevenSegment { get; } = new(1, 256);
     public ComponentInfo AnalogOut { get; } = new(1, 1);
-    public Task SetLedAsync(string? position, bool isEnabled)
+    public Task SetLedAsync(int position, bool isEnabled)
     {
         return Task.CompletedTask;
     }
 
-    public Task SetDatalineAsync(string? position, bool isEnabled)
+    public Task SetDatalineAsync(int position, bool isEnabled)
     {
         return Task.CompletedTask;
     }
 
-    public Task SetSevenSegmentAsync(string? position, string data)
+    public Task SetSevenSegmentAsync(int position, string data)
     {
         return Task.CompletedTask;
     }
 
-    public Task SetAnalogAsync(string? position, int value)
+    public Task SetAnalogAsync(int position, int value)
     {
         return Task.CompletedTask;
     }
