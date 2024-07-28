@@ -27,9 +27,6 @@ public sealed partial class Settings : ObservableObject
     private int? _port;
 
     [ObservableProperty]
-    private bool _isP3D;
-
-    [ObservableProperty]
     private bool _fdsUsb;
 
     [ObservableProperty]
