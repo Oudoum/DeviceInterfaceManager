@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
-             xmlns:ui="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              mc:Ignorable="d"
              d:DesignHeight="500"
              x:Class="DeviceInterfaceManager.Views.PreconditionView"
@@ -143,7 +142,7 @@
                         </Grid>
                     </ToggleButton>
                     <ToggleButton IsChecked="{Binding SelectedPrecondition.IsOrOperator, FallbackValue='False'}"
-                        CommandParameter="OR"
+                                  CommandParameter="OR"
                                   Command="{Binding ChangeLogicalOperatorCommand}">
                         <Grid>
                             <Viewbox>
@@ -162,13 +161,6 @@
                             <Setter Property="HorizontalAlignment" Value="Center" />
                             <Setter Property="VerticalAlignment" Value="Center" />
                             <Setter Property="Margin" Value=" 0 0 2 0" />
-                        </Style>
-                        <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
-                            <Setter Property="Foreground" Value="{DynamicResource ToggleButtonForeground}" />
-                        </Style>
-                        <Style Selector="ToggleButton:checked /template/ ui|FABorder#Root">
-                            <Setter Property="Background" Value="{DynamicResource ToggleButtonBackground}" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource ToggleButtonBorderBrush}"/>
                         </Style>
                         <Style Selector="ToggleButton:checked Path.toggleButtonChecked">
                             <Setter Property="Fill" Value="DodgerBlue"/>
