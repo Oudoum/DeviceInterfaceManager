@@ -9,13 +9,13 @@ public interface IOutput
     public ComponentInfo SevenSegment { get; }
     public ComponentInfo AnalogOut { get; }
     
-    public Task SetLedAsync(string? position, bool isEnabled);
+    public Task SetLedAsync(int position, bool isEnabled);
     
-    public Task SetDatalineAsync(string? position, bool isEnabled);
+    public Task SetDatalineAsync(int position, bool isEnabled);
     
-    public Task SetSevenSegmentAsync(string? position, string data);
+    public Task SetSevenSegmentAsync(int position, string data);
 
-    public Task SetAnalogAsync(string? position, int value);
+    public Task SetAnalogAsync(int position, int value);
 
     public Task ResetAllOutputsAsync();
 }
