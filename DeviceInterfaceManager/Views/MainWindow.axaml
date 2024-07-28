@@ -14,62 +14,61 @@
         MinHeight="650"
         WindowStartupLocation="CenterScreen"
         Title="">
-    
+
     <Design.DataContext>
-        <vm:MainWindowViewModel/>
+        <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid>
-        
-        <ui:NavigationView AlwaysShowHeader="False"
-                           IsSettingsVisible="False"
-                           SelectedItem="{Binding SelectedItem}"
-                           Content="{Binding CurrentViewModel}">
+    <ui:NavigationView AlwaysShowHeader="False"
+                       IsSettingsVisible="False"
+                       PaneTitle="DIM"
+                       SelectedItem="{Binding SelectedItem}"
+                       Content="{Binding CurrentViewModel}">
 
-            <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem IsSelected="True" Content="Home" IsEnabled="{Binding !ProfileCreatorViewModel.IsStarted}">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:PathIconSource Data="{StaticResource HomeOutline}" />
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItemSeparator />
-                <ui:NavigationViewItem Content="Profile Creator" IsEnabled="{Binding !HomeViewModel.IsStarted}">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:PathIconSource Data="{StaticResource ShapePlusOutline}" />
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-                <ui:NavigationViewItemSeparator />
-                <ui:NavigationViewItem Content="Devices" SelectsOnInvoked="False">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:PathIconSource Data="{StaticResource Devices}" />
-                    </ui:NavigationViewItem.IconSource>
-                    <ui:NavigationViewItem.InfoBadge>
-                        <ui:InfoBadge Value="{Binding InputOutputDevices.Count}" />
-                    </ui:NavigationViewItem.InfoBadge>
-                    <ui:NavigationViewItem.MenuItemsSource>
-                        <Binding Path="InputOutputDevices" />
-                    </ui:NavigationViewItem.MenuItemsSource>
-                    <ui:NavigationViewItem.DataTemplates>
-                        <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
-                            <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent" PointerPressed="DeviceOnPointerPressed">
-                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
-                                <TextBlock FontSize="14" Text="{Binding DeviceName}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ui:NavigationViewItem.DataTemplates>
-                </ui:NavigationViewItem>
-            </ui:NavigationView.MenuItems>
+        <ui:NavigationView.MenuItems>
+            <ui:NavigationViewItem IsSelected="True" Content="Home"
+                                   IsEnabled="{Binding !ProfileCreatorViewModel.IsStarted}">
+                <ui:NavigationViewItem.IconSource>
+                    <ui:PathIconSource Data="{StaticResource HomeOutline}" />
+                </ui:NavigationViewItem.IconSource>
+            </ui:NavigationViewItem>
+            <ui:NavigationViewItemSeparator />
+            <ui:NavigationViewItem Content="Profile Creator" IsEnabled="{Binding !HomeViewModel.IsStarted}">
+                <ui:NavigationViewItem.IconSource>
+                    <ui:PathIconSource Data="{StaticResource ShapePlusOutline}" />
+                </ui:NavigationViewItem.IconSource>
+            </ui:NavigationViewItem>
+            <ui:NavigationViewItemSeparator />
+            <ui:NavigationViewItem Content="Devices" SelectsOnInvoked="False">
+                <ui:NavigationViewItem.IconSource>
+                    <ui:PathIconSource Data="{StaticResource Devices}" />
+                </ui:NavigationViewItem.IconSource>
+                <ui:NavigationViewItem.InfoBadge>
+                    <ui:InfoBadge Value="{Binding InputOutputDevices.Count}" />
+                </ui:NavigationViewItem.InfoBadge>
+                <ui:NavigationViewItem.MenuItemsSource>
+                    <Binding Path="InputOutputDevices" />
+                </ui:NavigationViewItem.MenuItemsSource>
+                <ui:NavigationViewItem.DataTemplates>
+                    <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
+                        <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent"
+                                    PointerPressed="DeviceOnPointerPressed">
+                            <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
+                            <TextBlock FontSize="14" Text="{Binding DeviceName}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ui:NavigationViewItem.DataTemplates>
+            </ui:NavigationViewItem>
+        </ui:NavigationView.MenuItems>
 
-            <ui:NavigationView.FooterMenuItems>
-                <ui:NavigationViewItem Content="Settings">
-                    <ui:NavigationViewItem.IconSource>
-                        <ui:PathIconSource Data="{StaticResource CogOutline}" />
-                    </ui:NavigationViewItem.IconSource>
-                </ui:NavigationViewItem>
-            </ui:NavigationView.FooterMenuItems>
+        <ui:NavigationView.FooterMenuItems>
+            <ui:NavigationViewItem Content="Settings">
+                <ui:NavigationViewItem.IconSource>
+                    <ui:PathIconSource Data="{StaticResource CogOutline}" />
+                </ui:NavigationViewItem.IconSource>
+            </ui:NavigationViewItem>
+        </ui:NavigationView.FooterMenuItems>
 
-        </ui:NavigationView>
-
-    </Grid>
+    </ui:NavigationView>
 
 </Window>
