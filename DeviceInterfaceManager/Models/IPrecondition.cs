@@ -2,10 +2,8 @@ using System;
 
 namespace DeviceInterfaceManager.Models;
 
-public interface IPrecondition
+public interface IPrecondition : IActive
 {
-    public bool IsActive { get; set; }
-    
     public Guid ReferenceId { get; set; }
     
     public char? Operator { get; set; }
