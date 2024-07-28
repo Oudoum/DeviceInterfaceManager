@@ -18,9 +18,9 @@ public class NullableConverter : IValueConverter
             return null;
         }
         
-        if (uint.TryParse(value.ToString(), out uint uValue))
+        if (long.TryParse(value.ToString(), out long longValue))
         {
-            return uValue;
+            return longValue;
         }
         
         return null; //Invalid input: Please provide a valid numeric value.
