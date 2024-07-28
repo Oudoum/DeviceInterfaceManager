@@ -179,42 +179,9 @@
                                 Command="{Binding UpdateDimWasmModuleCommand}" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
-
-                <ui:SettingsExpanderItem Content="P3Dv4/v5/v6"
-                                         Description="Select Prepar3D instead of MSFS2020">
-                    <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsEnabled="False"
-                                      IsChecked="{Binding Settings.IsP3D}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-
-                <ui:SettingsExpanderItem Content="IP-Address">
-                    <ui:SettingsExpanderItem.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBox Classes="clear"
-                                     Watermark="127.0.0.1"
-                                     HorizontalContentAlignment="Center"
-                                     Width="120" />
-                            <Button Content="Ok" />
-                        </StackPanel>
-
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-
-                <ui:SettingsExpanderItem Content="Port">
-                    <ui:SettingsExpanderItem.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBox Classes="clear"
-                                     Watermark="500"
-                                     HorizontalContentAlignment="Center"
-                                     Width="90" />
-                            <Button Content="Ok" />
-                        </StackPanel>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
             
-            <ui:SettingsExpander Header="Server">
+            <ui:SettingsExpander Header="Server" IsEnabled="False">
                 <ui:SettingsExpander.IconSource>
                     <ui:PathIconSource Data="{StaticResource ServerNetworkOutline}" />
                 </ui:SettingsExpander.IconSource>
@@ -254,23 +221,23 @@
 
                 <ui:SettingsExpanderItem Content="Discord">
                     <ui:SettingsExpanderItem.Footer>
-                        <ui:HyperlinkButton NavigateUri="https://discord.gg/8SS5ew4WvT">
+                        <HyperlinkButton NavigateUri="https://discord.gg/8SS5ew4WvT">
                             <Svg Height="42" Path="/Assets/Images/icon_clyde_white_RGB.svg" />
-                        </ui:HyperlinkButton>
+                        </HyperlinkButton>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <ui:SettingsExpanderItem Content="GitHub">
                     <ui:SettingsExpanderItem.Footer>
-                        <ui:HyperlinkButton NavigateUri="https://github.com/Oudoum/DeviceInterfaceManager">
+                        <HyperlinkButton NavigateUri="https://github.com/Oudoum/DeviceInterfaceManager">
                             <Svg Height="42" Path="/Assets/Images/github-mark-white.svg" />
-                        </ui:HyperlinkButton>
+                        </HyperlinkButton>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <ui:SettingsExpanderItem>
                     <ui:SettingsExpanderItem.Footer>
-                        <ui:HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data" />
+                        <HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
