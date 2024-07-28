@@ -29,7 +29,7 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
             return;
         }
         
-        await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position.ToString(), direction);
+        await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position, direction);
     }
     
     [ObservableProperty]
@@ -68,17 +68,17 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
             if (value.Length > length)
             {
                 _sevenSegmentText = value.Remove(length);
-                InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position.ToString(), _sevenSegmentText);
+                InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText);
                 return;
             }
 
-            InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position.ToString(), _sevenSegmentText = value);
+            InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText = value);
         }
     }
 
     private void Reset7SegmentDisplay()
     {
-        InputOutputDevice.SetSevenSegmentAsync(InputOutputDevice.SevenSegment.First.ToString(), new string(' ', InputOutputDevice.SevenSegment.Count));
+        InputOutputDevice.SetSevenSegmentAsync(InputOutputDevice.SevenSegment.First, new string(' ', InputOutputDevice.SevenSegment.Count));
     }
 
     [ObservableProperty]
@@ -86,13 +86,13 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
 
     partial void OnAnalogOutValueChanged(int value)
     {
-        InputOutputDevice.SetAnalogAsync(InputOutputDevice.AnalogOut.First.ToString(), value);
+        InputOutputDevice.SetAnalogAsync(InputOutputDevice.AnalogOut.First, value);
     }
 
     [RelayCommand]
     private async Task IsChecked(Component component)
     {
-        await InputOutputDevice.SetLedAsync(component.Position.ToString(), component.IsSet);
+        await InputOutputDevice.SetLedAsync(component.Position, component.IsSet);
     }
 
     [RelayCommand]
@@ -101,7 +101,7 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
         foreach (Component ledComponent in InputOutputDevice.Led.Components)
         {
             ledComponent.IsSet = direction;
-            await InputOutputDevice.SetLedAsync(ledComponent.Position.ToString(), direction);
+            await InputOutputDevice.SetLedAsync(ledComponent.Position, direction);
         }
     }
 }
