@@ -5,13 +5,14 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 
 public class Helper
 {
+    public static readonly CultureInfo EnglishCulture = CultureInfo.GetCultureInfo("en-US");
+
     public event EventHandler<PmdgDataFieldChangedEventArgs>? FieldChanged;
 
     private B737.Data? _pmdg737Data;
@@ -20,8 +21,6 @@ public class Helper
     public List<string> WatchedFields { get; } = [];
 
     public IDictionary<string, object?> DynDict { get; } = new ExpandoObject();
-
-    private bool _initialized;
 
     public void ReceivePmdgData(object data)
     {
@@ -37,15 +36,7 @@ public class Helper
         }
     }
 
-    public void ReceivePmdgCduData(object data, DataRequestId dataRequestId)
-    {
-        if (data is Cdu.Screen screen)
-        {
-            App.SettingsViewModel.FlightSimulatorDataServer?.SendPmdgCduData(screen, dataRequestId);
-        }
-    }
-
-    public void Init(SimConnect simConnect, ProfileCreatorModel profileCreatorModel)
+    public void Init(ProfileCreatorModel profileCreatorModel)
     {
         foreach (OutputCreator output in profileCreatorModel.OutputCreators)
         {
@@ -65,31 +56,20 @@ public class Helper
                 WatchedFields.Add(pmdgDataFieldName);
             }
         }
+    }
 
-        if (_initialized)
-        {
-            return;
-        }
+    public void InitializePmdg737(SimConnect simConnect)
+    {
+        _pmdg737Data = new B737.Data();
+        Initialize(_pmdg737Data);
+        RegisterB737DataAndEvents(simConnect);
+    }
 
-        string? type = profileCreatorModel.InputCreators.FirstOrDefault(x => x.EventType is ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 && x.IsActive)?.EventType
-                       ?? profileCreatorModel.OutputCreators.FirstOrDefault(x => x.DataType is ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 && x.IsActive)?.DataType;
-
-        switch (type)
-        {
-            case ProfileCreatorModel.Pmdg737:
-                _pmdg737Data = new B737.Data();
-                Initialize(_pmdg737Data);
-                RegisterB737DataAndEvents(simConnect);
-                _initialized = true;
-                break;
-
-            case ProfileCreatorModel.Pmdg777:
-                _pmdg777Data = new B777.Data();
-                Initialize(_pmdg777Data);
-                RegisterB777DataAndEvents(simConnect);
-                _initialized = true;
-                break;
-        }
+    public void InitializePmdg777(SimConnect simConnect)
+    {
+        _pmdg777Data = new B777.Data();
+        Initialize(_pmdg777Data);
+        RegisterB777DataAndEvents(simConnect);
     }
 
     public static string? ConvertDataToPmdgDataFieldName(OutputCreator output)
@@ -176,7 +156,6 @@ public class Helper
         FieldChanged?.Invoke(null, new PmdgDataFieldChangedEventArgs(propertyName, newValue));
     }
 
-    //
     private static void CreateEvents<T>(SimConnect simConnect) where T : Enum
     {
         // Map the PMDG Events to SimConnect
@@ -194,13 +173,36 @@ public class Helper
         simConnect.AddToClientDataDefinition(definitionId, 0, (uint)Marshal.SizeOf<T>(), 0, 0);
         // Register the data area structure
         simConnect.RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, T>(definitionId);
+        // Sign up for notification of data change once
+        RequestClientData(simConnect, clientDataId, definitionId, requestId, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+        // Sign up for notification of data on set
+        RequestClientData(simConnect, clientDataId, definitionId, requestId, SIMCONNECT_CLIENT_DATA_PERIOD.ON_SET);
+    }
+
+    public void RequestClientDataOnce(SimConnect simConnect)
+    {
+        if (_pmdg737Data is not null)
+        {
+            RequestClientData(simConnect, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+            RequestClientData(simConnect, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+        }
+        else if (_pmdg737Data is not null)
+        {
+            RequestClientData(simConnect, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+            RequestClientData(simConnect, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+            RequestClientData(simConnect, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
+        }
+    }
+
+    private static void RequestClientData(SimConnect simConnect, Enum clientDataId, Enum definitionId, Enum requestId, SIMCONNECT_CLIENT_DATA_PERIOD period)
+    {
         // Sign up for notification of data change
         simConnect.RequestClientData(
             clientDataId,
             requestId,
             definitionId,
-            SIMCONNECT_CLIENT_DATA_PERIOD.ON_SET,
-            SIMCONNECT_CLIENT_DATA_REQUEST_FLAG.CHANGED,
+            period,
+            SIMCONNECT_CLIENT_DATA_REQUEST_FLAG.DEFAULT,
             0,
             0,
             0);
@@ -211,8 +213,8 @@ public class Helper
         CreateEvents<B737.Event>(simConnect);
 
         AssociateData<B737.Data>(simConnect, B737.DataName, B737.ClientDataId.Data, B737.DefineId.Data, DataRequestId.Data);
-        AssociateData<Cdu.Screen>(simConnect, B737.Cdu0Name, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0);
-        AssociateData<Cdu.Screen>(simConnect, B737.Cdu1Name, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1);
+        AssociateData<Cdu.ScreenBytes>(simConnect, B737.Cdu0Name, B737.ClientDataId.Cdu0, B737.DefineId.Cdu0, DataRequestId.Cdu0);
+        AssociateData<Cdu.ScreenBytes>(simConnect, B737.Cdu1Name, B737.ClientDataId.Cdu1, B737.DefineId.Cdu1, DataRequestId.Cdu1);
     }
 
     private static void RegisterB777DataAndEvents(SimConnect simConnect)
@@ -220,103 +222,9 @@ public class Helper
         CreateEvents<B777.Event>(simConnect);
 
         AssociateData<B777.Data>(simConnect, B777.DataName, B777.ClientDataId.Data, B777.DefineId.Data, DataRequestId.Data);
-        AssociateData<Cdu.Screen>(simConnect, B777.Cdu0Name, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0);
-        AssociateData<Cdu.Screen>(simConnect, B777.Cdu1Name, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1);
-        AssociateData<Cdu.Screen>(simConnect, B777.Cdu2Name, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2);
-    }
-    
-    public static readonly CultureInfo EnglishCulture = CultureInfo.GetCultureInfo("en-US");
-
-    public static void SetMcp(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "MCP_Altitude" when value[0] != '0':
-                value.Insert(0, " ", 5 - value.Length);
-                break;
-
-            case "MCP_Altitude" when value[0] == '0':
-                value.Insert(0, " 000");
-                break;
-
-            case "MCP_VertSpeed" when value[0] == '0' || value.ToString() == "-16960":
-                value.Clear();
-                value.Append(' ');
-                value.Append('0', 4);
-                break;
-
-            case "FMC_LandingAltitude" when value.ToString() == "-32767":
-                value.Clear();
-                value.Append(' ', 5);
-                break;
-
-            case "ADF_StandbyFrequency":
-                value.Insert(value.Length - 1, ".");
-                value.Insert(0, " ", 6 - value.Length);
-                break;
-            
-            case "MCP_VertSpeed" when int.TryParse(value.ToString(), out int intValue):
-                switch (intValue)
-                {
-                    case < 0:
-                        value.Clear();
-                        value.Append('-');
-                        value.Append($"{intValue.ToString("D3").TrimStart('-'),4}");
-                        break;
-
-                    case > 0:
-                        value.Clear();
-                        value.Append('+');
-                        value.Append($"{intValue.ToString("D3"),4}");
-                        break;
-                }
-                break;
-
-            case "MCP_FPA":
-                if (!float.TryParse(value.ToString(), EnglishCulture, out float floatValue))
-                {
-                    break;
-                }
-
-                switch (floatValue)
-                {
-                    case < 0:
-                        value.Clear();
-                        value.Append(' ', 2);
-                        value.Append($"{floatValue.ToString("F1", EnglishCulture),3}");
-                        break;
-            
-                    case < 10:
-                        value.Clear();
-                        value.Append(' ', 2);
-                        value.Append('+');
-                        value.Append($"{floatValue.ToString("F1", EnglishCulture),3}");
-                        break;
-                }
-                break;
-        }
-    }
-
-    public static void SetIrsDisplay(ref StringBuilder value, string name)
-    {
-        switch (name)
-        {
-            case "IRS_DisplayLeft" when value.Length > 0 && value[0] == 'w':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayLeft":
-                value.Append(' ', 6 - value.Length);
-                break;
-
-            case "IRS_DisplayRight" when value.Length > 0 && value[0] == 'n':
-                value[0] = '8';
-                break;
-
-            case "IRS_DisplayRight":
-                value.Append(' ', 7 - value.Length);
-                break;
-        }
+        AssociateData<Cdu.ScreenBytes>(simConnect, B777.Cdu0Name, B777.ClientDataId.Cdu0, B777.DefineId.Cdu0, DataRequestId.Cdu0);
+        AssociateData<Cdu.ScreenBytes>(simConnect, B777.Cdu1Name, B777.ClientDataId.Cdu1, B777.DefineId.Cdu1, DataRequestId.Cdu1);
+        AssociateData<Cdu.ScreenBytes>(simConnect, B777.Cdu2Name, B777.ClientDataId.Cdu2, B777.DefineId.Cdu2, DataRequestId.Cdu2);
     }
 
     public enum DataRequestId
