@@ -25,8 +25,8 @@ public class SimConnectClient
     private const string ClientDataNameCommand = "DIM.Command";
 
     private SimConnect? _simConnect;
-
-    public bool IsConnected { get; private set; }
+    private string? _aircraftTitle;
+    private readonly SignalRClientService _signalRClientService;
     public Helper PmdgHelper { get; private set; } = new();
 
     [DllImport("User32.dll", SetLastError = true)]
@@ -54,7 +54,17 @@ public class SimConnectClient
         return CallWindowProc(_lpPrevWndFunc, hWnd, message, wParam, lParam);
     }
 
-    public async Task<SimConnect?> ConnectAsync(CancellationToken token)
+    public SimConnectClient(SignalRClientService signalRClientService)
+    {
+        _signalRClientService = signalRClientService;
+        _signalRClientService.Connected += () =>
+        {
+            RequestTitle();
+            ResendCduData();
+        };
+    }
+
+    public async Task<string?> ConnectAsync(CancellationToken token)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -78,11 +88,11 @@ public class SimConnectClient
         _lpPrevWndFunc = PInvoke.GetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC);
         _hWndProc = HandleSimConnectEvents;
         PInvoke.SetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_hWndProc));
-
+        
         return await CreateSimConnect(handle, token);
     }
 
-    private async Task<SimConnect?> CreateSimConnect(nint handle, CancellationToken token)
+    private async Task<string?> CreateSimConnect(nint handle, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
@@ -124,7 +134,14 @@ public class SimConnectClient
             }
         }
 
-        return _simConnect;
+        await Task.Run(() =>
+        {
+            while (_aircraftTitle is null)
+            {
+            }
+        }, token);
+        await _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
+        return _aircraftTitle;
     }
 
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
@@ -133,9 +150,18 @@ public class SimConnectClient
         {
             return;
         }
-        
+
         _simConnect.MapClientDataNameToID(ClientDataNameCommand, ClientDataId.Command);
         _simConnect.AddToClientDataDefinition(DefineId.Command, 0, MessageSize, 0, 0);
+        _simConnect.AddToDataDefinition(
+            (DefineId)6,
+            "TITLE",
+            null,
+            SIMCONNECT_DATATYPE.STRING256,
+            0,
+            0);
+        _simConnect.RegisterDataDefineStruct<String256>((DefineId)6);
+        RequestTitle();
 
         RegisterSimVar("CAMERA STATE", "Enum");
 
@@ -146,13 +172,25 @@ public class SimConnectClient
         // {
         //     _simConnect.TransmitClientEvent_EX1(0, (EventId)id, SimConnectGroupPriority.Standard, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY, 2, 8,0,0,0 );
         // }
-        
+
         _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
         _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
+    }
 
-        IsConnected = true;
+    private void RequestTitle()
+    {
+        _simConnect?.RequestDataOnSimObject((RequestId)6, (DefineId)6, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD.ONCE, 0, 0, 0, 0);
     }
     
+    private void ResendCduData()
+    {
+        if (_simConnect is null)
+        {
+            return;
+        }
+        
+        PmdgHelper.RequestClientDataOnce(_simConnect);
+    }
 
     private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
     {
@@ -166,7 +204,7 @@ public class SimConnectClient
             case Helper.DataRequestId.Cdu0:
             case Helper.DataRequestId.Cdu1:
             case Helper.DataRequestId.Cdu2:
-                PmdgHelper.ReceivePmdgCduData(data.dwData[0], dataRequestId);
+                _ = _signalRClientService.SendPmdgDataMessageAsync((byte)dataRequestId, ((Cdu.ScreenBytes)data.dwData[0]).Data);
                 break;
         }
     }
@@ -193,7 +231,7 @@ public class SimConnectClient
         Disconnect();
     }
 
-    private readonly Dictionary<string, ulong> _inputEvents = [];
+    // private readonly Dictionary<string, ulong> _inputEvents = [];
 
     private static void SimConnectOnOnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
     {
@@ -212,7 +250,7 @@ public class SimConnectClient
         {
             return;
         }
-        
+
         _simConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
         _simConnect.OnRecvSimobjectData -= SimConnectOnOnRecvSimobjectData;
         _simConnect.OnRecvException -= SimConnectOnOnRecvException;
@@ -226,11 +264,28 @@ public class SimConnectClient
 
         PmdgHelper = new Helper();
 
-        IsConnected = false;
+        _aircraftTitle = null;
     }
-
+    
     private void SimConnectOnOnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
     {
+        if (_simConnect is not null && data.dwRequestID == 6)
+        {
+            _ = _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
+            
+            _aircraftTitle = ((String256)data.dwData[0]).value;
+            if (_aircraftTitle.StartsWith("PMDG 737"))
+            {
+                PmdgHelper.InitializePmdg737(_simConnect);
+            }
+            else if (_aircraftTitle.StartsWith("PMDG 777"))
+            {
+                PmdgHelper.InitializePmdg777(_simConnect);
+            }
+
+            return;
+        }
+
         OnRecvSimobjectData(data.dwRequestID - Offset, (double)data.dwData[0]);
     }
 
@@ -242,10 +297,10 @@ public class SimConnectClient
         }
 
         SimVar simVar = _simVars[(int)requestId - 1];
-        simVar.Data = dwData;
+        simVar.Data = Math.Round(dwData, 9);
         OnSimVarChanged?.Invoke(this, simVar);
     }
-    
+
     public event EventHandler<SimVar>? OnSimVarChanged;
 
     private const int Offset = 8;
@@ -255,7 +310,7 @@ public class SimConnectClient
     private readonly Dictionary<string, int> _simEvents = [];
 
     private readonly object _lockObject = new();
-    
+
     public void TransmitEvent(long data, Enum eventId)
     {
         lock (_lockObject)
@@ -435,6 +490,13 @@ public class SimConnectClient
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MessageSize)]
         private string _command = command;
     }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    private struct String256
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string value;
+    };
 
     private enum SimConnectGroupPriority : uint
     {
