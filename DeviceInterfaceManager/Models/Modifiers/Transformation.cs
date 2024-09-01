@@ -28,4 +28,9 @@ public partial class Transformation : ObservableObject, IModifier
             value = new StringBuilder("E");
         }
     }
+    
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
