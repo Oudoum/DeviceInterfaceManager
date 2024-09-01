@@ -90,4 +90,9 @@ public partial class Comparison : ObservableObject, IModifier
             _ => false
         };
     }
+    
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
