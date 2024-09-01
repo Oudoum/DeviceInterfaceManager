@@ -16,13 +16,18 @@ public partial class Substring : ObservableObject, IModifier
 
     public void Apply(ref StringBuilder value)
     {
-        if (Start >= value.Length)
+        if (Start >= value.Length || Start > End)
         {
            value.Clear();
            return;
         }
         
         value.Remove(0, Start);
-        value.Length = End;
+        value.Length = End - Start + 1;
+    }
+
+    public object Clone()
+    {
+        return MemberwiseClone();
     }
 }
