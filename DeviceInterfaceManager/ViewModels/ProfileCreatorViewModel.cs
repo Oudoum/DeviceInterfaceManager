@@ -21,7 +21,6 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia.Fluent;
 using HanumanInstitute.MvvmDialogs.FileSystem;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
-using Microsoft.FlightSimulator.SimConnect;
 using IDialogService = HanumanInstitute.MvvmDialogs.IDialogService;
 
 namespace DeviceInterfaceManager.ViewModels;
@@ -83,7 +82,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         };
         AddInput();
         AddOutput();
-        _simConnectClient = new SimConnectClient();
+        _simConnectClient = new SimConnectClient(new SignalRClientService());
     }
 #endif
 
@@ -584,11 +583,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             switch (inputOutputCreator)
             {
                 case InputCreator inputCreator:
-                    clonedInputCreators.Add(inputCreator.Clone());
+                    clonedInputCreators.Add((InputCreator)inputCreator.Clone());
                     break;
 
                 case OutputCreator outputCreator:
-                    clonedOutputCreators.Add(outputCreator.Clone());
+                    clonedOutputCreators.Add((OutputCreator)outputCreator.Clone());
                     break;
             }
         }
@@ -726,11 +725,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return;
         }
 
-        SimConnect? simConnect = await _simConnectClient.ConnectAsync(token);
+        await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested && simConnect is not null)
+        if (!token.IsCancellationRequested)
         {
-            _profile = new Profile(_simConnectClient, simConnect, ProfileCreatorModel, InputOutputDevice, App.SettingsViewModel.Settings.Server);
+            _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
             SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
             return;
         }
