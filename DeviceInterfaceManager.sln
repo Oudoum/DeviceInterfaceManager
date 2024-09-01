@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeviceInterfaceManager", "DeviceInterfaceManager\DeviceInterfaceManager.csproj", "{EE25864B-4A96-4817-94ED-CF9D08841609}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeviceInterfaceManager.Server", "DeviceInterfaceManager.Server\DeviceInterfaceManager.Server.csproj", "{D8665FAD-0734-424E-9DCC-213A4FA220F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x64 = Release|x64
@@ -15,6 +17,10 @@ Global
 		{EE25864B-4A96-4817-94ED-CF9D08841609}.Release|x64.Build.0 = Release|x64
 		{EE25864B-4A96-4817-94ED-CF9D08841609}.Debug|x64.ActiveCfg = Debug|x64
 		{EE25864B-4A96-4817-94ED-CF9D08841609}.Debug|x64.Build.0 = Debug|x64
+		{D8665FAD-0734-424E-9DCC-213A4FA220F7}.Release|x64.ActiveCfg = Release|Any CPU
+		{D8665FAD-0734-424E-9DCC-213A4FA220F7}.Release|x64.Build.0 = Release|Any CPU
+		{D8665FAD-0734-424E-9DCC-213A4FA220F7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D8665FAD-0734-424E-9DCC-213A4FA220F7}.Debug|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
