@@ -59,4 +59,9 @@ public partial class Padding : ObservableObject, IModifier
                 break;
         }
     }
+    
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
