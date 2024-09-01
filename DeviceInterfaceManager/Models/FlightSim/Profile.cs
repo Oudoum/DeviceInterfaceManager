@@ -8,7 +8,6 @@ using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
 using DeviceInterfaceManager.Models.Modifiers;
-using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Models.FlightSim;
 
@@ -20,13 +19,13 @@ public class Profile : IAsyncDisposable
 
     private readonly IInputOutputDevice _inputOutputDevice;
 
-    public Profile(SimConnectClient simConnectClient, SimConnect simConnect, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice, bool serverEnabled)
+    public Profile(SimConnectClient simConnectClient, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice)
     {
         _simConnectClient = simConnectClient;
         _profileCreatorModel = profileCreatorModel;
         _inputOutputDevice = inputOutputDevice;
 
-        _simConnectClient.PmdgHelper.Init(simConnect, profileCreatorModel);
+        _simConnectClient.PmdgHelper.Init(profileCreatorModel);
 
         _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
 
@@ -144,6 +143,7 @@ public class Profile : IAsyncDisposable
             //bool, byte, ushort, short, uint, int, float
             default:
                 double doubleValue = Convert.ToDouble(e.Value, Helper.EnglishCulture);
+                doubleValue = Math.Round(doubleValue, 9);
                 outputCreator.FlightSimValue = doubleValue.ToString(Helper.EnglishCulture);
                 break;
         }
@@ -323,12 +323,6 @@ public class Profile : IAsyncDisposable
                 }
 
                 while (stringBuilder.Length < outputCreator.DigitCount + dotCount) _ = stringBuilder.Insert(0, outputCreator.PaddingCharacter);
-            }
-
-            else if (outputCreator is { DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777, PmdgData: not null, PaddingCharacter: null, DigitCount: null })
-            {
-                Helper.SetMcp(ref stringBuilder, outputCreator.PmdgData);
-                Helper.SetIrsDisplay(ref stringBuilder, outputCreator.PmdgData);
             }
         }
 
