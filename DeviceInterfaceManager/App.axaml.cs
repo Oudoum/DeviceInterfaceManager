@@ -8,8 +8,10 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
+using DeviceInterfaceManager.Server;
 using DeviceInterfaceManager.ViewModels;
 using DeviceInterfaceManager.Views;
 using HanumanInstitute.MvvmDialogs;
@@ -45,6 +47,8 @@ public class App : Application
             .AddTransient<AskComboBoxViewModel>()
             .AddSingleton<ObservableCollection<IInputOutputDevice>>()
             .AddSingleton<SimConnectClient>()
+            .AddSingleton<SignalRServerService>()
+            .AddSingleton<SignalRClientService>()
             .BuildServiceProvider());
     }
 
@@ -61,7 +65,12 @@ public class App : Application
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
             {
-                DialogService.Show(null, MainWindowViewModel);
+                if (MainWindowViewModel is null)
+                {
+                    break;
+                }
+                
+                DialogService?.Show(null, MainWindowViewModel);
             
                 desktop.ShutdownRequested += (_, _) =>
                 {
@@ -73,9 +82,9 @@ public class App : Application
                     MainWindowViewModel.HomeViewModel.SaveMappings();
                 };
 
-                if (desktop.MainWindow is not null)
+                if (desktop.MainWindow is not null && SettingsViewModel is not null)
                 {
-                    desktop.MainWindow.PositionChanged += (sender, args) =>
+                    desktop.MainWindow.PositionChanged += (_, _) =>
                     {
                         if (SettingsViewModel.Settings.MinimizedHide && desktop.MainWindow.WindowState == WindowState.Minimized)
                         {
@@ -97,7 +106,7 @@ public class App : Application
             }
         }
 
-        if (!Design.IsDesignMode)
+        if (!Design.IsDesignMode && SettingsViewModel is not null)
         {
             await SettingsViewModel.Startup();
         }
@@ -113,9 +122,9 @@ public class App : Application
         mainWindow.ShowInTaskbar = false;
     }
 
-    public static MainWindowViewModel MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>()!;
-    public static SettingsViewModel SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>()!;
-    private static IDialogService DialogService => Ioc.Default.GetService<IDialogService>()!;
+    public static MainWindowViewModel? MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>();
+    private static SettingsViewModel? SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>();
+    private static IDialogService? DialogService => Ioc.Default.GetService<IDialogService>();
     private static ObservableCollection<IInputOutputDevice> InputOutputDevices => Ioc.Default.GetService<ObservableCollection<IInputOutputDevice>>()!;
     
     //TrayIcon
@@ -154,7 +163,11 @@ public class App : Application
 
         desktop.MainWindow.WindowState = WindowState.Normal;
         desktop.MainWindow.ShowInTaskbar = true;
-        _trayIcon!.IsVisible = false;
+        if (_trayIcon is not null)
+        {
+            _trayIcon.IsVisible = false;
+        }
+
         desktop.MainWindow.Show();
     }
     
