@@ -13,14 +13,13 @@ using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.FlightSim;
 using DeviceInterfaceManager.Models.FlightSim.MSFS;
-using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class HomeViewModel : ObservableRecipient
 {
     private readonly SimConnectClient _simConnectClient;
-    
+
     public ObservableCollection<IInputOutputDevice> InputOutputDevices { get; }
 
     private readonly ObservableCollection<ProfileCreatorModel> _profileCreatorModels = [];
@@ -37,11 +36,14 @@ public partial class HomeViewModel : ObservableRecipient
 
     private readonly List<Profile> _profiles = [];
 
+    [ObservableProperty]
+    private string? _aircraftTitle;
+
     public HomeViewModel(SimConnectClient simConnectClient, ObservableCollection<IInputOutputDevice> inputOutputDevices)
     {
         _simConnectClient = simConnectClient;
         InputOutputDevices = inputOutputDevices;
-        
+
         InputOutputDevices.CollectionChanged += (sender, args) =>
         {
             FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
@@ -61,18 +63,12 @@ public partial class HomeViewModel : ObservableRecipient
         if (DeviceProfileList is null && File.Exists(App.MappingsFile))
         {
             DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
-            
-            DeviceProfileList.CollectionChanged += (sender, args) =>
-            {
-                DeviceProfileListHasChanged = true;
-            };
+
+            DeviceProfileList.CollectionChanged += (sender, args) => DeviceProfileListHasChanged = true;
 
             foreach (ProfileMapping profileMapping in DeviceProfileList)
             {
-                profileMapping.PropertyChanged += (sender, args) =>
-                {
-                    DeviceProfileListHasChanged = true;
-                };
+                profileMapping.PropertyChanged += (sender, args) => DeviceProfileListHasChanged = true;
             }
         }
 
@@ -83,12 +79,12 @@ public partial class HomeViewModel : ObservableRecipient
             {
                 return;
             }
-            
+
             try
             {
                 _profileCreatorModels.Add(JsonSerializer.Deserialize<ProfileCreatorModel>(File.ReadAllText(filePath)) ?? throw new InvalidOperationException());
             }
-            catch (Exception)
+            catch
             {
                 // ignored
             }
@@ -114,8 +110,9 @@ public partial class HomeViewModel : ObservableRecipient
         DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
     }
 #endif
-    
+
     private bool _isFiltered;
+
     public bool IsFiltered
     {
         get => _isFiltered;
@@ -132,10 +129,7 @@ public partial class HomeViewModel : ObservableRecipient
     {
         DeviceProfileList ??= [];
         ProfileMapping profileMapping = new();
-        profileMapping.PropertyChanged += (sender, args) =>
-        {
-            DeviceProfileListHasChanged = true;
-        };
+        profileMapping.PropertyChanged += (sender, args) => DeviceProfileListHasChanged = true;
         DeviceProfileList.Add(profileMapping);
     }
 
@@ -155,7 +149,7 @@ public partial class HomeViewModel : ObservableRecipient
         {
             return;
         }
-        
+
         string serialize = JsonSerializer.Serialize(DeviceProfileList);
         File.WriteAllText(App.MappingsFile, serialize);
         DeviceProfileListHasChanged = false;
@@ -178,12 +172,14 @@ public partial class HomeViewModel : ObservableRecipient
                 await profile.DisposeAsync();
             }
 
+            AircraftTitle = null;
+
             return;
         }
 
-        SimConnect? simConnect = await _simConnectClient.ConnectAsync(token);
+        AircraftTitle = await _simConnectClient.ConnectAsync(token);
 
-        if (!token.IsCancellationRequested && simConnect is not null)
+        if (!token.IsCancellationRequested)
         {
             if (DeviceProfileList is null)
             {
@@ -210,8 +206,8 @@ public partial class HomeViewModel : ObservableRecipient
                 {
                     continue;
                 }
-                
-                Profile profile = new(_simConnectClient, simConnect, profileCreatorModel, inputOutputDevice, App.SettingsViewModel.Settings.Server);
+
+                Profile profile = new(_simConnectClient, profileCreatorModel, inputOutputDevice);
                 _profiles.Add(profile);
             }
 
