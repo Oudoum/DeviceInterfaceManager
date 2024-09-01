@@ -14,15 +14,7 @@
         <vm:HomeViewModel />
     </Design.DataContext>
     <Grid Margin="25">
-        <TextBlock Text="No device found! Please enable the specific driver in the settings!"
-                   IsVisible="{Binding !InputOutputDevices.Count}"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontWeight="Bold"
-                   FontSize="24" />
-
-        <Grid RowDefinitions="Auto *" ColumnDefinitions="Auto Auto" HorizontalAlignment="Center"
-              IsVisible="{Binding !!InputOutputDevices.Count}">
+        <Grid RowDefinitions="Auto Auto *" ColumnDefinitions="Auto Auto" HorizontalAlignment="Center">
 
             <Button Grid.Column="0"
                     Grid.Row="0"
@@ -59,7 +51,14 @@
                 </Button.Styles>
             </Button>
 
-            <Border Grid.Column="0" Grid.Row="1"
+            <TextBlock Grid.Column="0" Grid.Row="1"
+                       Grid.ColumnSpan="2"
+                       Margin="0 25 0 0"
+                       HorizontalAlignment="Center"
+                       FontSize="18" 
+                       Text="{Binding AircraftTitle}"/>
+
+            <Border Grid.Column="0" Grid.Row="2"
                     IsEnabled="{Binding !IsStarted}"
                     Margin=" 0 25 25 0"
                     CornerRadius="5"
@@ -193,7 +192,7 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Column="1" Grid.Row="1"
+            <Grid Grid.Column="1" Grid.Row="2"
                   RowDefinitions="Auto Auto *"
                   Margin="0 25 0 0">
                 <Button Grid.Row="0"
