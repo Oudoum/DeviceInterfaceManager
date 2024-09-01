@@ -57,7 +57,7 @@ public partial class ProfileCreatorModel : ObservableObject
     private ObservableCollection<OutputCreator> _outputCreators = [];
 }
 
-public partial class InputCreator : ObservableObject, IInputCreator, IActive
+public partial class InputCreator : ObservableObject, IInputCreator, IActive, ICloneable
 {
     [ObservableProperty]
     private Guid _id;
@@ -115,7 +115,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     [ObservableProperty]
     private Precondition[]? _preconditions;
 
-    public InputCreator Clone()
+    public object Clone()
     {
         InputCreator? clone = MemberwiseClone() as InputCreator;
         clone!.Id = Guid.NewGuid();
@@ -123,7 +123,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive
     }
 }
 
-public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
+public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, ICloneable
 {
     [ObservableProperty]
     private Guid _id;
@@ -192,12 +192,23 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive
     [ObservableProperty]
     private Precondition[]? _preconditions;
 
-    public OutputCreator Clone()
+    public object Clone()
     {
         OutputCreator clone = MemberwiseClone() as OutputCreator ?? new OutputCreator();
         clone.Id = Guid.NewGuid();
         clone.OutputValue = null;
         clone.FlightSimValue = null;
+
+        if (Modifiers is null)
+        {
+            return clone;
+        }
+
+        clone.Modifiers = new IModifier[Modifiers.Length];
+        for (int i = 0; i < Modifiers.Length; i++)
+        {
+            clone.Modifiers[i] = (IModifier)Modifiers[i].Clone();
+        }
         return clone;
     }
 }
