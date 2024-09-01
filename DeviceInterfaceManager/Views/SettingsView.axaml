@@ -180,8 +180,8 @@
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
-            
-            <ui:SettingsExpander Header="Server" IsEnabled="False">
+
+            <ui:SettingsExpander Header="Server">
                 <ui:SettingsExpander.IconSource>
                     <ui:PathIconSource Data="{StaticResource ServerNetworkOutline}" />
                 </ui:SettingsExpander.IconSource>
@@ -192,26 +192,27 @@
                                       Command="{Binding StartServerCommand }" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
-                
+
                 <ui:SettingsExpanderItem Content="IP-Address">
                     <ui:SettingsExpanderItem.Footer>
-                            <TextBox Classes="clear"
-                                     Watermark="127.0.0.1"
-                                     Text="{Binding Settings.IpAddress}"
-                                     HorizontalContentAlignment="Center"
-                                     Width="120" />
+                        <TextBox Classes="clear"
+                                 Watermark="127.0.0.1"
+                                 Text="{Binding Settings.IpAddress}"
+                                 HorizontalContentAlignment="Center"
+                                 Width="120" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <ui:SettingsExpanderItem Content="Port">
                     <ui:SettingsExpanderItem.Footer>
-                            <TextBox Classes="clear"
-                                     Watermark="2024"
-                                     Text="{Binding Settings.Port}"
-                                     HorizontalContentAlignment="Center"
-                                     Width="90" />
+                        <TextBox Classes="clear"
+                                 Watermark="2024"
+                                 Text="{Binding Settings.Port}"
+                                 HorizontalContentAlignment="Center"
+                                 Width="90" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
+
             </ui:SettingsExpander>
 
             <ui:SettingsExpander Header="Info">
