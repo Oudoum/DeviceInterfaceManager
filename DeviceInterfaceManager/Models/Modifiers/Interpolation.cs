@@ -12,4 +12,9 @@ public partial class Interpolation : ObservableObject, IModifier
     {
         
     }
+    
+    public object Clone()
+    {
+        return MemberwiseClone();
+    }
 }
