@@ -25,14 +25,25 @@ public static class Cdu
             public struct Cell
             {
                 [MarshalAs(UnmanagedType.U1)]
-                public char Symbol;
+                public byte Symbol;
                 public Color Color; // any of CDU_COLOR_ defines
-                public Flags Flags;  // a combination of CDU_FLAG_ bits
+                public Flags Flags; // a combination of CDU_FLAG_ bits
             }
         }
 
         [MarshalAs(UnmanagedType.I1)]
         public bool Powered; // true if CDU is powered
+    }
+
+    private const int CduColumns = 24;
+    private const int CduRows = 14;
+    private const int CduCells = CduColumns * CduRows;
+    private const int ScreenStateSize = CduCells * 3 + 1; // 3 = Symbol + Color + Flags | 1 = Powered
+
+    public struct ScreenBytes
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = ScreenStateSize)]
+        public byte[] Data;
     }
 
     // CDU Screen Cell Colors
