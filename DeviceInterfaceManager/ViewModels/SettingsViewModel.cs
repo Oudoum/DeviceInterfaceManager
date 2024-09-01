@@ -10,23 +10,22 @@ using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
 using DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
+using DeviceInterfaceManager.Server;
 using Velopack;
 using Velopack.Sources;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices) : ObservableObject
+public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SignalRServerService signalRServerService ,SignalRClientService signalRClientService) : ObservableObject
 {
 #if DEBUG
-    public SettingsViewModel() : this([])
+    public SettingsViewModel() : this([], new SignalRServerService(), new SignalRClientService())
     {
         Settings = new Settings();
     }
 #endif
 
     public Settings Settings { get; } = Settings.CreateSettings();
-    
-    public FlightSimulatorDataServer? FlightSimulatorDataServer { get; private set; }
 
     public async Task Startup()
     {
@@ -44,7 +43,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         {
             StartServerCommand.Execute(null);
         }
-        
+
         UpdateManager updateManager = CreateUpdateManager();
 
         CurrentVersion = updateManager.CurrentVersion?.ToFullString();
@@ -118,20 +117,26 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         }
     }
 
+
+    private bool _isStarted;
     [RelayCommand]
-    private async Task StartServer()
+    private async Task StartServer(CancellationToken cancellationToken)
     {
-        if (FlightSimulatorDataServer is not null)
+        if (_isStarted)
         {
-            return;    
+            await signalRClientService.StopConnectionAsync(cancellationToken);
+            await signalRServerService.StopAsync(cancellationToken);
+            _isStarted = false;
+            return;
         }
-        
-        FlightSimulatorDataServer = new FlightSimulatorDataServer();
-        await FlightSimulatorDataServer.StartAsync(Settings.IpAddress, Settings.Port);
+
+        await signalRServerService.StartAsync(Settings.IpAddress, Settings.Port, cancellationToken);
+        await signalRClientService.StartConnectionAsync(Settings.IpAddress, Settings.Port, cancellationToken);
+        _isStarted = true;
     }
 
     #region FdsUsb
-    
+
     [RelayCommand]
     private async Task ToggleFdsUsbAsync(CancellationToken cancellationToken)
     {
@@ -150,11 +155,11 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             }
         }
     }
-    
+
     #endregion
 
     #region FdsEthernet
-    
+
     [RelayCommand]
     private async Task ToggleFdsEthernetAsync(CancellationToken cancellationToken)
     {
@@ -191,7 +196,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         }
 
         connection = ipAddress.ToString();
-        if (Settings.FdsEthernetConnections is null || Settings.FdsEthernetConnections.Contains(connection))
+        if (Settings.FdsEthernetConnections?.Contains(connection) != false)
         {
             return;
         }
@@ -215,6 +220,6 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             AddInterfaceItEthernetConnection(connection);
         }
     }
-    
+
     #endregion
 }
