@@ -333,6 +333,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
         DataType = ProfileCreatorModel.MsfsSimConnect;
         OnMsfsSimConnectChanged();
+        IsDim = false;
     }
 
     private void OnMsfsSimConnectChanged()
@@ -340,7 +341,6 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         IsPmdg737 = false;
         IsPmdg777 = false;
         IsPmdg = false;
-        IsDim = false;
         SearchPmdgData = null;
         PmdgData = null;
     }
