@@ -4,10 +4,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.WindowsAndMessaging;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
@@ -17,9 +15,6 @@ namespace DeviceInterfaceManager.Models.FlightSim.MSFS;
 
 public class SimConnectClient
 {
-    private nint _lpPrevWndFunc;
-    private WNDPROC _hWndProc = null!;
-
     private const int WmUserSimConnect = 0x0402;
     private const int MessageSize = 1024;
     private const string ClientDataNameCommand = "DIM.Command";
@@ -27,16 +22,23 @@ public class SimConnectClient
     private SimConnect? _simConnect;
     private string? _aircraftTitle;
     private readonly SignalRClientService _signalRClientService;
+    
+    public Action<string?>? AircraftTitleChanged;
     public Helper PmdgHelper { get; private set; } = new();
 
-    [DllImport("User32.dll", SetLastError = true)]
-#pragma warning disable SYSLIB1054
-    private static extern LRESULT CallWindowProc(nint lpPrevWndFunc, HWND hWnd, uint message, WPARAM wParam, LPARAM lParam);
-#pragma warning restore SYSLIB1054
-
-    private LRESULT HandleSimConnectEvents(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
+    public SimConnectClient(SignalRClientService signalRClientService)
     {
-        switch (message)
+        _signalRClientService = signalRClientService;
+        _signalRClientService.Connected += () =>
+        {
+            RequestTitle();
+            ResendCduData();
+        };
+    }
+
+    private IntPtr CustomWndProcHookCallback(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        switch (msg)
         {
             case WmUserSimConnect:
             {
@@ -51,48 +53,27 @@ public class SimConnectClient
                 break;
         }
 
-        return CallWindowProc(_lpPrevWndFunc, hWnd, message, wParam, lParam);
+        return IntPtr.Zero;
     }
 
-    public SimConnectClient(SignalRClientService signalRClientService)
-    {
-        _signalRClientService = signalRClientService;
-        _signalRClientService.Connected += () =>
-        {
-            RequestTitle();
-            ResendCduData();
-        };
-    }
-
-    public async Task<string?> ConnectAsync(CancellationToken token)
+    public async Task ConnectAsync(CancellationToken token)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
-            return null;
+            return;
         }
 
         IPlatformHandle? platformHandle = desktop.MainWindow?.TryGetPlatformHandle();
-        if (platformHandle is null)
+        if (platformHandle is null || desktop.MainWindow is null)
         {
-            return null;
+            return;
         }
 
-        nint handle = platformHandle.Handle;
-
-        if (_lpPrevWndFunc != default)
-        {
-            return await CreateSimConnect(handle, token);
-        }
-
-        HWND hWnd = new(handle);
-        _lpPrevWndFunc = PInvoke.GetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC);
-        _hWndProc = HandleSimConnectEvents;
-        PInvoke.SetWindowLongPtr(hWnd, WINDOW_LONG_PTR_INDEX.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_hWndProc));
-        
-        return await CreateSimConnect(handle, token);
+        Win32Properties.AddWndProcHookCallback(desktop.MainWindow, CustomWndProcHookCallback);
+        await CreateSimConnect(platformHandle.Handle, token);
     }
 
-    private async Task<string?> CreateSimConnect(nint handle, CancellationToken token)
+    private async Task CreateSimConnect(nint handle, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
@@ -133,15 +114,6 @@ public class SimConnectClient
             {
             }
         }
-
-        await Task.Run(() =>
-        {
-            while (_aircraftTitle is null)
-            {
-            }
-        }, token);
-        await _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
-        return _aircraftTitle;
     }
 
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
@@ -265,15 +237,23 @@ public class SimConnectClient
         PmdgHelper = new Helper();
 
         _aircraftTitle = null;
+        
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null)
+        {
+            return;
+        }
+        
+        Win32Properties.RemoveWndProcHookCallback(desktop.MainWindow, CustomWndProcHookCallback);
     }
     
     private void SimConnectOnOnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
     {
         if (_simConnect is not null && data.dwRequestID == 6)
         {
+            _aircraftTitle = ((String256)data.dwData[0]).value;
+            AircraftTitleChanged?.Invoke(_aircraftTitle);
             _ = _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
             
-            _aircraftTitle = ((String256)data.dwData[0]).value;
             if (_aircraftTitle.StartsWith("PMDG 737"))
             {
                 PmdgHelper.InitializePmdg737(_simConnect);
