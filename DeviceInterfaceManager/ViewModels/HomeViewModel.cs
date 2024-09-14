@@ -42,9 +42,10 @@ public partial class HomeViewModel : ObservableRecipient
     public HomeViewModel(SimConnectClient simConnectClient, ObservableCollection<IInputOutputDevice> inputOutputDevices)
     {
         _simConnectClient = simConnectClient;
+        _simConnectClient.AircraftTitleChanged += s => AircraftTitle = s; 
+        
         InputOutputDevices = inputOutputDevices;
-
-        InputOutputDevices.CollectionChanged += (sender, args) =>
+        InputOutputDevices.CollectionChanged += (_, _) =>
         {
             FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
             OnPropertyChanged(nameof(FilteredProfileCreatorModels));
@@ -177,7 +178,7 @@ public partial class HomeViewModel : ObservableRecipient
             return;
         }
 
-        AircraftTitle = await _simConnectClient.ConnectAsync(token);
+        await _simConnectClient.ConnectAsync(token);
 
         if (!token.IsCancellationRequested)
         {
