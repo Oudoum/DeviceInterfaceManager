@@ -47,7 +47,7 @@ public partial class ProfileCreatorModel : ObservableObject
     [ObservableProperty]
     private string? _description;
 
-	[ObservableProperty]
+    [ObservableProperty]
     private string? _deviceName;
 
     [ObservableProperty]
@@ -67,7 +67,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 
     [ObservableProperty]
     private string? _description;
-    
+
     partial void OnDescriptionChanged(string? value)
     {
         if (value == string.Empty)
@@ -96,7 +96,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 
     [ObservableProperty]
     private long? _dataRelease;
-    
+
     [ObservableProperty]
     private long? _dataRelease2;
 
@@ -117,8 +117,10 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 
     public object Clone()
     {
-        InputCreator? clone = MemberwiseClone() as InputCreator;
-        clone!.Id = Guid.NewGuid();
+        InputCreator clone = MemberwiseClone() as InputCreator ?? new InputCreator();
+        clone.Id = Guid.NewGuid();
+        clone.Description = null;
+
         return clone;
     }
 }
@@ -133,7 +135,7 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
 
     [ObservableProperty]
     private string? _description;
-    
+
     partial void OnDescriptionChanged(string? value)
     {
         if (value == string.Empty)
@@ -196,6 +198,7 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
     {
         OutputCreator clone = MemberwiseClone() as OutputCreator ?? new OutputCreator();
         clone.Id = Guid.NewGuid();
+        clone.Description = null;
         clone.OutputValue = null;
         clone.FlightSimValue = null;
 
@@ -209,6 +212,7 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
         {
             clone.Modifiers[i] = (IModifier)Modifiers[i].Clone();
         }
+
         return clone;
     }
 }
