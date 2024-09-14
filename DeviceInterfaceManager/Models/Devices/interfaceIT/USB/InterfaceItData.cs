@@ -47,7 +47,7 @@ public partial class InterfaceItData : IDeviceSerial
         {
             CheckError(interfaceIT_Brightness_Set(_session, value));
         }
-        
+
         return Task.CompletedTask;
     }
 
@@ -68,14 +68,14 @@ public partial class InterfaceItData : IDeviceSerial
         {
             return Task.FromResult(ConnectionStatus.NotConnected);
         }
-        
+
         foreach (string device in interfaceIT_GetDeviceList())
         {
             if (!_isOpen)
             {
                 _isOpen = true;
             }
-            
+
             if (ErrorCode.ControllerAlreadyBound == interfaceIT_Bind(device, ref _session))
             {
                 continue;
@@ -83,7 +83,7 @@ public partial class InterfaceItData : IDeviceSerial
 
             interfaceIT_GetBoardInfo(_session, out BoardInfo boardInfo);
             InterfaceItBoardId boardId = GetInterfaceItBoardId(boardInfo.BoardType);
-            if (Switch.Count > 64)
+            if (Switch.Count > 64 || boardId == InterfaceItBoardId.FDS_CONTROLLER_MCP)
             {
                 CheckError(interfaceIT_SetBoardOptions(_session, (uint)BoardOptions.Force64));
             }
@@ -96,6 +96,7 @@ public partial class InterfaceItData : IDeviceSerial
             {
                 AnalogIn = new ComponentInfo(1, 1);
             }
+
             Led = new ComponentInfo(boardInfo.LedFirst, boardInfo.LedLast);
             Dataline = new ComponentInfo(boardInfo.DatalineFirst, boardInfo.DatalineLast);
             SevenSegment = new ComponentInfo(boardInfo.SevenSegmentFirst, boardInfo.SevenSegmentLast);
@@ -103,7 +104,7 @@ public partial class InterfaceItData : IDeviceSerial
             {
                 AnalogOut = new ComponentInfo(1, 1);
             }
-            
+
             EnableDeviceFeatures();
             _keyNotifyCallback = KeyPressedProc;
             CheckError(interfaceIT_Switch_Enable_Callback(_session, true, _keyNotifyCallback));
@@ -200,7 +201,7 @@ public partial class InterfaceItData : IDeviceSerial
 
 
     private static int _totalControllers = -1;
-    
+
     private static int interfaceIT_GetTotalControllers()
     {
         CheckError(interfaceIT_OpenControllers());
@@ -264,7 +265,7 @@ public partial class InterfaceItData : IDeviceSerial
 
     [LibraryImport("interfaceITAPI x64.dll")]
     private static partial ErrorCode interfaceIT_Analog_GetValue(uint session, int reserved, out int value);
-    
+
     // [LibraryImport("interfaceITAPI x64.dll")]
     // private static partial ErrorCode interfaceIT_Analog_GetValues(uint session, byte[] values, ref int valuesSize); //Not tested
     //
@@ -284,7 +285,7 @@ public partial class InterfaceItData : IDeviceSerial
     //
     // [LibraryImport("interfaceITAPI x64.dll")]
     // private static partial ErrorCode interfaceIT_EnableLogging([MarshalAs(UnmanagedType.Bool)] bool enable);
-    
+
     private enum SwitchDirection : byte
     {
         Unknown = 0xFF,
