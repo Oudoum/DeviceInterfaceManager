@@ -12,6 +12,7 @@ public class DoubleToIntConverter : IValueConverter
         {
             return (double)intValue;
         }
+
         return 0;
     }
 
@@ -26,6 +27,7 @@ public class DoubleToIntConverter : IValueConverter
         {
             return (int)doubleValue;
         }
+
         return 0;
     }
 }

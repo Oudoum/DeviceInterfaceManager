@@ -1,7 +1,7 @@
 namespace DeviceInterfaceManager.Models;
 
 public class DigitFormatting
-{    
+{
     public DigitFormatting(int digit)
     {
         Digit = digit;
@@ -22,20 +22,20 @@ public class DigitFormatting
     public int Digit { get; }
 
     public bool IsDigitChecked { get; set; }
-    
+
     public bool IsDecimalPointChecked { get; set; }
-    
+
 
     public byte? GetDigitCheckedSum(byte? digitCheckedSum)
     {
         return GetCheckedSum(IsDigitChecked, digitCheckedSum);
     }
-    
+
     public byte? GetDecimalPointCheckedSum(byte? decimalPointCheckedSum)
     {
-       return GetCheckedSum(IsDecimalPointChecked, decimalPointCheckedSum);
+        return GetCheckedSum(IsDecimalPointChecked, decimalPointCheckedSum);
     }
-    
+
     private byte? GetCheckedSum(bool isChecked, byte? checkedSum)
     {
         if (isChecked)

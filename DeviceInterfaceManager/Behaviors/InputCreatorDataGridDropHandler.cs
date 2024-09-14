@@ -25,6 +25,5 @@ public sealed class InputCreatorDataGridDropHandler : BaseDataGridDropHandler<In
 
         var items = vm.ProfileCreatorModel.InputCreators;
         return RunDropAction(dg, e, bExecute, sourceItem, targetItem, items);
-
     }
 }

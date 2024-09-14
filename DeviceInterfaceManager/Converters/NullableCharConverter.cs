@@ -17,7 +17,7 @@ public class NullableCharConverter : IValueConverter
         {
             return null;
         }
-        
+
         return char.Parse((string)value);
     }
 }

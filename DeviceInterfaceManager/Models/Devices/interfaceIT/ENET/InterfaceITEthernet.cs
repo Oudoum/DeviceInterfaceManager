@@ -222,7 +222,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
     }
 
     private const string SwitchData = "B1=SW:";
-    
+
     private void ProcessSwitchData(string ethernetData)
     {
         if (!ethernetData.StartsWith(SwitchData))
@@ -252,12 +252,12 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         }
 
         string data = ethernetData.Replace(AnalogData, string.Empty);
-        
+
         if (!int.TryParse(data, out int value))
         {
             return;
         }
-        
+
         AnalogIn.UpdatePosition(1, value);
         AnalogInValueChanged?.Invoke(this, new AnalogInValueChangedEventArgs(1, value));
     }

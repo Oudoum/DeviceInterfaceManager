@@ -26,7 +26,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
         SelectedOutputCreator = OutputCreators.FirstOrDefault(oc => SelectedPrecondition is not null && oc.Id == SelectedPrecondition.ReferenceId);
     }
 
-    #if DEBUG
+#if DEBUG
     protected BaseCreatorViewModel()
     {
         InputOutputDevice = new DeviceSerialBase();
@@ -42,15 +42,15 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
             },
             new OutputCreator
             {
-            IsActive = true,
-            Preconditions = [new Precondition()],
-            Description = "Description 2",
-            OutputType = ProfileCreatorModel.Led,
-            Outputs = [1, 2, 3]
+                IsActive = true,
+                Preconditions = [new Precondition()],
+                Description = "Description 2",
+                OutputType = ProfileCreatorModel.Led,
+                Outputs = [1, 2, 3]
             }
         ];
     }
-  #endif
+#endif
 
     public virtual Precondition[]? Copy()
     {
@@ -63,9 +63,9 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
         preconditions.AddRange(Preconditions);
         return preconditions.ToArray();
     }
-    
+
     public IEnumerable<OutputCreator> OutputCreators { get; set; }
-    
+
     [ObservableProperty]
     private OutputCreator? _selectedOutputCreator;
 
@@ -83,7 +83,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<PreconditionModel>? _preconditions;
-    
+
     [ObservableProperty]
     private PreconditionModel? _selectedPrecondition;
 
@@ -93,7 +93,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
     }
 
     public static char[] Operators => Models.Modifiers.Comparison.Operators;
-    
+
     [RelayCommand]
     private void AddPrecondition()
     {
@@ -124,10 +124,10 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
             Preconditions = null;
             return;
         }
-        
+
         SelectedPrecondition = Preconditions[^1];
     }
-    
+
     [RelayCommand]
     private void ClearPreconditions()
     {
@@ -140,7 +140,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
         SelectedPrecondition = null;
         Preconditions = null;
     }
-    
+
     [RelayCommand]
     private void ChangeLogicalOperator(string logicalOperator)
     {

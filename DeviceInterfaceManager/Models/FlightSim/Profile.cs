@@ -51,7 +51,7 @@ public class Profile : IAsyncDisposable
                 ProfileIteration(outputCreator);
                 continue;
             }
-            
+
             if (!string.IsNullOrEmpty(outputCreator.Unit))
             {
                 _simConnectClient.RegisterSimVar(outputCreator.Data!, outputCreator.Unit);

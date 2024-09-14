@@ -6,7 +6,7 @@ namespace DeviceInterfaceManager.Models;
 public interface IInputCreator
 {
     public string? Description { get; set; }
-    
+
     public string? InputType { get; set; }
 
     public Component? Input { get; set; }
@@ -16,11 +16,11 @@ public interface IInputCreator
     public string? Event { get; set; }
 
     public long? DataPress { get; set; }
-    
+
     public long? DataPress2 { get; set; }
 
     public long? DataRelease { get; set; }
-    
+
     public long? DataRelease2 { get; set; }
 
     public int? PmdgEvent { get; set; }

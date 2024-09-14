@@ -17,6 +17,7 @@ public class DeviceSerialBase : IDeviceSerial
     public ComponentInfo Dataline { get; } = new(1, 256);
     public ComponentInfo SevenSegment { get; } = new(1, 256);
     public ComponentInfo AnalogOut { get; } = new(1, 1);
+
     public Task SetLedAsync(int position, bool isEnabled)
     {
         return Task.CompletedTask;
@@ -53,7 +54,6 @@ public class DeviceSerialBase : IDeviceSerial
 
     public void Disconnect()
     {
-
     }
 
     private void OnSwitchPositionChanged(SwitchPositionChangedEventArgs e)

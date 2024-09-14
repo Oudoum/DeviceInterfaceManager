@@ -9,6 +9,7 @@ namespace DeviceInterfaceManager.Server;
 public class SignalRServerService
 {
     private IHost? _host;
+
     public async Task StartAsync(string? ipAddress, int? port, CancellationToken cancellationToken)
     {
         if (!IPAddress.TryParse(ipAddress, out IPAddress? address))
@@ -46,7 +47,7 @@ public class SignalRServerService
                     });
             })
             .Build();
-        
+
         await _host.StartAsync(cancellationToken);
     }
 

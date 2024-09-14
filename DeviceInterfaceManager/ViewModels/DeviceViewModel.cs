@@ -5,8 +5,8 @@ namespace DeviceInterfaceManager.ViewModels;
 
 public class DeviceViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    public IInputOutputDevice InputOutputDevice  => inputOutputDevice;
-    
+    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+
     public InformationViewModel InformationViewModel { get; } = new(inputOutputDevice);
 
     public InputTestViewModel InputTestViewModel { get; } = new(inputOutputDevice);

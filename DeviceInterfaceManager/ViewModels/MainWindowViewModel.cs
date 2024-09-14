@@ -27,7 +27,7 @@ public partial class MainWindowViewModel : ObservableObject
         InputOutputDevices = [];
     }
 #endif
-    
+
     public HomeViewModel HomeViewModel { get; }
 
     public ProfileCreatorViewModel ProfileCreatorViewModel { get; }
@@ -39,7 +39,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<DeviceViewModel> _deviceViewModels = [];
-    
+
     [ObservableProperty]
     private ObservableObject? _currentViewModel;
 
@@ -85,7 +85,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         HomeViewModel.IsActive = false;
     }
-    
+
     private void InputOutputDevicesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.Action is not (NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Reset) || e.OldItems is null)

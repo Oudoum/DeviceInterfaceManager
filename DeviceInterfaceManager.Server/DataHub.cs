@@ -13,7 +13,7 @@ public class DataHub : Hub
     {
         await Clients.All.SendAsync(nameof(SendPmdgData), id, message);
     }
-    
+
     public override async Task OnConnectedAsync()
     {
         await SendConnected();

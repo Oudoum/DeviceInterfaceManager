@@ -35,27 +35,32 @@ public class ItemsControlDropHandler : DropHandlerBase
                 {
                     MoveItem(items, sourceIndex, targetIndex);
                 }
+
                 return true;
             }
+
             case DragDropEffects.Link:
             {
                 if (bExecute)
                 {
                     SwapItem(items, sourceIndex, targetIndex);
                 }
+
                 return true;
             }
+
             default:
                 return false;
         }
     }
-        
+
     public override bool Validate(object? sender, DragEventArgs e, object? sourceContext, object? targetContext, object? state)
     {
         if (e.Source is Control && sender is ItemsControl itemsControl)
         {
             return Validate<IModifier>(itemsControl, e, sourceContext, targetContext, false);
         }
+
         return false;
     }
 
@@ -65,6 +70,7 @@ public class ItemsControlDropHandler : DropHandlerBase
         {
             return Validate<IModifier>(itemsControl, e, sourceContext, targetContext, true);
         }
+
         return false;
     }
 }

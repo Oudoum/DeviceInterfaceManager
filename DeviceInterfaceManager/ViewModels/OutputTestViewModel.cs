@@ -9,15 +9,14 @@ namespace DeviceInterfaceManager.ViewModels;
 
 public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    #if DEBUG
+#if DEBUG
     public OutputTestViewModel() : this(new DeviceSerialBase())
     {
-        
     }
-    #endif
-    
+#endif
+
     public IInputOutputDevice InputOutputDevice => inputOutputDevice;
-    
+
     [ObservableProperty]
     private Component? _selectedDataline = inputOutputDevice.Dataline.Components.FirstOrDefault();
 
@@ -28,10 +27,10 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
         {
             return;
         }
-        
+
         await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position, direction);
     }
-    
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SevenSegmentText))]
     private Component? _selectedSevenSegment = inputOutputDevice.SevenSegment.Components.FirstOrDefault();
@@ -58,7 +57,7 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
             {
                 return;
             }
-            
+
             if (SevenSegmentText.Length > value.Length)
             {
                 Reset7SegmentDisplay();

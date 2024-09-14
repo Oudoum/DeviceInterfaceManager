@@ -17,12 +17,12 @@ public class NullableConverter : IValueConverter
         {
             return null;
         }
-        
+
         if (long.TryParse(value.ToString(), out long longValue))
         {
             return longValue;
         }
-        
+
         return null; //Invalid input: Please provide a valid numeric value.
     }
 }

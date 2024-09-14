@@ -89,7 +89,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         _inputCreator.DataRelease2 = DataRelease2;
         return base.Copy();
     }
-    
+
     private string? GetDescription()
     {
         if (!string.IsNullOrEmpty(Description))
@@ -104,7 +104,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
         return PmdgEventName ?? null;
     }
-    
+
     public string? Description { get; set; }
 
     [ObservableProperty]
@@ -276,7 +276,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         ClearPmdgMouseRelease();
         OnRelease = false;
     }
-    
+
     [ObservableProperty]
     private string? _event;
 
@@ -287,10 +287,10 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             Event = null;
         }
     }
-        
+
     [ObservableProperty]
     private long? _dataPress;
-    
+
     [ObservableProperty]
     private long? _dataPress2;
 
@@ -301,7 +301,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     private long? _dataRelease2;
 
     public int? PmdgEvent { get; set; }
-    
+
     [ObservableProperty]
     private string? _pmdgEventName;
 
@@ -316,14 +316,14 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             PmdgEventName = value;
             return;
         }
-        
+
         if (IsPmdg777 && Enum.TryParse(value, true, out B777.Event pmdg777Event))
         {
             PmdgEvent = (int)pmdg777Event;
             PmdgEventName = value;
             return;
         }
-        
+
         PmdgEvent = null;
     }
 
@@ -333,7 +333,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         {
             return null;
         }
-        
+
         if (IsPmdg737)
         {
             return Enum.GetName((B737.Event)PmdgEvent);
@@ -341,7 +341,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
         if (IsPmdg777)
         {
-           return Enum.GetName((B777.Event)PmdgEvent);
+            return Enum.GetName((B777.Event)PmdgEvent);
         }
 
         return null;

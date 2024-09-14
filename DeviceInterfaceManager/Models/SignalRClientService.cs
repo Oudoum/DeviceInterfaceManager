@@ -14,8 +14,6 @@ namespace DeviceInterfaceManager.Models;
 public class SignalRClientService
 {
     private HubConnection? _connection;
-    
-    public event Action<byte[]>? DataReceived;
     public event Action? Connected;
 
     public async Task StartConnectionAsync(string? ipAddress, int? port, CancellationToken cancellationToken)
@@ -26,15 +24,15 @@ public class SignalRClientService
         }
 
         port ??= 2024;
-        
+
         _connection = new HubConnectionBuilder()
             .WithUrl($"http://{address}:{port}/datahub")
             .WithAutomaticReconnect()
             .AddMessagePackProtocol()
             .Build();
-        
-        _connection.On<string?>(nameof(DataHub.SendConnected),OnConnected);
-        
+
+        _connection.On<string?>(nameof(DataHub.SendConnected), OnConnected);
+
         try
         {
             await _connection.StartAsync(cancellationToken);
@@ -44,7 +42,7 @@ public class SignalRClientService
             // ignored
         }
     }
-    
+
     public async Task StopConnectionAsync(CancellationToken cancellationToken)
     {
         if (_connection is null)
@@ -69,7 +67,7 @@ public class SignalRClientService
             Connected?.Invoke();
         }
     }
-    
+
     private async Task SendMessageAsync(string methodName, string? message, CancellationToken cancellationToken = default)
     {
         if (_connection is null)
@@ -86,29 +84,29 @@ public class SignalRClientService
             // ignored
         }
     }
-    
-   public async Task SendPmdgDataMessageAsync(byte id, byte[] message)
-   {
-       if (_connection is null)
-       {
-           return;
-       }
 
-       try
-       {
-           await _connection.InvokeAsync(nameof(DataHub.SendPmdgData), id, message);
-       }
-       catch (Exception)
-       {
-           // ignored
-       }
-   }
-   
-   public async Task SendTitleMessageAsync(string? title)
-   {
-       await SendMessageAsync(nameof(DataHub.SendTitle), title);
-   }
-    
+    public async Task SendPmdgDataMessageAsync(byte id, byte[] message)
+    {
+        if (_connection is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _connection.InvokeAsync(nameof(DataHub.SendPmdgData), id, message);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+    }
+
+    public async Task SendTitleMessageAsync(string? title)
+    {
+        await SendMessageAsync(nameof(DataHub.SendTitle), title);
+    }
+
     public static byte[] CreateCduTestData()
     {
         Cdu.Screen.Row.Cell cell = new() { Symbol = (byte)'T' };

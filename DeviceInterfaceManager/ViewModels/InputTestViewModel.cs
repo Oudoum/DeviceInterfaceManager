@@ -5,12 +5,11 @@ namespace DeviceInterfaceManager.ViewModels;
 
 public class InputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
 {
-    #if DEBUG
+#if DEBUG
     public InputTestViewModel() : this(new DeviceSerialBase())
     {
-        
     }
-    #endif
-    
+#endif
+
     public IInputOutputDevice InputOutputDevice => inputOutputDevice;
 }

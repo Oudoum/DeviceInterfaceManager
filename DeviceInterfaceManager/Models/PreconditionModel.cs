@@ -34,6 +34,7 @@ public partial class PreconditionModel : Precondition
             ReferenceId = precondition.ReferenceId;
             return;
         }
+
         HasError = true;
     }
 }

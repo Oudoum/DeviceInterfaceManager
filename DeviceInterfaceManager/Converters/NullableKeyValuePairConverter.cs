@@ -25,7 +25,7 @@ public class NullableKeyValuePairConverter : IValueConverter
         {
             return null;
         }
-        
+
         return stringParameter switch
         {
             "Key" => valueType.GetProperty("Key")?.GetValue(value, null),

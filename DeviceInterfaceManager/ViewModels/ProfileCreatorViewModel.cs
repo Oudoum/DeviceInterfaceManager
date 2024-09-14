@@ -74,7 +74,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     Preconditions = [new Precondition()],
                     Description = "Description",
                     OutputType = ProfileCreatorModel.Led,
-                    Outputs = [1, 2 ,3],
+                    Outputs = [1, 2, 3],
                     FlightSimValue = "1234",
                     OutputValue = "4321"
                 }
@@ -206,7 +206,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                         await ChangeDeviceAsync(false);
                         break;
                 }
-                    
+
                 TaskDialogStandardResult dialogResult = await _dialogService.ShowTaskDialogAsync(
                     Ioc.Default.GetService<MainWindowViewModel>()!,
                     new TaskDialogSettings
@@ -691,8 +691,8 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 FullSizeDesired = true
             });
 
-       await InputOutputDevice.ResetAllOutputsAsync();
-        
+        await InputOutputDevice.ResetAllOutputsAsync();
+
         if (outputResult == ContentDialogResult.Primary)
         {
             outputCreator.Preconditions = outputCreatorViewModel.Copy();

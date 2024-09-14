@@ -66,6 +66,7 @@ public sealed partial class Settings : ObservableObject
         {
             FdsEthernetConnections.CollectionChanged += (sender, args) => SaveSettings();
         }
+
         SaveSettings();
     }
 }

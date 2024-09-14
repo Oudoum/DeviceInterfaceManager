@@ -16,7 +16,7 @@ using Velopack.Sources;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SignalRServerService signalRServerService ,SignalRClientService signalRClientService) : ObservableObject
+public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SignalRServerService signalRServerService, SignalRClientService signalRClientService) : ObservableObject
 {
 #if DEBUG
     public SettingsViewModel() : this([], new SignalRServerService(), new SignalRClientService())
@@ -119,6 +119,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
 
 
     private bool _isStarted;
+
     [RelayCommand]
     private async Task StartServer(CancellationToken cancellationToken)
     {

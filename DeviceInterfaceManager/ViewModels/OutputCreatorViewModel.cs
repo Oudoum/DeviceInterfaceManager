@@ -31,10 +31,12 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             OutputsCollection = new ObservableCollection<int>(outputCreator.Outputs);
             Position = 0;
         }
+
         if (outputCreator.Outputs?.Length > 0)
         {
             Output = Components.FirstOrDefault(x => x?.Position == outputCreator.Outputs[^1]);
         }
+
         DataType = outputCreator.DataType;
         Data = outputCreator.Data;
         Unit = outputCreator.Unit;
@@ -152,7 +154,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         {
             return PmdgData + " [" + PmdgDataArrayIndex + "]";
         }
-            
+
         return PmdgData;
     }
 
@@ -254,16 +256,16 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [RelayCommand]
     private void RemoveOutputs(IList list)
     {
-       List<int> outputs = [..list.Cast<int>()];
-       foreach (int output in outputs)
-       {
-           OutputsCollection.Remove(output);
-       }
-       
-       if (OutputsCollection.Count > 0)
-       {
-           Position = OutputsCollection[^1];
-       }
+        List<int> outputs = [..list.Cast<int>()];
+        foreach (int output in outputs)
+        {
+            OutputsCollection.Remove(output);
+        }
+
+        if (OutputsCollection.Count > 0)
+        {
+            Position = OutputsCollection[^1];
+        }
     }
 
     [ObservableProperty]
@@ -311,7 +313,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 case ProfileCreatorModel.Pmdg777:
                     IsPmdg777 = true;
                     break;
-                
+
                 case ProfileCreatorModel.Dim:
                     IsDim = true;
                     break;

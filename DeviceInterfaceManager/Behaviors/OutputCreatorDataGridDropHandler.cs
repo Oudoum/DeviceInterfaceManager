@@ -25,6 +25,5 @@ public class OutputCreatorDataGridDropHandler : BaseDataGridDropHandler<OutputCr
 
         var items = vm.ProfileCreatorModel.OutputCreators;
         return RunDropAction(dg, e, bExecute, sourceItem, targetItem, items);
-
     }
 }

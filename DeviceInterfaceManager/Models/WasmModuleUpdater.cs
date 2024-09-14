@@ -45,7 +45,6 @@ public class WasmModuleUpdater
 
         if (!File.Exists(searchPath))
         {
-            
             searchPath = SearchPath(@"Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\UserCfg.opt", Environment.SpecialFolder.LocalApplicationData);
             if (!File.Exists(searchPath))
             {
