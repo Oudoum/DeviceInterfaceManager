@@ -23,11 +23,11 @@ namespace DeviceInterfaceManager;
 public class App : Application
 {
     public static readonly string UserDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDomain.CurrentDomain.FriendlyName);
-    
+
     public static readonly string ProfilesPath = Path.Combine(UserDataPath, "Profiles");
-    
+
     public static readonly string SettingsFile = Path.Combine(UserDataPath, "settings.json");
-    
+
     public static readonly string MappingsFile = Path.Combine(UserDataPath, "mappings.json");
 
     public override void Initialize()
@@ -60,18 +60,13 @@ public class App : Application
         GC.KeepAlive(typeof(DialogService));
 
         CreateTrayIcon();
-        
+
         switch (ApplicationLifetime)
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
             {
-                if (MainWindowViewModel is null)
-                {
-                    break;
-                }
-                
-                DialogService?.Show(null, MainWindowViewModel);
-            
+                DialogService.Show(null, MainWindowViewModel);
+
                 desktop.ShutdownRequested += (_, _) =>
                 {
                     foreach (IInputOutputDevice item in InputOutputDevices)
@@ -82,7 +77,7 @@ public class App : Application
                     MainWindowViewModel.HomeViewModel.SaveMappings();
                 };
 
-                if (desktop.MainWindow is not null && SettingsViewModel is not null)
+                if (desktop.MainWindow is not null)
                 {
                     desktop.MainWindow.PositionChanged += (_, _) =>
                     {
@@ -91,11 +86,11 @@ public class App : Application
                             HideWindow(desktop.MainWindow);
                         }
                     };
-            
+
                     if (SettingsViewModel.Settings.MinimizedHide)
                     {
                     }
-            
+
                     if (SettingsViewModel.Settings.AutoHide)
                     {
                         HideWindow(desktop.MainWindow);
@@ -106,11 +101,11 @@ public class App : Application
             }
         }
 
-        if (!Design.IsDesignMode && SettingsViewModel is not null)
+        if (!Design.IsDesignMode)
         {
             await SettingsViewModel.Startup();
         }
-        
+
         base.OnFrameworkInitializationCompleted();
     }
 
@@ -122,12 +117,11 @@ public class App : Application
         mainWindow.ShowInTaskbar = false;
     }
 
-    public static MainWindowViewModel? MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>();
-    private static SettingsViewModel? SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>();
-    private static IDialogService? DialogService => Ioc.Default.GetService<IDialogService>();
+    public static MainWindowViewModel MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>()!;
+    private static SettingsViewModel SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>()!;
+    private static IDialogService DialogService => Ioc.Default.GetService<IDialogService>()!;
     private static ObservableCollection<IInputOutputDevice> InputOutputDevices => Ioc.Default.GetService<ObservableCollection<IInputOutputDevice>>()!;
-    
-    //TrayIcon
+
     private TrayIcon? _trayIcon;
 
     private NativeMenuItem? _exitMenuItem;
@@ -170,7 +164,7 @@ public class App : Application
 
         desktop.MainWindow.Show();
     }
-    
+
     private void MenuItemExitClick(object? sender, EventArgs e)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
