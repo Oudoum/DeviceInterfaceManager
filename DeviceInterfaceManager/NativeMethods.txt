@@ -1,3 +1,0 @@
-GetWindowLongPtr
-SetWindowLongPtr
-CallWindowProc
