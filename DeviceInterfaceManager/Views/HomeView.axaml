@@ -51,11 +51,11 @@
                 </Button.Styles>
             </Button>
 
-            <TextBlock Grid.Column="0" Grid.Row="1"
+            <SelectableTextBlock Grid.Column="0" Grid.Row="1"
                        Grid.ColumnSpan="2"
                        Margin="0 25 0 0"
                        HorizontalAlignment="Center"
-                       FontSize="18" 
+                       FontSize="18"
                        Text="{Binding AircraftTitle}"/>
 
             <Border Grid.Column="0" Grid.Row="2"
@@ -142,7 +142,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-
+                            
                             <DataGridTemplateColumn Header="Device" SortMemberPath="Device" MinWidth="200">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -186,6 +186,9 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+                            
+                            <DataGridTextColumn Header="Aircraft" SortMemberPath="Aircraft" MinWidth="200"
+                                                Binding="{Binding Aircraft}"/>
 
                         </DataGrid.Columns>
                     </DataGrid>
