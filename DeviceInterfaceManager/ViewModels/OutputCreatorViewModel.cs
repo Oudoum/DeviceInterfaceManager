@@ -10,8 +10,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using DeviceInterfaceManager.Models.Modifiers;
+using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -19,8 +20,8 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 {
     private readonly IOutputCreator _outputCreator;
 
-    public OutputCreatorViewModel(IInputOutputDevice inputOutputDevice, IOutputCreator outputCreator, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
-        : base(inputOutputDevice, outputCreators, preconditions)
+    public OutputCreatorViewModel(IDeviceService deviceService, IOutputCreator outputCreator, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
+        : base(deviceService, outputCreators, preconditions)
     {
         _outputCreator = outputCreator;
         Description = outputCreator.Description;
@@ -34,7 +35,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
         if (outputCreator.Outputs?.Length > 0)
         {
-            Output = Components.FirstOrDefault(x => x?.Position == outputCreator.Outputs[^1]);
+            Output = Components?.FirstOrDefault(x => x?.Position == outputCreator.Outputs[^1]);
         }
 
         DataType = outputCreator.DataType;
@@ -195,6 +196,10 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 IsDisplay = true;
                 IsPadded = false;
                 return;
+            
+            case ProfileCreatorModel.Analog:
+                Components = GetComponents(value);
+                break;
         }
 
         IsDisplay = false;
@@ -203,13 +208,14 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         DigitCount = null;
     }
 
-    private IEnumerable<Component?> GetComponents(string? value)
+    private IEnumerable<Component?>? GetComponents(string? value)
     {
         return value switch
         {
-            ProfileCreatorModel.Led => InputOutputDevice.Led.Components,
-            ProfileCreatorModel.Dataline => InputOutputDevice.Dataline.Components,
-            ProfileCreatorModel.SevenSegment => InputOutputDevice.SevenSegment.Components,
+            ProfileCreatorModel.Led => DeviceService.Outputs?.Led.Components,
+            ProfileCreatorModel.Dataline => DeviceService.Outputs?.Dataline.Components,
+            ProfileCreatorModel.SevenSegment => DeviceService.Outputs?.SevenSegment.Components,
+            ProfileCreatorModel.Analog => DeviceService.Outputs?.Analog.Components,
             _ => Components
         };
     }
@@ -217,10 +223,10 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     [ObservableProperty]
     private bool _isDisplay;
 
-    public static string[] OutputTypes => [ProfileCreatorModel.Led, ProfileCreatorModel.Dataline, ProfileCreatorModel.SevenSegment];
+    public static string[] OutputTypes => [ProfileCreatorModel.Led, ProfileCreatorModel.Dataline, ProfileCreatorModel.SevenSegment, ProfileCreatorModel.Analog];
 
     [ObservableProperty]
-    private IEnumerable<Component?> _components;
+    private IEnumerable<Component?>? _components;
 
     [ObservableProperty]
     private Component? _output;
@@ -235,15 +241,19 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         switch (OutputType)
         {
             case ProfileCreatorModel.Led:
-                Task.Run(() => InputOutputDevice.Led.PerformOperationOnAllComponents(async i => await InputOutputDevice.SetLedAsync(i, false)));
+                Task.Run(() => DeviceService.Outputs?.Led.PerformOperationOnAllComponents(async i => await DeviceService.SetLedAsync(i, false)));
                 break;
 
             case ProfileCreatorModel.Dataline:
-                Task.Run(() => InputOutputDevice.Dataline.PerformOperationOnAllComponents(async i => await InputOutputDevice.SetDatalineAsync(i, false)));
+                Task.Run(() => DeviceService.Outputs?.Dataline.PerformOperationOnAllComponents(async i => await DeviceService.SetDatalineAsync(i, false)));
                 break;
 
             case ProfileCreatorModel.SevenSegment:
-                Task.Run(() => InputOutputDevice.SevenSegment.PerformOperationOnAllComponents(async i => await InputOutputDevice.SetSevenSegmentAsync(i, " ")));
+                Task.Run(() => DeviceService.Outputs?.SevenSegment.PerformOperationOnAllComponents(async i => await DeviceService.SetSevenSegmentAsync(i, " ")));
+                break;
+            
+            case ProfileCreatorModel.Analog:
+                Task.Run(() => DeviceService.Outputs?.Analog.PerformOperationOnAllComponents(async i => await DeviceService.SetAnalogAsync(i, 0)));
                 break;
         }
     }
@@ -601,15 +611,19 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         switch (OutputType)
         {
             case ProfileCreatorModel.Led:
-                await InputOutputDevice.SetLedAsync(position, isEnabled);
+                await DeviceService.SetLedAsync(position, isEnabled);
                 break;
 
             case ProfileCreatorModel.Dataline:
-                await InputOutputDevice.SetDatalineAsync(position, isEnabled);
+                await DeviceService.SetDatalineAsync(position, isEnabled);
                 break;
 
             case ProfileCreatorModel.SevenSegment:
-                await InputOutputDevice.SetSevenSegmentAsync(position, isEnabled ? "8" : " ");
+                await DeviceService.SetSevenSegmentAsync(position, isEnabled ? "8" : " ");
+                break;
+            
+            case ProfileCreatorModel.Analog:
+                await DeviceService.SetAnalogAsync(position, isEnabled ? 100 : 0);
                 break;
         }
     }
