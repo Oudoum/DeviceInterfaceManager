@@ -69,8 +69,8 @@
                             <ComboBox Name="InputComboBox"
                                       HorizontalAlignment="Stretch"
                                       HorizontalContentAlignment="Center"
-                                      DisplayMemberBinding="{Binding Position}"
-                                      SelectedItem="{Binding Input}"
+                                      DisplayMemberBinding="{Binding Name}"
+                                      SelectedItem="{Binding Component}"
                                       ItemsSource="{Binding Components}" />
                             <ToggleButton Content="?"
                                           FontWeight="Bold"
@@ -83,8 +83,13 @@
                     </Grid>
 
                     <!-- PMDG Event -->
-                    <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg}">
+                    <Grid ColumnDefinitions="*,2*">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="IsPmdg" />
+                                <Binding Path="!IsAnalog" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="PMDG Event" />
@@ -130,9 +135,12 @@
                             </MultiBinding>
                         </Grid.IsEnabled>
                         <Grid.IsVisible>
-                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                <Binding Path="IsRpn" />
-                                <Binding Path="IsKEvent" />
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                    <Binding Path="IsRpn" />
+                                    <Binding Path="IsKEvent" />
+                                </MultiBinding>
+                                <Binding Path="!IsAnalog" />
                             </MultiBinding>
                         </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
@@ -145,8 +153,13 @@
 
                     <!-- Mouse Press -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg}"
                           IsEnabled="{Binding DataPress, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="IsPmdg" />
+                                <Binding Path="!IsAnalog" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Mouse Press" />
@@ -162,8 +175,13 @@
 
                     <!-- Data Press -->
                     <Grid ColumnDefinitions="* 2*"
-                          IsVisible="{Binding !IsRpn}"
                           IsEnabled="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!IsRpn" />
+                                <Binding Path="!IsAnalog" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Press" />
@@ -189,8 +207,13 @@
 
                     <!-- Mouse Release -->
                     <Grid ColumnDefinitions="*,2*"
-                          IsVisible="{Binding IsPmdg}"
                           IsEnabled="{Binding DataRelease, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="IsPmdg" />
+                                <Binding Path="!IsAnalog" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Mouse Release" />
@@ -206,8 +229,13 @@
 
                     <!-- Data Release -->
                     <Grid ColumnDefinitions="* 2*"
-                          IsVisible="{Binding !IsRpn}"
                           IsEnabled="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNull}}">
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!IsRpn" />
+                                <Binding Path="!IsAnalog" />
+                            </MultiBinding>
+                        </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
@@ -231,6 +259,73 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Interpolation" IsVisible="{Binding IsAnalog}">
+                <Grid RowDefinitions="Auto *">
+                    <StackPanel Grid.Row="0">
+                        <Button Content="Create"
+                                Command="{Binding CreateInterpolationCommand}"
+                                Margin="0 25 0 0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Top" />
+                        <Button Content="Destroy"
+                                Command="{Binding DestroyInterpolationCommand}"
+                                Margin="0 25 0 0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Top" />
+                        <StackPanel
+                            IsVisible="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull} }">
+                            <TextBlock HorizontalAlignment="Center"
+                                       Margin="0 25 0 25"
+                                       FontSize="16">
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="{}{0} values with Min: {1} and Max: {2}">
+                                        <Binding Path="Interpolation.Values.Count" FallbackValue="0" />
+                                        <Binding Path="Interpolation.Min" FallbackValue="0" />
+                                        <Binding Path="Interpolation.Max" FallbackValue="0" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <Button Content="Add"
+                                    Margin="0 0 0 25"
+                                    Command="{Binding Interpolation.AddItemCommand, FallbackValue={x:Null}}"
+                                    HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding Interpolation.Values, FallbackValue={x:Null}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="25 0 0 25"
+                                                Spacing="5">
+                                        <StackPanel.Styles>
+                                            <Style Selector="DataValidationErrors">
+                                                <Setter Property="Theme"
+                                                        Value="{StaticResource TooltipDataValidationErrors}" />
+                                            </Style>
+                                        </StackPanel.Styles>
+                                        <TextBlock Text="Input value"
+                                                   VerticalAlignment="Center" />
+                                        <TextBox Text="{Binding Key}"
+                                                 Width="140" />
+                                        <TextBlock Text="maps to"
+                                                   VerticalAlignment="Center" />
+                                        <TextBox Text="{Binding Value}"
+                                                 Width="140" />
+                                        <Button IsVisible="{Binding IsVisible}"
+                                                Command="{Binding $parent[UserControl].((vm:InputCreatorViewModel)DataContext).Interpolation.RemoveItemCommand,
+                                                FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding}">
+                                            <PathIcon Data="{StaticResource TrashCanOutline}" />
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
 
             <TabItem Header="Precondition">
