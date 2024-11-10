@@ -2,15 +2,20 @@
 using System.Collections.Specialized;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Models.Devices;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using DeviceInterfaceManager.Services.Devices;
 using FluentAvalonia.UI.Controls;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IInputOutputDevice> inputOutputDevices)
+    private readonly ILogger _logger;
+    
+    public MainWindowViewModel(ILogger<MainWindowViewModel> logger, HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IDeviceService> inputOutputDevices)
     {
+        _logger = logger;
         HomeViewModel = homeViewModel;
         ProfileCreatorViewModel = profileCreatorViewModel;
         _settingsViewModel = settingsViewModel;
@@ -21,6 +26,7 @@ public partial class MainWindowViewModel : ObservableObject
 #if DEBUG
     public MainWindowViewModel()
     {
+        _logger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
         HomeViewModel = new HomeViewModel();
         ProfileCreatorViewModel = new ProfileCreatorViewModel();
         _settingsViewModel = new SettingsViewModel();
@@ -35,7 +41,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly SettingsViewModel _settingsViewModel;
 
     [ObservableProperty]
-    private ObservableCollection<IInputOutputDevice> _inputOutputDevices;
+    private ObservableCollection<IDeviceService> _inputOutputDevices;
 
     [ObservableProperty]
     private ObservableCollection<DeviceViewModel> _deviceViewModels = [];
@@ -60,8 +66,8 @@ public partial class MainWindowViewModel : ObservableObject
                 };
                 break;
 
-            case IInputOutputDevice inputOutputDevice:
-                DeviceViewModel? existingViewModel = DeviceViewModels.FirstOrDefault(vm => vm.InputOutputDevice.Equals(inputOutputDevice));
+            case IDeviceService inputOutputDevice:
+                DeviceViewModel? existingViewModel = DeviceViewModels.FirstOrDefault(vm => vm.DeviceService.Equals(inputOutputDevice));
                 if (existingViewModel is null)
                 {
                     DeviceViewModel newViewModel = new(inputOutputDevice);
@@ -93,9 +99,9 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        foreach (IInputOutputDevice inputOutputDevice in e.OldItems)
+        foreach (IDeviceService inputOutputDevice in e.OldItems)
         {
-            DeviceViewModel? viewModelToRemove = DeviceViewModels.FirstOrDefault(vm => vm.InputOutputDevice.Equals(inputOutputDevice));
+            DeviceViewModel? viewModelToRemove = DeviceViewModels.FirstOrDefault(vm => vm.DeviceService.Equals(inputOutputDevice));
             if (viewModelToRemove is not null)
             {
                 DeviceViewModels.Remove(viewModelToRemove);
