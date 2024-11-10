@@ -12,43 +12,44 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim;
-using DeviceInterfaceManager.Models.FlightSim.MSFS;
+using DeviceInterfaceManager.Services;
+using DeviceInterfaceManager.Services.Devices;
+using DeviceInterfaceManager.ViewModels.Dialogs;
 using FluentAvalonia.Core;
 using FluentAvalonia.UI.Controls;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia.Fluent;
 using HanumanInstitute.MvvmDialogs.FileSystem;
 using HanumanInstitute.MvvmDialogs.FrameworkDialogs;
+using Microsoft.Extensions.Logging;
 using IDialogService = HanumanInstitute.MvvmDialogs.IDialogService;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class ProfileCreatorViewModel : ObservableObject
 {
-    private readonly ObservableCollection<IInputOutputDevice> _inputOutputDevices;
-
-    private readonly SimConnectClient _simConnectClient;
-
+    private readonly ILogger _logger;
+    private readonly ObservableCollection<IDeviceService> _inputOutputDevices;
+    private readonly SimConnectClientService _simConnectClientService;
+    private readonly PmdgHelperService _pmdgHelperService;
     private readonly IDialogService _dialogService;
-
-    [ObservableProperty]
-    private ProfileCreatorModel? _profileCreatorModel;
-
-    public ProfileCreatorViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SimConnectClient simConnectClient, IDialogService dialogService)
+    
+    public ProfileCreatorViewModel(ILogger<ProfileCreatorModel> logger, ObservableCollection<IDeviceService> inputOutputDevices, SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, IDialogService dialogService)
     {
+        _logger = logger;
         _inputOutputDevices = inputOutputDevices;
-        _simConnectClient = simConnectClient;
+        _simConnectClientService = simConnectClientService;
+        _pmdgHelperService = pmdgHelperService;
         _dialogService = dialogService;
     }
 
 #if DEBUG
     public ProfileCreatorViewModel()
     {
-        ObservableCollection<IInputOutputDevice> inputOutputDevices =
+        _logger = new LoggerFactory().CreateLogger<ProfileCreatorViewModel>();
+        ObservableCollection<IDeviceService> inputOutputDevices =
         [
-            new DeviceSerialBase()
+            new DeviceSerialService()
         ];
         _inputOutputDevices = inputOutputDevices;
         _dialogService = Ioc.Default.GetService<IDialogService>()!;
@@ -62,7 +63,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     Preconditions = [new Precondition()],
                     Description = "Description",
                     InputType = ProfileCreatorModel.Switch,
-                    Input = new Component(1)
+                    Input = 1
                 }
             ],
 
@@ -82,9 +83,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
         };
         AddInput();
         AddOutput();
-        _simConnectClient = new SimConnectClient(new SignalRClientService());
+        _pmdgHelperService = new PmdgHelperService();
+        _simConnectClientService = new SimConnectClientService(_pmdgHelperService ,Ioc.Default.GetRequiredService<SignalRClientService>());
     }
 #endif
+    
+    [ObservableProperty]
+    private ProfileCreatorModel? _profileCreatorModel;
 
     private string? _previousProfileName;
 
@@ -97,7 +102,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(AddInputCommand))]
     [NotifyCanExecuteChangedFor(nameof(AddOutputCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartProfilesCommand))]
-    private IInputOutputDevice? _inputOutputDevice;
+    private IDeviceService? _inputOutputDevice;
 
     [ObservableProperty]
     private bool _infoBarIsOpen;
@@ -129,22 +134,22 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [RelayCommand]
     private async Task ChangeDeviceAsync(bool changeProfileName)
     {
-        AskComboBoxViewModel viewModel = _dialogService.CreateViewModel<AskComboBoxViewModel>();
-        viewModel.Title = "Please select your device:";
-        viewModel.Text = InputOutputDevice?.DeviceName;
-        viewModel.ObservableCollection = _inputOutputDevices;
-        viewModel.SelectedItem = InputOutputDevice;
+        AskComboBoxDialogModel dialogModel = _dialogService.CreateViewModel<AskComboBoxDialogModel>();
+        dialogModel.Title = "Please select your device:";
+        dialogModel.Text = InputOutputDevice?.DeviceName;
+        dialogModel.ObservableCollection = _inputOutputDevices;
+        dialogModel.SelectedItem = InputOutputDevice;
 
         ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
         {
-            Content = viewModel,
+            Content = dialogModel,
             Title = "Device",
             PrimaryButtonText = "OK",
             SecondaryButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         });
 
-        IInputOutputDevice? inputOutputDevice = viewModel.SelectedItem;
+        IDeviceService? inputOutputDevice = dialogModel.SelectedItem;
         if (result == ContentDialogResult.Primary && inputOutputDevice is not null)
         {
             ProfileCreatorModel ??= new ProfileCreatorModel();
@@ -192,14 +197,14 @@ public partial class ProfileCreatorViewModel : ObservableObject
         {
             ProfileCreatorModel profileCreatorModel = JsonSerializer.Deserialize<ProfileCreatorModel>(result) ?? throw new InvalidOperationException();
 
-            IInputOutputDevice? inputOutputDevice = _inputOutputDevices.FirstOrDefault(device => device.DeviceName == profileCreatorModel.DeviceName);
+            IDeviceService? inputOutputDevice = _inputOutputDevices.FirstOrDefault(device => device.DeviceName == profileCreatorModel.DeviceName);
 
             if (inputOutputDevice is null)
             {
                 switch (_inputOutputDevices.Count)
                 {
                     case 1:
-                        InputOutputDevice = _inputOutputDevices[0];
+                        inputOutputDevice = _inputOutputDevices[0];
                         break;
 
                     case > 1:
@@ -220,8 +225,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 {
                     return;
                 }
-
-                profileCreatorModel.DeviceName = InputOutputDevice?.DeviceName;
             }
 
             if (await OverwriteCheck())
@@ -236,6 +239,8 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
                 SetInfoBar(_previousProfileName + " successfully loaded.", InfoBarSeverity.Success);
             }
+            
+            profileCreatorModel.DeviceName = InputOutputDevice?.DeviceName;
         }
         catch (Exception e)
         {
@@ -333,20 +338,20 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     private async Task<string?> RenameProfileAsync()
     {
-        AskTextBoxViewModel viewModel = _dialogService.CreateViewModel<AskTextBoxViewModel>();
-        viewModel.Title = "Please enter your profile name:";
-        viewModel.Text = _previousProfileName;
+        AskTextBoxDialogModel dialogModel = _dialogService.CreateViewModel<AskTextBoxDialogModel>();
+        dialogModel.Title = "Please enter your profile name:";
+        dialogModel.Text = _previousProfileName;
 
         ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
         {
-            Content = viewModel,
+            Content = dialogModel,
             Title = "Profile name",
             PrimaryButtonText = "OK",
             SecondaryButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary
         });
 
-        string? profileName = viewModel.Text;
+        string? profileName = dialogModel.Text;
 
         if (result == ContentDialogResult.Primary && !string.IsNullOrEmpty(profileName))
         {
@@ -410,13 +415,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
         {
             case false or null:
                 IsSortedAscending = true;
-                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(y.Input?.Position, x.Input?.Position));
+                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(y.Input, x.Input));
                 sortedOutputList.Sort((x, y) => Comparer<int?>.Default.Compare(y.Outputs?[0], x.Outputs?[0]));
                 break;
 
             case true:
                 IsSortedAscending = false;
-                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(x.Input?.Position, y.Input?.Position));
+                sortedInputList.Sort((x, y) => Comparer<int?>.Default.Compare(x.Input, y.Input));
                 sortedOutputList.Sort((x, y) => Comparer<int?>.Default.Compare(x.Outputs?[0], y.Outputs?[0]));
                 break;
         }
@@ -702,7 +707,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [ObservableProperty]
     private bool _isStarted;
 
-    private Profile? _profile;
+    private ProfileService? _profile;
 
     [RelayCommand(CanExecute = nameof(CanEditProfile), IncludeCancelCommand = true)]
     private async Task StartProfilesAsync(CancellationToken token)
@@ -715,7 +720,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         IsStarted = !IsStarted;
         if (!IsStarted)
         {
-            _simConnectClient.Disconnect();
+            _simConnectClientService.Disconnect();
             if (_profile is not null)
             {
                 await _profile.DisposeAsync();
@@ -725,11 +730,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return;
         }
 
-        await _simConnectClient.ConnectAsync(token);
+        await _simConnectClientService.ConnectAsync(token);
 
         if (!token.IsCancellationRequested)
         {
-            _profile = new Profile(_simConnectClient, ProfileCreatorModel, InputOutputDevice);
+            _profile = new ProfileService(_simConnectClientService, _pmdgHelperService, ProfileCreatorModel, InputOutputDevice);
             SetInfoBar(ProfileCreatorModel?.ProfileName + " started.", InfoBarSeverity.Informational);
             return;
         }
