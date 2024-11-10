@@ -2,8 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using DeviceInterfaceManager.Models.Modifiers;
 
 #pragma warning disable CS0657 // Not a valid attribute location for this declaration
@@ -20,6 +19,7 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Hid = "HID";
     public const string Arduino = "Arduino";
     public const string Sioc = "SIOC";
+    public const string FsCockpit = "FSCockpit";
 
     //Data-/EventTypes
     public const string Pmdg737 = "PMDG737";
@@ -31,15 +31,16 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Rpn = "RPN/H-Events";
     public const string XPlane = "XPlane";
 
+    //Input & Output
+    public const string Analog = "Analog";
+    
     //Inputs
     public const string Switch = "Switch";
-    public const string AnalogIn = "AnalogIn";
 
     //Outputs
     public const string Led = "LED";
-    public const string SevenSegment = "7 Segment";
     public const string Dataline = "Dataline";
-    public const string AnalogOut = "AnalogOut";
+    public const string SevenSegment = "7 Segment";
 
     [ObservableProperty]
     private string? _profileName;
@@ -80,7 +81,7 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
     private string? _inputType;
 
     [ObservableProperty]
-    private Component? _input;
+    private int? _input;
 
     [ObservableProperty]
     private string? _eventType;
@@ -111,6 +112,9 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 
     [ObservableProperty]
     private bool _onRelease;
+    
+    [ObservableProperty]
+    private Interpolation? _interpolation;
 
     [ObservableProperty]
     private Precondition[]? _preconditions;
@@ -121,6 +125,12 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
         clone.Id = Guid.NewGuid();
         clone.Description = null;
 
+        if (Interpolation is null)
+        {
+            return clone;
+        }
+
+        clone.Interpolation = (Interpolation)Interpolation.Clone();
         return clone;
     }
 }
