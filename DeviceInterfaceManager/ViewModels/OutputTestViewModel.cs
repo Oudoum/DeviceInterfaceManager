@@ -2,23 +2,37 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
+using Microsoft.Extensions.Logging;
 using Component = DeviceInterfaceManager.Models.Devices.Component;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
+public partial class OutputTestViewModel : ObservableObject
 {
-#if DEBUG
-    public OutputTestViewModel() : this(new DeviceSerialBase())
+    private readonly ILogger _logger;
+    
+    public OutputTestViewModel(ILogger<OutputTestViewModel> logger, IDeviceService deviceService)
     {
+        _logger = logger;
+        DeviceService = deviceService;
+        SelectedDataline = DeviceService.Outputs?.Dataline.Components.FirstOrDefault();
+        SelectedSevenSegment = DeviceService.Outputs?.SevenSegment.Components.FirstOrDefault();
+        SelectedAnalog = DeviceService.Outputs?.Analog.Components.FirstOrDefault();
+    }
+    
+#if DEBUG
+    public OutputTestViewModel()
+    {
+        _logger = new LoggerFactory().CreateLogger<OutputTestViewModel>();
+        DeviceService = new DeviceSerialService();
     }
 #endif
 
-    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+    public IDeviceService DeviceService { get; }
 
     [ObservableProperty]
-    private Component? _selectedDataline = inputOutputDevice.Dataline.Components.FirstOrDefault();
+    private Component? _selectedDataline;
 
     [RelayCommand]
     private async Task SetDataline(bool direction)
@@ -28,12 +42,12 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
             return;
         }
 
-        await InputOutputDevice.SetDatalineAsync(SelectedDataline.Position, direction);
+        await DeviceService.SetDatalineAsync(SelectedDataline.Position, direction);
     }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SevenSegmentText))]
-    private Component? _selectedSevenSegment = inputOutputDevice.SevenSegment.Components.FirstOrDefault();
+    private Component? _selectedSevenSegment;
 
     partial void OnSelectedSevenSegmentChanged(Component? value)
     {
@@ -53,7 +67,7 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
         get => _sevenSegmentText;
         set
         {
-            if (SelectedSevenSegment is null)
+            if (DeviceService.Outputs is null || SelectedSevenSegment is null)
             {
                 return;
             }
@@ -63,44 +77,62 @@ public partial class OutputTestViewModel(IInputOutputDevice inputOutputDevice) :
                 Reset7SegmentDisplay();
             }
 
-            int length = InputOutputDevice.SevenSegment.Count - SelectedSevenSegment.Position + InputOutputDevice.SevenSegment.First;
+            int length = DeviceService.Outputs.SevenSegment.Count - SelectedSevenSegment.Position + DeviceService.Outputs.SevenSegment.First;
             if (value.Length > length)
             {
                 _sevenSegmentText = value.Remove(length);
-                InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText);
+                DeviceService.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText);
                 return;
             }
 
-            InputOutputDevice.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText = value);
+            DeviceService.SetSevenSegmentAsync(SelectedSevenSegment.Position, _sevenSegmentText = value);
         }
     }
 
     private void Reset7SegmentDisplay()
     {
-        InputOutputDevice.SetSevenSegmentAsync(InputOutputDevice.SevenSegment.First, new string(' ', InputOutputDevice.SevenSegment.Count));
+        if (DeviceService.Outputs is null)
+        {
+            return;
+        }
+
+        DeviceService.SetSevenSegmentAsync(DeviceService.Outputs.SevenSegment.First, new string(' ', DeviceService.Outputs.SevenSegment.Count));
     }
 
     [ObservableProperty]
-    private int _analogOutValue;
+    private Component? _selectedAnalog;
 
-    partial void OnAnalogOutValueChanged(int value)
+    [ObservableProperty]
+    private int _analogValue;
+
+    partial void OnAnalogValueChanged(int value)
     {
-        InputOutputDevice.SetAnalogAsync(InputOutputDevice.AnalogOut.First, value);
+        if (DeviceService.Outputs is null || SelectedAnalog is null)
+        {
+            return;
+        }
+        
+        DeviceService.SetAnalogAsync(SelectedAnalog.Position, value);
     }
 
     [RelayCommand]
     private async Task IsChecked(Component component)
     {
-        await InputOutputDevice.SetLedAsync(component.Position, component.IsSet);
+        await DeviceService.SetLedAsync(component.Position, component.IsSet);
     }
 
     [RelayCommand]
     private async Task SetAllLed(bool direction)
     {
-        foreach (Component ledComponent in InputOutputDevice.Led.Components)
+        if (DeviceService.Outputs is null)
+        {
+            return;
+        }
+        
+        foreach (Component ledComponent in DeviceService.Outputs.Led.Components)
         {
             ledComponent.IsSet = direction;
-            await InputOutputDevice.SetLedAsync(ledComponent.Position, direction);
+            await DeviceService.SetLedAsync(ledComponent.Position, direction);
         }
     }
 }
