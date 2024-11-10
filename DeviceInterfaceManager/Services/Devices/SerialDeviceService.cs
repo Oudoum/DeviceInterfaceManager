@@ -2,9 +2,9 @@
 using System.Diagnostics;
 using System.IO.Ports;
 
-namespace DeviceInterfaceManager.Models.Devices.COM;
+namespace DeviceInterfaceManager.Services.Devices;
 
-public class SerialDevice
+public class SerialDeviceService
 {
     private string PortName { get; set; } = "COM3";
 
@@ -18,7 +18,7 @@ public class SerialDevice
 
     SerialPort _serialPort;
 
-    public SerialDevice()
+    public SerialDeviceService()
     {
 
         _serialPort = new SerialPort(PortName, BaudRate, Parity, DataBits, StopBits)
