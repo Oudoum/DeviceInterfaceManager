@@ -5,23 +5,42 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
-using DeviceInterfaceManager.Models.Devices.interfaceIT.USB;
 using DeviceInterfaceManager.Server;
+using DeviceInterfaceManager.Services;
+using DeviceInterfaceManager.Services.Devices;
+using Microsoft.Extensions.Logging;
 using Velopack;
 using Velopack.Sources;
+using InterfaceItUsbService = DeviceInterfaceManager.Services.Devices.InterfaceItUsbService;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> inputOutputDevices, SignalRServerService signalRServerService, SignalRClientService signalRClientService) : ObservableObject
+public partial class SettingsViewModel : ObservableObject
 {
+    private readonly ILogger _logger;
+    private readonly ObservableCollection<IDeviceService> _inputOutputDevices;
+    private readonly SignalRServerService _signalRServerService;
+    private readonly SignalRClientService _signalRClientService;
+
+    public SettingsViewModel(ILogger<SettingsViewModel> logger, ObservableCollection<IDeviceService> inputOutputDevices, SignalRServerService signalRServerService, SignalRClientService signalRClientService)
+    {
+        _logger = logger;
+        _inputOutputDevices = inputOutputDevices;
+        _signalRServerService = signalRServerService;
+        _signalRClientService = signalRClientService;
+    }
+    
 #if DEBUG
-    public SettingsViewModel() : this([], new SignalRServerService(), new SignalRClientService())
+    public SettingsViewModel()
     {
         Settings = new Settings();
+        _logger = new LoggerFactory().CreateLogger<SettingsViewModel>();
+        _inputOutputDevices = [];
+        _signalRServerService = Ioc.Default.GetRequiredService<SignalRServerService>();
+        _signalRClientService = Ioc.Default.GetRequiredService<SignalRClientService>();
     }
 #endif
 
@@ -37,6 +56,11 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         if (Settings.FdsEthernet)
         {
             ToggleFdsEthernetCommand.Execute(null);
+        }
+
+        if (Settings.FsCockpit)
+        {
+            ToggleFsCockpitCommand.Execute(null);
         }
 
         if (Settings.Server)
@@ -94,7 +118,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     [RelayCommand]
     private async Task UpdateDimWasmModuleAsync()
     {
-        WasmModuleUpdaterMessage = await WasmModuleUpdater.Create().InstallWasmModule();
+        WasmModuleUpdaterMessage = await WasmModuleUpdateService.Create().InstallWasmModule();
     }
 
     [RelayCommand]
@@ -103,9 +127,9 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         Process.Start("explorer.exe", App.UserDataPath);
     }
 
-    private void DisconnectAndRemove<T>() where T : IInputOutputDevice
+    private void DisconnectAndRemove<T>() where T : IDeviceService
     {
-        foreach (IInputOutputDevice inputOutputDevice in inputOutputDevices.ToArray())
+        foreach (IDeviceService inputOutputDevice in _inputOutputDevices.ToArray())
         {
             if (inputOutputDevice is not T)
             {
@@ -113,7 +137,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
             }
 
             inputOutputDevice.Disconnect();
-            inputOutputDevices.Remove(inputOutputDevice);
+            _inputOutputDevices.Remove(inputOutputDevice);
         }
     }
 
@@ -125,14 +149,14 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     {
         if (_isStarted)
         {
-            await signalRClientService.StopConnectionAsync(cancellationToken);
-            await signalRServerService.StopAsync(cancellationToken);
+            await _signalRClientService.StopConnectionAsync(cancellationToken);
+            await _signalRServerService.StopAsync(cancellationToken);
             _isStarted = false;
             return;
         }
 
-        await signalRServerService.StartAsync(Settings.IpAddress, Settings.Port, cancellationToken);
-        await signalRClientService.StartConnectionAsync(Settings.IpAddress, Settings.Port, cancellationToken);
+        await _signalRServerService.StartAsync(Settings.IpAddress, Settings.Port, cancellationToken);
+        await _signalRClientService.StartConnectionAsync(Settings.IpAddress, Settings.Port, cancellationToken);
         _isStarted = true;
     }
 
@@ -143,16 +167,16 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     {
         if (!Settings.FdsUsb)
         {
-            DisconnectAndRemove<InterfaceItData>();
+            DisconnectAndRemove<InterfaceItUsbService>();
             return;
         }
 
-        for (int i = 0; i < InterfaceItData.TotalControllers; i++)
+        for (int i = 0; i < InterfaceItUsbService.TotalControllers; i++)
         {
-            InterfaceItData interfaceItData = new();
-            if (await interfaceItData.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+            InterfaceItUsbService interfaceItUsbService = new();
+            if (await interfaceItUsbService.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
             {
-                inputOutputDevices.Add(interfaceItData);
+                _inputOutputDevices.Add(interfaceItUsbService);
             }
         }
     }
@@ -166,7 +190,7 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     {
         if (!Settings.FdsEthernet)
         {
-            DisconnectAndRemove<InterfaceItEthernet>();
+            DisconnectAndRemove<InterfaceItEthernetService>();
             return;
         }
 
@@ -174,15 +198,15 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
         {
             foreach (string fdsEthernetConnection in Settings.FdsEthernetConnections)
             {
-                if (inputOutputDevices.Any(x => x.Id == fdsEthernetConnection))
+                if (_inputOutputDevices.Any(x => x.Id == fdsEthernetConnection))
                 {
                     continue;
                 }
 
-                InterfaceItEthernet interfaceItEthernet = new(fdsEthernetConnection);
-                if (await interfaceItEthernet.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+                InterfaceItEthernetService interfaceItEthernetService = new(fdsEthernetConnection);
+                if (await interfaceItEthernetService.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
                 {
-                    inputOutputDevices.Add(interfaceItEthernet);
+                    _inputOutputDevices.Add(interfaceItEthernetService);
                 }
             }
         }
@@ -215,12 +239,32 @@ public partial class SettingsViewModel(ObservableCollection<IInputOutputDevice> 
     [RelayCommand]
     private async Task GetInterfaceItEthernetDevices()
     {
-        string connection = await InterfaceItEthernet.ReceiveControllerDiscoveryDataAsync();
+        string connection = await InterfaceItEthernetService.ReceiveControllerDiscoveryDataAsync();
         if (!string.IsNullOrEmpty(connection))
         {
             AddInterfaceItEthernetConnection(connection);
         }
     }
 
+    #endregion
+    
+    #region FsCockpit
+
+    [RelayCommand]
+    private async Task ToggleFsCockpitAsync(CancellationToken cancellationToken)
+    {
+        if (!Settings.FsCockpit)
+        {
+            DisconnectAndRemove<FsCockpitServiceBase>();
+            return;
+        }
+
+        IDeviceService? deviceService =  await FsCockpitServiceBase.GetFsCockpitService(cancellationToken);
+        if (deviceService is not null)
+        {
+            _inputOutputDevices.Add(deviceService);
+        }
+    }
+    
     #endregion
 }
