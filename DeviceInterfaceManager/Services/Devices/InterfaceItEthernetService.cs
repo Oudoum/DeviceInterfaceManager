@@ -10,21 +10,18 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using DeviceInterfaceManager.Models.Devices;
 
-namespace DeviceInterfaceManager.Models.Devices.interfaceIT.ENET;
+namespace DeviceInterfaceManager.Services.Devices;
 
-public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
+public class InterfaceItEthernetService : DeviceServiceBase
 {
-    public ComponentInfo Switch { get; private set; } = new(0, 0);
-    public ComponentInfo AnalogIn { get; private set; } = new(0, 0);
-    public event EventHandler<SwitchPositionChangedEventArgs>? SwitchPositionChanged;
-    public event EventHandler<AnalogInValueChangedEventArgs>? AnalogInValueChanged;
-    public ComponentInfo Led { get; private set; } = new(0, 0);
-    public ComponentInfo Dataline { get; private set; } = new(0, 0);
-    public ComponentInfo SevenSegment { get; private set; } = new(0, 0);
-    public ComponentInfo AnalogOut { get; } = new(0, 0);
-
-    public async Task SetLedAsync(int position, bool isEnabled)
+    public InterfaceItEthernetService(string iPAddress)
+    {
+        Id = iPAddress;
+        Icon = (Geometry?)Application.Current!.FindResource("Ethernet");
+    }
+    public override async Task SetLedAsync(int position, bool isEnabled)
     {
         try
         {
@@ -39,36 +36,25 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         }
     }
 
-    public Task SetDatalineAsync(int position, bool isEnabled)
+    public override Task SetDatalineAsync(int position, bool isEnabled)
     {
         //Add
         return Task.CompletedTask;
     }
 
-    public Task SetSevenSegmentAsync(int position, string data)
+    public override Task SetSevenSegmentAsync(int position, string data)
     {
         //Add
         return Task.CompletedTask;
     }
 
-    public Task SetAnalogAsync(int position, int value)
+    public override Task SetAnalogAsync(int position, double value)
     {
         //Add
         return Task.CompletedTask;
     }
 
-    public async Task ResetAllOutputsAsync()
-    {
-        await Led.PerformOperationOnAllComponents(async i => await SetLedAsync(i, false));
-        await Dataline.PerformOperationOnAllComponents(async i => await SetDatalineAsync(i, false));
-        await SevenSegment.PerformOperationOnAllComponents(async i => await SetSevenSegmentAsync(i, " "));
-    }
-
-    public string Id { get; } = iPAddress;
-    public string? DeviceName { get; private set; }
-    public Geometry? Icon { get; } = (Geometry?)Application.Current!.FindResource("Ethernet");
-
-    public async Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
+    public override async Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
     {
         if (!await PingHostAsync())
         {
@@ -83,7 +69,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         return ConnectionStatus.Connected;
     }
 
-    public async void Disconnect()
+    public override async void Disconnect()
     {
         await CloseStream();
     }
@@ -111,12 +97,22 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
     private async Task<bool> PingHostAsync()
     {
+        if (Id is null)
+        {
+            return false;
+        }
+        
         using Ping ping = new();
         return (await ping.SendPingAsync(Id)).Status == IPStatus.Success;
     }
 
     private async Task<bool> ConnectToHostAsync(CancellationToken cancellationToken)
     {
+        if (Id is null)
+        {
+            return false;
+        }
+        
         while (!cancellationToken.IsCancellationRequested)
             try
             {
@@ -147,6 +143,8 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
     private async Task GetInterfaceItEthernetDataAsync(CancellationToken cancellationToken)
     {
+        Inputs.Builder inputBuilder = new();
+        Outputs.Builder outputsBuilder = new();
         TaskCompletionSource tcs = new();
         _ = Task.Run(async () =>
         {
@@ -187,7 +185,6 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
                         case "STATE=3":
                             isSwitchIdentifying = true;
-
                             break;
 
                         case "STATE=4":
@@ -203,7 +200,9 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                             }
                             else if (isInitializing && !isSwitchIdentifying)
                             {
-                                GetInterfaceItEthernetInfoData(ethernetData);
+                                GetInterfaceItEthernetInfoData(inputBuilder, outputsBuilder, ethernetData);
+                                Inputs = inputBuilder.Build();
+                                Outputs = outputsBuilder.Build();
                                 if (!tcs.Task.IsCompleted)
                                 {
                                     tcs.SetResult();
@@ -225,7 +224,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
 
     private void ProcessSwitchData(string ethernetData)
     {
-        if (!ethernetData.StartsWith(SwitchData))
+        if (Inputs is null || !ethernetData.StartsWith(SwitchData))
         {
             return;
         }
@@ -238,15 +237,14 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
         }
 
         bool isPressed = splitData[1] == "ON";
-        Switch.UpdatePosition(position, isPressed);
-        SwitchPositionChanged?.Invoke(this, new SwitchPositionChangedEventArgs(position, isPressed));
+        OnSwitchPositionChanged(position, isPressed);
     }
 
     private const string AnalogData = "B1=ANALOG:";
 
     private void ProcessAnalogInData(string ethernetData)
     {
-        if (!ethernetData.StartsWith(AnalogData))
+        if (Inputs is null || !ethernetData.StartsWith(AnalogData))
         {
             return;
         }
@@ -258,11 +256,10 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
             return;
         }
 
-        AnalogIn.UpdatePosition(1, value);
-        AnalogInValueChanged?.Invoke(this, new AnalogInValueChangedEventArgs(1, value));
+        OnAnalogInValueChanged(1, value);
     }
 
-    private void GetInterfaceItEthernetInfoData(string ethernetData)
+    private void GetInterfaceItEthernetInfoData(Inputs.Builder inputsBuilder,Outputs.Builder outputsBuilder, string ethernetData)
     {
         int index = ethernetData.IndexOf('=');
         if (index < 0)
@@ -278,31 +275,31 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 break;
 
             case "CONFIG":
-                GetConfigData(value);
+                GetConfigData(inputsBuilder, outputsBuilder, value);
                 break;
         }
     }
 
-    private void GetConfigData(string value)
+    private static void GetConfigData(Inputs.Builder inputsBuilder,Outputs.Builder outputsBuilder, string value)
     {
         string[] config = value.Split(":");
 
         switch (config[1])
         {
             case "LED":
-                Led = GetComponentInfo(config);
+                outputsBuilder.SetLedInfo(GetComponentInfo(config));
                 break;
 
             case "SWITCH":
-                Switch = GetComponentInfo(config);
+                inputsBuilder.SetSwitchInfo(GetComponentInfo(config));
                 break;
 
             case "7 SEGMENT":
-                SevenSegment = GetComponentInfo(config);
+                outputsBuilder.SetSevenSegmentInfo(GetComponentInfo(config));
                 break;
 
             case "DATALINE":
-                Dataline = GetComponentInfo(config);
+                outputsBuilder.SetDatalineInfo(GetComponentInfo(config));
                 break;
 
             case "ENCODER":
@@ -310,7 +307,7 @@ public class InterfaceItEthernet(string iPAddress) : IInputOutputDevice
                 break;
 
             case "ANALOG IN":
-                AnalogIn = GetComponentInfo(config);
+                inputsBuilder.SetAnalogInfo(GetComponentInfo(config));
                 break;
 
             case "PULSE WIDTH":
