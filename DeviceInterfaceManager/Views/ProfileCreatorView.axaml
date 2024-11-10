@@ -327,9 +327,9 @@
             <TabItem Header="Input">
                 <TabItem.Content>
                     <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
-                        <DataGrid
-                            ItemsSource="{Binding ProfileCreatorModel.InputCreators,
-                            FallbackValue={x:Null}}">
+                        <DataGrid Grid.Row="0"
+                                  ItemsSource="{Binding ProfileCreatorModel.InputCreators,
+                                  FallbackValue={x:Null}}">
                             <DataGrid.Styles>
                                 <Style Selector="DataGridCell.Tip" x:DataType="m:InputCreator">
                                     <Setter Property="ToolTip.Tip"
@@ -418,7 +418,7 @@
                                 <DataGridTextColumn
                                     Header="Input"
                                     SortMemberPath="Input.Position"
-                                    Binding="{Binding Input.Position, FallbackValue=''}"
+                                    Binding="{Binding Input}"
                                     IsReadOnly="True"
                                     CellStyleClasses="Tip" />
 
