@@ -4,17 +4,17 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public abstract partial class BaseCreatorViewModel : ObservableObject
 {
-    protected readonly IInputOutputDevice InputOutputDevice;
+    protected readonly IDeviceService DeviceService;
 
-    protected BaseCreatorViewModel(IInputOutputDevice inputOutputDevice, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
+    protected BaseCreatorViewModel(IDeviceService deviceService, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
     {
-        InputOutputDevice = inputOutputDevice;
+        DeviceService = deviceService;
         OutputCreators = outputCreators;
         if (preconditions is null)
         {
@@ -29,7 +29,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
 #if DEBUG
     protected BaseCreatorViewModel()
     {
-        InputOutputDevice = new DeviceSerialBase();
+        DeviceService = new DeviceSerialService();
         OutputCreators =
         [
             new OutputCreator
