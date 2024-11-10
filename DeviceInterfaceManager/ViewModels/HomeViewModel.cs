@@ -10,48 +10,73 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim;
-using DeviceInterfaceManager.Models.FlightSim.MSFS;
+using DeviceInterfaceManager.Services;
+using DeviceInterfaceManager.Services.Devices;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class HomeViewModel : ObservableRecipient
 {
-    private readonly SimConnectClient _simConnectClient;
+    private readonly ILogger _logger;
+    private readonly SimConnectClientService _simConnectClientService;
+    private readonly PmdgHelperService _pmdgHelperService;
 
-    public ObservableCollection<IInputOutputDevice> InputOutputDevices { get; }
-
+    private readonly ObservableCollection<IDeviceService> _inputOutputDevices;
     private readonly ObservableCollection<ProfileCreatorModel> _profileCreatorModels = [];
 
     public IEnumerable<ProfileCreatorModel> FilteredProfileCreatorModels { get; private set; } = [];
 
     private IEnumerable<ProfileCreatorModel> GetFilteredProfileCreatorModels()
     {
-        return IsFiltered ? _profileCreatorModels : _profileCreatorModels.Where(x => InputOutputDevices.Any(y => y.DeviceName == x.DeviceName));
+        return IsFiltered ? _profileCreatorModels : _profileCreatorModels.Where(x => _inputOutputDevices.Any(y => y.DeviceName == x.DeviceName));
     }
 
     [ObservableProperty]
     private ObservableCollection<ProfileMapping>? _deviceProfileList;
 
-    private readonly List<Profile> _profiles = [];
+    private readonly List<ProfileService> _profiles = [];
 
     [ObservableProperty]
     private string? _aircraftTitle;
 
-    public HomeViewModel(SimConnectClient simConnectClient, ObservableCollection<IInputOutputDevice> inputOutputDevices)
+    public HomeViewModel(ILogger<HomeViewModel> logger,SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, ObservableCollection<IDeviceService> inputOutputDevices)
     {
-        _simConnectClient = simConnectClient;
-        _simConnectClient.AircraftTitleChanged += s => AircraftTitle = s; 
+        _logger = logger;
+        _simConnectClientService = simConnectClientService;
+        _pmdgHelperService = pmdgHelperService;
+        _simConnectClientService.AircraftTitleChanged += s => AircraftTitle = s; 
         
-        InputOutputDevices = inputOutputDevices;
-        InputOutputDevices.CollectionChanged += (_, _) =>
+        _inputOutputDevices = inputOutputDevices;
+        _inputOutputDevices.CollectionChanged += (_, _) =>
         {
             FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
             OnPropertyChanged(nameof(FilteredProfileCreatorModels));
         };
     }
+    
+#if DEBUG
+    public HomeViewModel()
+    {
+        _logger = new LoggerFactory().CreateLogger<HomeViewModel>();
+        _pmdgHelperService = new PmdgHelperService();
+        _simConnectClientService = new SimConnectClientService(_pmdgHelperService ,Ioc.Default.GetRequiredService<SignalRClientService>());
+        _inputOutputDevices =
+        [
+            new DeviceSerialService()
+        ];
 
+        _profileCreatorModels =
+        [
+            new ProfileCreatorModel { DeviceName = "Device 1", ProfileName = "Profile 1" },
+            new ProfileCreatorModel { DeviceName = "Device 2", ProfileName = "Profile 2" }
+        ];
+
+        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
+        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
+    }
+#endif
+    
     protected override void OnActivated()
     {
         _profileCreatorModels.Clear();
@@ -65,11 +90,11 @@ public partial class HomeViewModel : ObservableRecipient
         {
             DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
 
-            DeviceProfileList.CollectionChanged += (sender, args) => DeviceProfileListHasChanged = true;
+            DeviceProfileList.CollectionChanged += (_, _) => DeviceProfileListHasChanged = true;
 
             foreach (ProfileMapping profileMapping in DeviceProfileList)
             {
-                profileMapping.PropertyChanged += (sender, args) => DeviceProfileListHasChanged = true;
+                profileMapping.PropertyChanged += (_, _) => DeviceProfileListHasChanged = true;
             }
         }
 
@@ -85,32 +110,12 @@ public partial class HomeViewModel : ObservableRecipient
             {
                 _profileCreatorModels.Add(JsonSerializer.Deserialize<ProfileCreatorModel>(File.ReadAllText(filePath)) ?? throw new InvalidOperationException());
             }
-            catch
+            catch (Exception e)
             {
-                // ignored
+                _logger.LogError(e, "An error occurred: {Message}", e.Message);
             }
         }
     }
-
-#if DEBUG
-    public HomeViewModel()
-    {
-        _simConnectClient = Ioc.Default.GetService<SimConnectClient>()!;
-        InputOutputDevices =
-        [
-            new DeviceSerialBase()
-        ];
-
-        _profileCreatorModels =
-        [
-            new ProfileCreatorModel { DeviceName = "Device 1", ProfileName = "Profile 1" },
-            new ProfileCreatorModel { DeviceName = "Device 2", ProfileName = "Profile 2" }
-        ];
-
-        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
-        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
-    }
-#endif
 
     private bool _isFiltered;
 
@@ -130,7 +135,7 @@ public partial class HomeViewModel : ObservableRecipient
     {
         DeviceProfileList ??= [];
         ProfileMapping profileMapping = new();
-        profileMapping.PropertyChanged += (sender, args) => DeviceProfileListHasChanged = true;
+        profileMapping.PropertyChanged += (_, _) => DeviceProfileListHasChanged = true;
         DeviceProfileList.Add(profileMapping);
     }
 
@@ -166,9 +171,9 @@ public partial class HomeViewModel : ObservableRecipient
 
         if (!IsStarted)
         {
-            _simConnectClient.Disconnect();
+            _simConnectClientService.Disconnect();
 
-            foreach (Profile profile in _profiles)
+            foreach (ProfileService profile in _profiles)
             {
                 await profile.DisposeAsync();
             }
@@ -178,7 +183,7 @@ public partial class HomeViewModel : ObservableRecipient
             return;
         }
 
-        await _simConnectClient.ConnectAsync(token);
+        AircraftTitle = await _simConnectClientService.ConnectAsync(token);
 
         if (!token.IsCancellationRequested)
         {
@@ -193,6 +198,11 @@ public partial class HomeViewModel : ObservableRecipient
                 {
                     continue;
                 }
+                
+                if (!string.IsNullOrEmpty(AircraftTitle) && !string.IsNullOrEmpty(profileMapping.Aircraft) && !AircraftTitle.Contains(profileMapping.Aircraft))
+                {
+                    continue;
+                }
 
                 ProfileCreatorModel? profileCreatorModel = _profileCreatorModels.FirstOrDefault(x => x.ProfileName == profileMapping.ProfileName);
 
@@ -201,15 +211,15 @@ public partial class HomeViewModel : ObservableRecipient
                     continue;
                 }
 
-                IInputOutputDevice? inputOutputDevice = InputOutputDevices.FirstOrDefault(x => x.Id == profileMapping.Id);
+                IDeviceService? inputOutputDevice = _inputOutputDevices.FirstOrDefault(x => x.Id == profileMapping.Id);
 
                 if (inputOutputDevice is null)
                 {
                     continue;
                 }
 
-                Profile profile = new(_simConnectClient, profileCreatorModel, inputOutputDevice);
-                _profiles.Add(profile);
+                ProfileService profileService = new(_simConnectClientService, _pmdgHelperService, profileCreatorModel, inputOutputDevice);
+                _profiles.Add(profileService);
             }
 
             return;
