@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.Views;
 
@@ -11,8 +11,8 @@ public partial class HomeView : UserControl
     {
         InitializeComponent();
 
-        AddHandler(DragDrop.DropEvent, Drop);
-        AddHandler(DragDrop.DragOverEvent, DragEnter);
+        AddHandler(DragDrop.DropEvent, OnDrop);
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
     }
 
     private async void ProfileListOnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -27,14 +27,14 @@ public partial class HomeView : UserControl
         await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
     }
 
-    private void Drop(object? sender, DragEventArgs e)
+    private static void OnDrop(object? sender, DragEventArgs e)
     {
         DropLogic(e, true);
     }
 
     private static void DropLogic(DragEventArgs e, bool set = false)
     {
-        object? data = e.Data.Get(nameof(IInputOutputDevice)) ?? e.Data.Get(nameof(ProfileCreatorModel));
+        object? data = e.Data.Get(nameof(IDeviceService)) ?? e.Data.Get(nameof(ProfileCreatorModel));
 
         if (e.Source is not Control control)
         {
@@ -48,7 +48,7 @@ public partial class HomeView : UserControl
 
         switch (control.Name)
         {
-            case "DeviceStackPanel" when data is IInputOutputDevice inputOutputDevice && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == inputOutputDevice.DeviceName):
+            case "DeviceStackPanel" when data is IDeviceService inputOutputDevice && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == inputOutputDevice.DeviceName):
                 e.DragEffects = DragDropEffects.Link;
                 if (set)
                 {
@@ -68,7 +68,7 @@ public partial class HomeView : UserControl
         }
     }
 
-    private void DragEnter(object? sender, DragEventArgs e)
+    private void OnDragOver(object? sender, DragEventArgs e)
     {
         e.DragEffects = DragDropEffects.None;
         DropLogic(e);
