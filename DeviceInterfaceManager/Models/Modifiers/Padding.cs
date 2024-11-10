@@ -48,7 +48,7 @@ public partial class Padding : ObservableObject, IModifier
         switch (Direction)
         {
             case PaddingDirection.Left:
-                for (int i = value.Length; i < Length; i++)
+                while (value.Length < Length)
                 {
                     value.Insert(0, Character);
                 }
