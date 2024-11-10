@@ -1,15 +1,22 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public class InputTestViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
+public class InputTestViewModel : ObservableObject
 {
-#if DEBUG
-    public InputTestViewModel() : this(new DeviceSerialBase())
+    public InputTestViewModel(IDeviceService deviceService)
     {
+        DeviceService = deviceService;
+    }
+    
+#if DEBUG
+    public InputTestViewModel()
+    {
+        DeviceService = new DeviceSerialService();
     }
 #endif
 
-    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+    public IDeviceService DeviceService { get; }
 }
