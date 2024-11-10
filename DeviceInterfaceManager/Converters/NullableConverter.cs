@@ -23,6 +23,6 @@ public class NullableConverter : IValueConverter
             return longValue;
         }
 
-        return null; //Invalid input: Please provide a valid numeric value.
+        return null;
     }
 }
