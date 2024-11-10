@@ -4,41 +4,45 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using DeviceInterfaceManager.Models.Modifiers;
+using DeviceInterfaceManager.Services.Devices;
 
-namespace DeviceInterfaceManager.Models.FlightSim;
+namespace DeviceInterfaceManager.Services;
 
-public class Profile : IAsyncDisposable
+public class ProfileService : IAsyncDisposable
 {
-    private readonly SimConnectClient _simConnectClient;
-
+    private readonly SimConnectClientService _simConnectClientService;
     private readonly ProfileCreatorModel _profileCreatorModel;
+    private readonly IDeviceService _deviceService;
 
-    private readonly IInputOutputDevice _inputOutputDevice;
-
-    public Profile(SimConnectClient simConnectClient, ProfileCreatorModel profileCreatorModel, IInputOutputDevice inputOutputDevice)
+    public ProfileService(SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, ProfileCreatorModel profileCreatorModel, IDeviceService deviceService)
     {
-        _simConnectClient = simConnectClient;
+        _simConnectClientService = simConnectClientService;
         _profileCreatorModel = profileCreatorModel;
-        _inputOutputDevice = inputOutputDevice;
+        _deviceService = deviceService;
 
-        _simConnectClient.PmdgHelper.Init(profileCreatorModel);
+        pmdgHelperService.InitializeProfile(profileCreatorModel);
 
-        _simConnectClient.OnSimVarChanged += SimConnectClientOnOnSimVarChanged;
+        _simConnectClientService.OnSimVarChanged += OnOnSimVarChanged;
 
-        _simConnectClient.PmdgHelper.FieldChanged += PmdgHelperOnFieldChanged;
+        pmdgHelperService.FieldChanged += PmdgPmdgHelperServiceOnFieldChanged;
 
-        _inputOutputDevice.SwitchPositionChanged += SwitchPositionChanged;
+        _deviceService.SwitchPositionChanged += SwitchPositionChanged;
+        _deviceService.AnalogValueChanged += AnalogValueChanged;
 
-        foreach (string watchedField in _simConnectClient.PmdgHelper.WatchedFields)
+        foreach (string watchedField in pmdgHelperService.WatchedFields)
         {
-            object? obj = _simConnectClient.PmdgHelper.DynDict[watchedField];
+            if (!pmdgHelperService.DynDict.TryGetValue(watchedField, out object? obj))
+            {
+                continue;
+            }
+
             if (obj is not null)
             {
-                PmdgHelperOnFieldChanged(this, new PmdgDataFieldChangedEventArgs(watchedField, obj));
+                PmdgPmdgHelperServiceOnFieldChanged(this, new PmdgDataFieldChangedEventArgs(watchedField, obj));
             }
         }
 
@@ -54,27 +58,31 @@ public class Profile : IAsyncDisposable
 
             if (!string.IsNullOrEmpty(outputCreator.Unit))
             {
-                _simConnectClient.RegisterSimVar(outputCreator.Data!, outputCreator.Unit);
+                _simConnectClientService.RegisterSimVar(outputCreator.Data!, outputCreator.Unit);
                 continue;
             }
 
-            _simConnectClient.RegisterSimVar(outputCreator.Data!);
+            _simConnectClientService.RegisterSimVar(outputCreator.Data!);
         }
 
         foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x =>
                      x is { IsActive: true, EventType: ProfileCreatorModel.KEvent, Event: not null }))
         {
-            _simConnectClient.RegisterSimEvent(inputCreator.Event!);
+            _simConnectClientService.RegisterSimEvent(inputCreator.Event!);
         }
     }
 
-    private void SimConnectClientOnOnSimVarChanged(object? sender, SimConnectClient.SimVar simVar)
+    private void OnOnSimVarChanged(object? sender, SimConnectClientService.SimVar simVar)
     {
         if (simVar is { Name: "CAMERA STATE", Data: <= 6 })
         {
-            foreach (Component component in _inputOutputDevice.Switch.Components)
+            if (_deviceService.Inputs is not null)
             {
-                SendEvent(component.Position, component.IsSet);
+                foreach (Component component in _deviceService.Inputs.Switch.Components)
+                {
+                    SendEvent(component.Position, component.IsSet);
+                }
+                
             }
         }
 
@@ -86,9 +94,9 @@ public class Profile : IAsyncDisposable
         }
     }
 
-    private void ProfileEntryIteration(OutputCreator outputCreator, SimConnectClient.SimVar simVar)
+    private void ProfileEntryIteration(OutputCreator outputCreator, SimConnectClientService.SimVar simVar)
     {
-        outputCreator.FlightSimValue = simVar.Data.ToString(Helper.EnglishCulture);
+        outputCreator.FlightSimValue = simVar.Data.ToString(PmdgHelperService.EnglishCulture);
 
         ProfileIteration(outputCreator);
     }
@@ -104,14 +112,14 @@ public class Profile : IAsyncDisposable
                 case ProfileCreatorModel.MsfsSimConnect:
                     if (precondition.Data is not null)
                     {
-                        ProfileEntryIteration(precondition, new SimConnectClient.SimVar(precondition.Data, Convert.ToDouble(precondition.FlightSimValue!)));
+                        ProfileEntryIteration(precondition, new SimConnectClientService.SimVar(precondition.Data, Convert.ToDouble(precondition.FlightSimValue!)));
                     }
 
                     break;
 
                 case ProfileCreatorModel.Pmdg737:
                 case ProfileCreatorModel.Pmdg777:
-                    string? propertyName = Helper.ConvertDataToPmdgDataFieldName(precondition);
+                    string? propertyName = PmdgHelperService.ConvertDataToPmdgDataFieldName(precondition);
                     if (!string.IsNullOrEmpty(propertyName))
                     {
                         ProfileEntryIteration(precondition, new PmdgDataFieldChangedEventArgs(propertyName, precondition.FlightSimValue!));
@@ -122,7 +130,7 @@ public class Profile : IAsyncDisposable
         }
     }
 
-    private void PmdgHelperOnFieldChanged(object? sender, PmdgDataFieldChangedEventArgs e)
+    private void PmdgPmdgHelperServiceOnFieldChanged(object? sender, PmdgDataFieldChangedEventArgs e)
     {
         foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
                      x is { IsActive: true, DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 } &&
@@ -142,9 +150,9 @@ public class Profile : IAsyncDisposable
 
             //bool, byte, ushort, short, uint, int, float
             default:
-                double doubleValue = Convert.ToDouble(e.Value, Helper.EnglishCulture);
+                double doubleValue = Convert.ToDouble(e.Value, PmdgHelperService.EnglishCulture);
                 doubleValue = Math.Round(doubleValue, 9);
-                outputCreator.FlightSimValue = doubleValue.ToString(Helper.EnglishCulture);
+                outputCreator.FlightSimValue = doubleValue.ToString(PmdgHelperService.EnglishCulture);
                 break;
         }
 
@@ -154,7 +162,7 @@ public class Profile : IAsyncDisposable
     private void ProfileIteration(OutputCreator outputCreator)
     {
         outputCreator.OutputValue = null;
-        if (!CheckPrecomparison(outputCreator.Preconditions))
+        if (!CheckPrecondition(outputCreator.Preconditions))
         {
             return;
         }
@@ -187,7 +195,7 @@ public class Profile : IAsyncDisposable
         SetSendOutput(outputCreator, stringBuilder);
     }
 
-    private bool CheckPrecomparison(IReadOnlyList<Precondition>? preconditions)
+    private bool CheckPrecondition(IReadOnlyList<Precondition>? preconditions)
     {
         if (preconditions is null)
         {
@@ -254,15 +262,22 @@ public class Profile : IAsyncDisposable
             switch (outputCreator.OutputType)
             {
                 case ProfileCreatorModel.Led:
-                    _inputOutputDevice.SetLedAsync(output, boolValue);
+                    _deviceService.SetLedAsync(output, boolValue);
                     break;
 
                 case ProfileCreatorModel.Dataline:
-                    _inputOutputDevice.SetDatalineAsync(output, boolValue);
+                    _deviceService.SetDatalineAsync(output, boolValue);
                     break;
 
                 case ProfileCreatorModel.SevenSegment:
-                    _inputOutputDevice.SetSevenSegmentAsync(output, outputCreator.OutputValue);
+                    _deviceService.SetSevenSegmentAsync(output, outputCreator.OutputValue);
+                    break;
+                
+                case ProfileCreatorModel.Analog:
+                    if (double.TryParse(outputCreator.OutputValue, out double analogValue))
+                    {
+                        _deviceService.SetAnalogAsync(output, analogValue);
+                    }
                     break;
             }
         }
@@ -396,10 +411,10 @@ public class Profile : IAsyncDisposable
 
     private void SendEvent(int position, bool isPressed)
     {
-        foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x.IsActive && x.Input?.Position == position))
+        foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x is { IsActive: true, InputType: ProfileCreatorModel.Switch } && x.Input == position))
         {
             //Precondition
-            if (!CheckPrecomparison(inputCreator.Preconditions))
+            if (!CheckPrecondition(inputCreator.Preconditions))
             {
                 continue;
             }
@@ -408,13 +423,13 @@ public class Profile : IAsyncDisposable
             {
                 //HTML Event(H:Event), Reverse Polish Notation (RPN)
                 case ProfileCreatorModel.Rpn when !string.IsNullOrEmpty(inputCreator.Event) && isPressed == !inputCreator.OnRelease:
-                    _simConnectClient.SendWasmEvent(inputCreator.Event);
+                    _simConnectClientService.SendWasmEvent(inputCreator.Event);
                     continue;
 
                 //Key Event ID (K:Event[K]) with one parameter
                 case ProfileCreatorModel.KEvent when inputCreator.Event is not null && ((isPressed && inputCreator is { DataPress: null, OnRelease: false })
                                                                                         || (!isPressed && inputCreator is { DataRelease: null, OnRelease: true })):
-                    _simConnectClient.TransmitSimEvent(inputCreator.Event);
+                    _simConnectClientService.TransmitSimEvent(inputCreator.Event);
                     continue;
             }
 
@@ -453,28 +468,64 @@ public class Profile : IAsyncDisposable
                     continue;
             }
 
-            switch (inputCreator.EventType)
+            SendParameters(inputCreator, firstParameter, secondParameter);
+        }
+    }
+
+    private void SendParameters(InputCreator inputCreator, double firstParameter, double secondParameter)
+    {
+        switch (inputCreator.EventType)
+        {
+            //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]))
+            case ProfileCreatorModel.MsfsSimConnect when inputCreator.Event is not null:
+                _simConnectClientService.SetSimVar(firstParameter, inputCreator.Event);
+                return;
+
+            //Key Event ID (K:Event[K]) with one or more parameters
+            case ProfileCreatorModel.KEvent when inputCreator.Event is not null:
+                _simConnectClientService.TransmitSimEvent(firstParameter, secondParameter, inputCreator.Event);
+                return;
+
+            //PMDG 737
+            case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
+                _simConnectClientService.TransmitEvent(firstParameter, (B737.Event)inputCreator.PmdgEvent.Value);
+                return;
+
+            //PMDG 777
+            case ProfileCreatorModel.Pmdg777 when inputCreator.PmdgEvent is not null:
+                _simConnectClientService.TransmitEvent(firstParameter, (B777.Event)inputCreator.PmdgEvent.Value);
+                return;
+        }
+    }
+
+    private void AnalogValueChanged(object? sender, AnalogValueChangedEventArgs e)
+    {
+        foreach (InputCreator inputCreator in _profileCreatorModel.InputCreators.Where(x => x is { IsActive: true, InputType: ProfileCreatorModel.Analog } && x.Input == e.Position))
+        {
+            //Precondition
+            if (!CheckPrecondition(inputCreator.Preconditions))
             {
-                //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]))
-                case ProfileCreatorModel.MsfsSimConnect when inputCreator.Event is not null:
-                    _simConnectClient.SetSimVar(firstParameter, inputCreator.Event);
-                    continue;
-
-                //Key Event ID (K:Event[K]) with one or more parameters
-                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && (inputCreator.DataPress is not null || inputCreator.DataRelease is not null):
-                    _simConnectClient.TransmitSimEvent(firstParameter, secondParameter, inputCreator.Event);
-                    continue;
-
-                //PMDG 737
-                case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
-                    _simConnectClient.TransmitEvent(firstParameter, (B737.Event)inputCreator.PmdgEvent.Value);
-                    continue;
-
-                //PMDG 777
-                case ProfileCreatorModel.Pmdg777 when inputCreator.PmdgEvent is not null:
-                    _simConnectClient.TransmitEvent(firstParameter, (B777.Event)inputCreator.PmdgEvent.Value);
-                    continue;
+                continue;
             }
+            
+            double value = e.Value;
+
+            if (inputCreator.Interpolation is not null)
+            {
+                StringBuilder stringBuilder = new(e.Value.ToString(CultureInfo.InvariantCulture));
+                inputCreator.Interpolation.Apply(ref stringBuilder);
+                try
+                {
+                    string sValue = stringBuilder.ToString();
+                    value = Convert.ToDouble(sValue, CultureInfo.InvariantCulture);
+                }
+                catch (Exception)
+                {
+                    //
+                }
+            }
+
+            SendParameters(inputCreator, value, 0);
         }
     }
 
@@ -482,10 +533,11 @@ public class Profile : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        await _inputOutputDevice.ResetAllOutputsAsync();
+        await _deviceService.ResetAllOutputsAsync();
 
-        _inputOutputDevice.SwitchPositionChanged -= SwitchPositionChanged;
-        _simConnectClient.OnSimVarChanged -= SimConnectClientOnOnSimVarChanged;
+        _deviceService.AnalogValueChanged -= AnalogValueChanged;
+        _deviceService.SwitchPositionChanged -= SwitchPositionChanged;
+        _simConnectClientService.OnSimVarChanged -= OnOnSimVarChanged;
 
         GC.SuppressFinalize(this);
     }
