@@ -3,18 +3,18 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace DeviceInterfaceManager.Models;
+namespace DeviceInterfaceManager.Services;
 
-public class WasmModuleUpdater
+public class WasmModuleUpdateService
 {
     private const string WasmModuleFolder = "dim-event-module";
     private const string WasmModuleName = "DIM_WASM_Module.wasm";
 
     private string? _communityFolder;
 
-    public static WasmModuleUpdater Create()
+    public static WasmModuleUpdateService Create()
     {
-        return new WasmModuleUpdater();
+        return new WasmModuleUpdateService();
     }
 
     public async Task<string> InstallWasmModule()
