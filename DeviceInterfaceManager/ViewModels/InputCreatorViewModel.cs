@@ -5,7 +5,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
+using DeviceInterfaceManager.Models.Modifiers;
+using DeviceInterfaceManager.Services.Devices;
 using HanumanInstitute.MvvmDialogs;
 
 namespace DeviceInterfaceManager.ViewModels;
@@ -14,14 +16,14 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 {
     private readonly IInputCreator _inputCreator;
 
-    public InputCreatorViewModel(IInputOutputDevice inputOutputDevice, IInputCreator inputCreator, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
-        : base(inputOutputDevice, outputCreators, preconditions)
+    public InputCreatorViewModel(IDeviceService deviceService, IInputCreator inputCreator, IReadOnlyCollection<OutputCreator> outputCreators, IEnumerable<IPrecondition>? preconditions)
+        : base(deviceService, outputCreators, preconditions)
     {
         _inputCreator = inputCreator;
         Description = _inputCreator.Description;
         InputType = inputCreator.InputType;
         Components = GetComponents(InputType);
-        Input = Components.FirstOrDefault(x => x?.Position == inputCreator.Input?.Position);
+        Component = Components?.FirstOrDefault(x => x?.Position == inputCreator.Input);
         EventType = inputCreator.EventType;
         Event = inputCreator.Event;
         DataPress = inputCreator.DataPress;
@@ -32,13 +34,15 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         PmdgMousePress = inputCreator.PmdgMousePress;
         PmdgMouseRelease = inputCreator.PmdgMouseRelease;
         OnRelease = inputCreator.OnRelease;
+        Interpolation = inputCreator.Interpolation;
 
         if (PmdgEvent is not null)
         {
             SearchPmdgEvent = GetPmdgEventName();
         }
 
-        InputOutputDevice.SwitchPositionChanged += SwitchPositionChanged;
+        DeviceService.SwitchPositionChanged += SwitchPositionChanged;
+        DeviceService.AnalogValueChanged += AnalogValueChanged;
     }
 
 #if DEBUG
@@ -51,7 +55,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                 Preconditions = [new Precondition()],
                 Description = "Description",
                 InputType = ProfileCreatorModel.Switch,
-                Input = new Component(1)
+                Input = 1
             };
         Components = new List<Component?>();
     }
@@ -59,16 +63,25 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     public void OnClosed()
     {
-        InputOutputDevice.SwitchPositionChanged -= SwitchPositionChanged;
+        DeviceService.SwitchPositionChanged -= SwitchPositionChanged;
+        DeviceService.AnalogValueChanged -= AnalogValueChanged;
     }
 
     public bool GetPosition { get; set; }
 
     private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
-        if (GetPosition && e.IsPressed)
+        if (InputType == ProfileCreatorModel.Switch || GetPosition && e.IsPressed)
         {
-            Input = Components.FirstOrDefault(i => i?.Position == e.Position);
+            Component = Components?.FirstOrDefault(i => i?.Position == e.Position);
+        }
+    }
+
+    private void AnalogValueChanged(object? sender, AnalogValueChangedEventArgs e)
+    {
+        if (InputType == ProfileCreatorModel.Analog && GetPosition)
+        {
+            Component = Components?.FirstOrDefault(i => i?.Position == e.Position);
         }
     }
 
@@ -76,17 +89,18 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     {
         _inputCreator.Description = GetDescription();
         _inputCreator.InputType = InputType;
-        _inputCreator.Input = Input;
+        _inputCreator.Input = Component?.Position;
         _inputCreator.EventType = EventType;
-        _inputCreator.PmdgEvent = PmdgEvent;
-        _inputCreator.PmdgMousePress = PmdgMousePress;
-        _inputCreator.PmdgMouseRelease = PmdgMouseRelease;
         _inputCreator.Event = Event;
-        _inputCreator.OnRelease = OnRelease;
         _inputCreator.DataPress = DataPress;
         _inputCreator.DataPress2 = DataPress2;
         _inputCreator.DataRelease = DataRelease;
         _inputCreator.DataRelease2 = DataRelease2;
+        _inputCreator.PmdgEvent = PmdgEvent;
+        _inputCreator.PmdgMousePress = PmdgMousePress;
+        _inputCreator.PmdgMouseRelease = PmdgMouseRelease;
+        _inputCreator.OnRelease = OnRelease;
+        _inputCreator.Interpolation = Interpolation;
         return base.Copy();
     }
 
@@ -108,24 +122,54 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     public string? Description { get; set; }
 
     [ObservableProperty]
-    private string? _inputType;
+    private bool _isAnalog;
 
-    private IEnumerable<Component?> GetComponents(string? value)
+    [ObservableProperty]
+    private string? _inputType;
+    
+    partial void OnInputTypeChanged(string? value)
+    {
+        switch (value)
+        {
+            case ProfileCreatorModel.Switch:
+                Components = GetComponents(value);
+                DestroyInterpolation();
+                IsAnalog = false;
+                break;
+                
+            case ProfileCreatorModel.Analog:
+                Components = GetComponents(value);
+                IsAnalog = true;
+                DataPress = null;
+                DataPress2 = null;
+                DataRelease = null;
+                DataRelease2 = null;
+                OnRelease = false;
+                ClearPmdgMousePress();
+                ClearPmdgMouseRelease();
+                break;
+        }
+    }
+
+    private IEnumerable<Component?>? GetComponents(string? value)
     {
         return value switch
         {
-            ProfileCreatorModel.Switch => InputOutputDevice.Switch.Components,
+            ProfileCreatorModel.Switch => DeviceService.Inputs?.Switch.Components,
+            ProfileCreatorModel.Analog => DeviceService.Inputs?.Analog.Components,
             _ => Components
         };
     }
 
-    public static string[] InputTypes => [ProfileCreatorModel.Switch];
+    public static string[] InputTypes => [ProfileCreatorModel.Switch, ProfileCreatorModel.Analog];
 
     [ObservableProperty]
-    private IEnumerable<Component?> _components;
+    private IEnumerable<Component?>? _components;
 
     [ObservableProperty]
-    private Component? _input;
+    private Component? _component;
+    
+    public int? Input { get; set; }
 
     private string? _eventType;
 
@@ -380,4 +424,19 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private bool _onRelease;
+    
+    [ObservableProperty]
+    private Interpolation? _interpolation;
+
+    [RelayCommand]
+    private void CreateInterpolation()
+    {
+        Interpolation ??= new Interpolation();
+    }
+    
+    [RelayCommand]
+    private void DestroyInterpolation()
+    {
+        Interpolation = null;
+    }
 }
