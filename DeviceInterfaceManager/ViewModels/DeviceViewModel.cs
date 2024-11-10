@@ -1,17 +1,27 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Models.Devices;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using DeviceInterfaceManager.Services.Devices;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public class DeviceViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
+public class DeviceViewModel : ObservableObject
 {
-    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+    public DeviceViewModel(IDeviceService deviceService)
+    {
+        DeviceService = deviceService;
+        InformationViewModel = new InformationViewModel(deviceService);
+        InputTestViewModel = new InputTestViewModel(deviceService);
+        OutputTestViewModel = new OutputTestViewModel(Ioc.Default.GetService<ILogger<OutputTestViewModel>>()!, deviceService);
+    }
+    
+    public IDeviceService DeviceService { get; }
 
-    public InformationViewModel InformationViewModel { get; } = new(inputOutputDevice);
+    public InformationViewModel InformationViewModel { get; }
 
-    public InputTestViewModel InputTestViewModel { get; } = new(inputOutputDevice);
+    public InputTestViewModel InputTestViewModel { get; }
 
-    public OutputTestViewModel OutputTestViewModel { get; } = new(inputOutputDevice);
+    public OutputTestViewModel OutputTestViewModel { get; }
 
     public bool IsHomeSelected { get; set; } = true;
 
