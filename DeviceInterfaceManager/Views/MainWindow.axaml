@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:vm="using:DeviceInterfaceManager.ViewModels"
-        xmlns:device="clr-namespace:DeviceInterfaceManager.Models.Devices"
+        xmlns:devices="clr-namespace:DeviceInterfaceManager.Services.Devices"
         mc:Ignorable="d"
         x:Class="DeviceInterfaceManager.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -16,7 +16,7 @@
         Title="">
 
     <Design.DataContext>
-        <vm:MainWindowViewModel />
+        <vm:MainWindowViewModel  />
     </Design.DataContext>
 
     <ui:NavigationView AlwaysShowHeader="False"
@@ -50,7 +50,7 @@
                     <Binding Path="InputOutputDevices" />
                 </ui:NavigationViewItem.MenuItemsSource>
                 <ui:NavigationViewItem.DataTemplates>
-                    <DataTemplate DataType="{x:Type device:IInputOutputDevice}">
+                    <DataTemplate DataType="{x:Type devices:IDeviceService}">
                         <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent"
                                     PointerPressed="DeviceOnPointerPressed">
                             <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
