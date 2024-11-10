@@ -1,7 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-#pragma warning disable CS0657 // Not a valid attribute location for this declaration
-
 namespace DeviceInterfaceManager.Models;
 
 public partial class ProfileMapping : ObservableObject
@@ -17,4 +15,7 @@ public partial class ProfileMapping : ObservableObject
 
     [ObservableProperty]
     private string? _deviceName;
+
+    [ObservableProperty]
+    private string? _aircraft;
 }
