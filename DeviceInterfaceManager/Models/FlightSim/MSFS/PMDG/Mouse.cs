@@ -1,4 +1,4 @@
-namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
 public enum Mouse : uint
 {
