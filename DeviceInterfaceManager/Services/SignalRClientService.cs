@@ -4,15 +4,23 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
+using DeviceInterfaceManager.Server;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
-using DeviceInterfaceManager.Server;
+using Microsoft.Extensions.Logging;
 
-namespace DeviceInterfaceManager.Models;
+namespace DeviceInterfaceManager.Services;
 
 public class SignalRClientService
 {
+    private readonly ILogger _logger;
+
+    public SignalRClientService(ILogger<SignalRClientService> logger)
+    {
+        _logger = logger;
+    }
+
     private HubConnection? _connection;
     public event Action? Connected;
 
@@ -20,6 +28,7 @@ public class SignalRClientService
     {
         if (!IPAddress.TryParse(ipAddress, out IPAddress? address))
         {
+            _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
             address = IPAddress.Loopback;
         }
 
@@ -37,9 +46,9 @@ public class SignalRClientService
         {
             await _connection.StartAsync(cancellationToken);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            // ignored
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
         }
     }
 
@@ -54,9 +63,9 @@ public class SignalRClientService
         {
             await _connection.StopAsync(cancellationToken);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            // ignored
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
         }
     }
 
@@ -79,9 +88,9 @@ public class SignalRClientService
         {
             await _connection.InvokeAsync(methodName, message, cancellationToken);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            // ignored
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
         }
     }
 
@@ -96,9 +105,9 @@ public class SignalRClientService
         {
             await _connection.InvokeAsync(nameof(DataHub.SendPmdgData), id, message);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            // ignored
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
         }
     }
 
