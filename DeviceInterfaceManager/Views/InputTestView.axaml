@@ -23,7 +23,8 @@
             </Style>
         </Grid.Styles>
 
-        <ItemsControl ItemsSource="{Binding InputOutputDevice.AnalogIn.Components}">
+        <ItemsControl Grid.Row="0"
+                      ItemsSource="{Binding DeviceService.Inputs.Analog.Components, FallbackValue=0}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <WrapPanel Orientation="Horizontal"
@@ -42,7 +43,7 @@
                                        Margin="15 5 15 5">
                                 <TextBlock.Text>
                                     <MultiBinding StringFormat="{}{0} => {1}">
-                                        <Binding Path="Position" />
+                                        <Binding Path="Name" />
                                         <Binding Path="Value" />
                                     </MultiBinding>
                                 </TextBlock.Text>
@@ -55,7 +56,7 @@
         </ItemsControl>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding InputOutputDevice.Switch.Components}">
+            <ItemsControl ItemsSource="{Binding DeviceService.Inputs.Switch.Components, FallbackValue=0}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal"
@@ -72,8 +73,8 @@
                                           FontWeight="Bold"
                                           Margin="15 5 15 5"
                                           IsChecked="{Binding IsSet}"
-                                          OnContent="{Binding Position}"
-                                          OffContent="{Binding Position}">
+                                          OnContent="{Binding Name}"
+                                          OffContent="{Binding Name}">
                                 <ToggleSwitch.Styles>
                                     <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
                                         <Setter Property="Background" Value="LimeGreen" />
