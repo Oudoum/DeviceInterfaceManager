@@ -2,10 +2,8 @@ using DeviceInterfaceManager.Models.Modifiers;
 
 namespace DeviceInterfaceManager.Models;
 
-public interface IOutputCreator
+public interface IOutputCreator : IDescription
 {
-    public string? Description { get; set; }
-
     public string? OutputType { get; set; }
 
     public int[]? Outputs { get; set; }
