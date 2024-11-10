@@ -9,15 +9,30 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeviceInterfaceManager.Models.Devices;
 
-public class ComponentInfo(int first, int last)
+public class ComponentInfo
 {
+    public ComponentInfo(int first, int last)
+    {
+        First = first;
+        Last = last;
+        Components = Component.GetComponents(first, last);
+    }
+
+    public ComponentInfo(IEnumerable<Component> components)
+    {
+        var enumerable = components as Component[] ?? components.ToArray();
+        Components = enumerable;
+        First = enumerable.MinBy(x => x.Position)?.Position ?? default;
+        Last = enumerable.MaxBy(x => x.Position)?.Position ?? default;
+    }
+
     public int Count => Components.Count();
 
-    public int First { get; } = first;
+    public int First { get; }
 
-    public int Last { get; } = last;
+    public int Last { get; }
 
-    public IEnumerable<Component> Components { get; } = Component.GetComponents(first, last);
+    public IEnumerable<Component> Components { get; }
 
     public void UpdatePosition(int position, bool isSet)
     {
@@ -46,9 +61,23 @@ public class ComponentInfo(int first, int last)
     }
 }
 
-public partial class Component(int position) : ObservableObject
+public partial class Component : ObservableObject
 {
-    public int Position { get; } = position;
+    public Component(int position)
+    {
+        Position = position;
+        Name = position.ToString();
+    }
+
+    public Component(int position, string name)
+    {
+        Position = position;
+        Name = name;
+    }
+
+    public int Position { get; }
+
+    [JsonIgnore] public string? Name { get; }
 
     [ObservableProperty]
     [property: JsonIgnore]
@@ -61,7 +90,7 @@ public partial class Component(int position) : ObservableObject
     public static IEnumerable<Component> GetComponents(int first, int last)
     {
         List<Component> components = [];
-        if (first == 0 || last == 0)
+        if (first == 0 && last == 0)
         {
             return components;
         }
