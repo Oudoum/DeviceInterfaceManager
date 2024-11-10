@@ -2,9 +2,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 
-namespace DeviceInterfaceManager.Models.Devices;
+namespace DeviceInterfaceManager.Services.Devices;
 
-public interface IInputOutputDevice : IInput, IOutput
+public interface IDeviceService : IInputService, IOutputService
 {
     public string? Id { get; }
     public string? DeviceName { get; }
