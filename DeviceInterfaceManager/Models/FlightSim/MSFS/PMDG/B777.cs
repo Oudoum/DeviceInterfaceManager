@@ -9,7 +9,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
 public static class B777
 {
