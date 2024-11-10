@@ -2,13 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels.Dialogs"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="130"
-             x:Class="DeviceInterfaceManager.Views.AskTextBoxView"
-             x:DataType="vm:AskTextBoxViewModel">
+             x:Class="DeviceInterfaceManager.Views.Dialogs.AskTextBoxDialog"
+             x:DataType="vm:AskTextBoxDialogModel">
     <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding Title}" />
-        <TextBox Height="24" Margin="0,10,0,20" Text="{Binding Text}" />
+        <TextBox Name="TextBox"
+                 Height="24"
+                 Margin="0,10,0,20"
+                 Text="{Binding Text}" />
         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
             <StackPanel.Styles>
                 <Style Selector="Button">

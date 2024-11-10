@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DeviceInterfaceManager.ViewModels;
+namespace DeviceInterfaceManager.ViewModels.Dialogs;
 
-public class AskTextBoxViewModel : ObservableObject
+public class AskTextBoxDialogModel : ObservableObject
 {
     public string? Title { get; set; }
 
