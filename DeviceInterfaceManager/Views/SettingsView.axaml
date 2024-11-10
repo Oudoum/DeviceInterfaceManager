@@ -130,39 +130,42 @@
                 <!-- CPflight -->
                 <ui:SettingsExpanderItem Content="CPflight USB">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <ToggleSwitch IsEnabled="False" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <ui:SettingsExpanderItem Content="CPflight Ethernet">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <ToggleSwitch IsEnabled="False" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <!-- HID -->
                 <ui:SettingsExpanderItem Content="Human Interface Device [HID]">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <ToggleSwitch IsEnabled="False" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <!-- Arduino -->
                 <ui:SettingsExpanderItem Content="Arduino">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <ToggleSwitch IsEnabled="False" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
                 <!-- SIOC -->
                 <ui:SettingsExpanderItem Content="SIOC">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding }"
-                                      Command="{Binding }" />
+                        <ToggleSwitch IsEnabled="False" />
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                
+                <!-- FSCockpit -->
+                <ui:SettingsExpanderItem Content="FSCockpit">
+                    <ui:SettingsExpanderItem.Footer>
+                        <ToggleSwitch IsChecked="{Binding Settings.FsCockpit}"
+                                      Command="{Binding ToggleFsCockpitCommand}" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
@@ -199,7 +202,8 @@
                                  Watermark="127.0.0.1"
                                  Text="{Binding Settings.IpAddress}"
                                  HorizontalContentAlignment="Center"
-                                 Width="120" />
+                                 MinWidth="120"
+                                 MaxWidth="220"/>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
@@ -209,7 +213,14 @@
                                  Watermark="2024"
                                  Text="{Binding Settings.Port}"
                                  HorizontalContentAlignment="Center"
-                                 Width="90" />
+                                 MinWidth="90"
+                                 MaxWidth="180">
+                            <TextBox.Styles>
+                                <Style Selector="DataValidationErrors">
+                                    <Setter Property="Theme" Value="{StaticResource TooltipDataValidationErrors}" />
+                                </Style>
+                            </TextBox.Styles>
+                        </TextBox>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
