@@ -8,15 +8,16 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS;
 using DeviceInterfaceManager.Server;
+using DeviceInterfaceManager.Services;
+using DeviceInterfaceManager.Services.Devices;
 using DeviceInterfaceManager.ViewModels;
+using DeviceInterfaceManager.ViewModels.Dialogs;
 using DeviceInterfaceManager.Views;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace DeviceInterfaceManager;
 
@@ -37,16 +38,18 @@ public class App : Application
         Directory.CreateDirectory(ProfilesPath);
 
         Ioc.Default.ConfigureServices(new ServiceCollection()
+            .AddLogging(loggingBuilder => loggingBuilder.AddSerilog())
             .AddSingleton<IDialogService, DialogService>(provider => new DialogService(new DialogManager(new ViewLocator(), new DialogFactory().AddFluent()), provider.GetService))
             .AddSingleton<MainWindow>()
             .AddSingleton<MainWindowViewModel>()
             .AddSingleton<HomeViewModel>()
             .AddSingleton<ProfileCreatorViewModel>()
             .AddSingleton<SettingsViewModel>()
-            .AddTransient<AskTextBoxViewModel>()
-            .AddTransient<AskComboBoxViewModel>()
-            .AddSingleton<ObservableCollection<IInputOutputDevice>>()
-            .AddSingleton<SimConnectClient>()
+            .AddTransient<AskTextBoxDialogModel>()
+            .AddTransient<AskComboBoxDialogModel>()
+            .AddSingleton<ObservableCollection<IDeviceService>>()
+            .AddSingleton<PmdgHelperService>()
+            .AddSingleton<SimConnectClientService>()
             .AddSingleton<SignalRServerService>()
             .AddSingleton<SignalRClientService>()
             .BuildServiceProvider());
@@ -69,7 +72,7 @@ public class App : Application
 
                 desktop.ShutdownRequested += (_, _) =>
                 {
-                    foreach (IInputOutputDevice item in InputOutputDevices)
+                    foreach (IDeviceService item in InputOutputDevices)
                     {
                         item.Disconnect();
                     }
@@ -120,7 +123,7 @@ public class App : Application
     public static MainWindowViewModel MainWindowViewModel => Ioc.Default.GetService<MainWindowViewModel>()!;
     private static SettingsViewModel SettingsViewModel => Ioc.Default.GetService<SettingsViewModel>()!;
     private static IDialogService DialogService => Ioc.Default.GetService<IDialogService>()!;
-    private static ObservableCollection<IInputOutputDevice> InputOutputDevices => Ioc.Default.GetService<ObservableCollection<IInputOutputDevice>>()!;
+    private static ObservableCollection<IDeviceService> InputOutputDevices => Ioc.Default.GetService<ObservableCollection<IDeviceService>>()!;
 
     private TrayIcon? _trayIcon;
 
