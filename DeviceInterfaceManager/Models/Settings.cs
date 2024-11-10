@@ -35,6 +35,9 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private ObservableCollection<string>? _fdsEthernetConnections = [];
 
+    [ObservableProperty]
+    private bool _fsCockpit;
+
     public static Settings CreateSettings()
     {
         if (!File.Exists(App.SettingsFile))
@@ -64,7 +67,7 @@ public sealed partial class Settings : ObservableObject
 
         if (e.PropertyName == nameof(FdsEthernetConnections) && FdsEthernetConnections is not null)
         {
-            FdsEthernetConnections.CollectionChanged += (sender, args) => SaveSettings();
+            FdsEthernetConnections.CollectionChanged += (_, _) => SaveSettings();
         }
 
         SaveSettings();
