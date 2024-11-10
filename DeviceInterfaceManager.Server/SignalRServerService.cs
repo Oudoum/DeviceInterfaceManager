@@ -3,17 +3,26 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.Server;
 
 public class SignalRServerService
 {
+    private readonly ILogger _logger;
+
+    public SignalRServerService(ILogger<SignalRServerService> logger)
+    {
+        _logger = logger;
+    }
+
     private IHost? _host;
 
     public async Task StartAsync(string? ipAddress, int? port, CancellationToken cancellationToken)
     {
         if (!IPAddress.TryParse(ipAddress, out IPAddress? address))
         {
+            _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
             address = IPAddress.Loopback;
         }
 
@@ -48,7 +57,14 @@ public class SignalRServerService
             })
             .Build();
 
-        await _host.StartAsync(cancellationToken);
+        try
+        {
+            await _host.StartAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
