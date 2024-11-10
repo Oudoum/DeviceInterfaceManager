@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
-using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
 using FluentAvalonia.UI.Windowing;
 
 namespace DeviceInterfaceManager.Views;
@@ -21,7 +21,7 @@ public partial class MainWindow : AppWindow
         }
         
         DataObject data = new();
-        data.Set(nameof(IInputOutputDevice), stackPanel.DataContext);
+        data.Set(nameof(IDeviceService), stackPanel.DataContext);
         await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
     }
 }
