@@ -9,14 +9,24 @@
 
     <Viewbox Margin="25">
 
-        <StackPanel Spacing="25" MinWidth="300">
-            
-            <StackPanel.Styles>
-                <Style Selector="StackPanel">
+        <Grid ColumnDefinitions="Auto 20 Auto" RowDefinitions="Auto Auto">
+
+            <Grid.Styles>
+                <Style Selector="StackPanel.sp0">
+                    <Setter Property="MinWidth" Value="300" />
+                    <Setter Property="Orientation" Value="Vertical" />
+                    <Setter Property="Spacing" Value="25" />
+                </Style>
+                <Style Selector="StackPanel.sp1">
+                    <Setter Property="Margin" Value="10 0 10 10" />
                     <Setter Property="Orientation" Value="Vertical" />
                     <Setter Property="Spacing" Value="0" />
                     <Setter Property="HorizontalAlignment" Value="Center" />
                     <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+                <Style Selector="StackPanel.sp2">
+                    <Setter Property="Orientation" Value="Horizontal" />
+                    <Setter Property="Spacing" Value="10" />
                 </Style>
                 <Style Selector="Border.b1">
                     <Setter Property="BorderThickness" Value="5" />
@@ -25,97 +35,140 @@
                 </Style>
                 <Style Selector="TextBlock">
                     <Setter Property="FontSize" Value="32" />
-                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                    <Setter Property="HorizontalAlignment" Value="Center" />
                 </Style>
                 <Style Selector="PathIcon">
                     <Setter Property="Margin" Value="0 4 0 0" />
                 </Style>
-            </StackPanel.Styles>
+            </Grid.Styles>
 
-            <Border Classes="b1">
-                <StackPanel Margin="10 0 10 10">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+            <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="0" Classes="b1" Margin="0 0 0 20">
+                <StackPanel Classes="sp1">
+                    <StackPanel Classes="sp2">
                         <PathIcon Data="{StaticResource Devices}" />
                         <TextBlock Text="Device" />
                     </StackPanel>
-                    <TextBlock Text="{Binding InputOutputDevice.DeviceName}"
-                               ToolTip.Tip="{Binding InputOutputDevice.Id}"/>
+                    <TextBlock Text="{Binding DeviceService.DeviceName}"
+                               ToolTip.Tip="{Binding DeviceService.Id}" />
                 </StackPanel>
             </Border>
 
-            <Border Classes="b1">
-                <StackPanel Margin="10 0 10 10">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <PathIcon Data="{StaticResource ElectricSwitch}" />
-                        <TextBlock Text="Switch" />
+            <StackPanel Grid.Row="1" Grid.Column="0" Classes="sp0">
+
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource ElectricSwitch}" />
+                            <TextBlock Text="Switch" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Inputs.Switch.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Inputs.Switch.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Inputs.Switch.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
-                    <TextBlock>
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
-                                <Binding Path="InputOutputDevice.Switch.Count" />
-                                <Binding Path="InputOutputDevice.Switch.First" />
-                                <Binding Path="InputOutputDevice.Switch.Last" />
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Classes="b1">
-                <StackPanel Margin="10 0 10 10">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <PathIcon Data="{StaticResource LedOutline}" />
-                        <TextBlock Text="LED" />
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
+                            <TextBlock Text="Analog" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Inputs.Analog.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Inputs.Analog.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Inputs.Analog.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
-                    <TextBlock>
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
-                                <Binding Path="InputOutputDevice.Led.Count" />
-                                <Binding Path="InputOutputDevice.Led.First" />
-                                <Binding Path="InputOutputDevice.Led.Last" />
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Classes="b1">
-                <StackPanel Margin="10 0 10 10">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <PathIcon Data="{StaticResource LightningBolt}" />
-                        <TextBlock Text="Dataline" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Grid.Column="2" Classes="sp0">
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource LedOutline}" />
+                            <TextBlock Text="LED" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Outputs.Led.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Led.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Led.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
-                    <TextBlock>
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
-                                <Binding Path="InputOutputDevice.Dataline.Count" />
-                                <Binding Path="InputOutputDevice.Dataline.First" />
-                                <Binding Path="InputOutputDevice.Dataline.Last" />
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+                </Border>
 
-            <Border Classes="b1">
-                <StackPanel Margin="10 0 10 10">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
-                        <TextBlock Text="7 Segment" />
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource LightningBolt}" />
+                            <TextBlock Text="Dataline" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Outputs.Dataline.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Dataline.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Dataline.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
-                    <TextBlock>
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
-                                <Binding Path="InputOutputDevice.SevenSegment.Count" />
-                                <Binding Path="InputOutputDevice.SevenSegment.First" />
-                                <Binding Path="InputOutputDevice.SevenSegment.Last" />
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
+                </Border>
 
-        </StackPanel>
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
+                            <TextBlock Text="7 Segment" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Outputs.SevenSegment.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.SevenSegment.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.SevenSegment.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="b1">
+                    <StackPanel Classes="sp1">
+                        <StackPanel Classes="sp2">
+                            <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
+                            <TextBlock Text="Analog" />
+                        </StackPanel>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} | ( {1} - {2} )">
+                                    <Binding Path="DeviceService.Outputs.Analog.Count" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Analog.First" FallbackValue="0" />
+                                    <Binding Path="DeviceService.Outputs.Analog.Last" FallbackValue="0" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+
+        </Grid>
 
     </Viewbox>
 
