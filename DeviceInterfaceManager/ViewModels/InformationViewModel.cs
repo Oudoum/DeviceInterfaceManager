@@ -1,9 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Models.Devices;
+using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public class InformationViewModel(IInputOutputDevice inputOutputDevice) : ObservableObject
+public class InformationViewModel : ObservableObject
 {
-    public IInputOutputDevice InputOutputDevice => inputOutputDevice;
+    public InformationViewModel(IDeviceService deviceService)
+    {
+        DeviceService = deviceService;
+    }
+    
+    public IDeviceService DeviceService { get; }
 }
