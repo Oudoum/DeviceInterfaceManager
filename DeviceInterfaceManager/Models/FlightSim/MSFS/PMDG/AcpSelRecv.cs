@@ -1,6 +1,6 @@
 using System;
 
-namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
 // Audio control panel selected receiver flags.
 // The COMM_ReceiverSwitches[3] variables may contain any combination of these flags.
