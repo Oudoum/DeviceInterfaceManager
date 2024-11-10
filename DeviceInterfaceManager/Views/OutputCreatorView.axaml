@@ -39,7 +39,7 @@
                         <RadioButton Content="PMDG 777"
                                      IsChecked="{Binding IsPmdg777}" />
                         <RadioButton Content="DIMVar"
-                                     IsChecked="{Binding IsDim}"/>
+                                     IsChecked="{Binding IsDim}" />
                     </StackPanel>
 
                     <!-- Output Type -->
@@ -74,7 +74,7 @@
                                           ItemsSource="{Binding Components}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Name="PositionTextBlock" Text="{Binding Position}"
+                                            <TextBlock Name="PositionTextBlock" Text="{Binding Name}"
                                                        Background="Transparent">
                                                 <i:Interaction.Behaviors>
                                                     <ia:EventTriggerBehavior EventName="PointerEntered">
@@ -208,6 +208,8 @@
 
             <TabItem Header="Modify">
                 <TabItem.DataTemplates>
+                    
+                    <!-- Transformation -->
                     <DataTemplate DataType="{x:Type modifiers:Transformation}">
                         <Grid ColumnDefinitions="Auto *">
                             <Rectangle Grid.Column="0"
@@ -251,6 +253,8 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
+                    
+                    <!-- Comparison -->
                     <DataTemplate DataType="{x:Type modifiers:Comparison}">
                         <Grid ColumnDefinitions="Auto *">
                             <Rectangle Grid.Column="0"
@@ -319,6 +323,8 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
+                    
+                    <!-- Interpolation -->
                     <DataTemplate DataType="{x:Type modifiers:Interpolation}">
                         <Grid ColumnDefinitions="Auto *">
                             <Rectangle Grid.Column="0"
@@ -338,8 +344,53 @@
                                                    FontWeight="Bold"
                                                    Width="100"
                                                    VerticalAlignment="Center" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} values with Min: {1} and Max: {2}">
+                                                    <Binding Path="Values.Count" />
+                                                    <Binding Path="Min" />
+                                                    <Binding Path="Max" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Expander.Header>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Button Content="Add"
+                                            Command="{Binding AddItemCommand}"
+                                            HorizontalAlignment="Stretch" />
+                                    <ItemsControl ItemsSource="{Binding Values}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,10,0,0"
+                                                        Padding="5">
+                                                    <StackPanel Orientation="Horizontal"
+                                                                Spacing="5">
+                                                        <StackPanel.Styles>
+                                                            <Style Selector="DataValidationErrors">
+                                                                <Setter Property="Theme" Value="{StaticResource TooltipDataValidationErrors}" />
+                                                            </Style>
+                                                        </StackPanel.Styles>
+                                                        <TextBlock Text="Input value"
+                                                                   VerticalAlignment="Center" />
+                                                        <TextBox Text="{Binding Key}"
+                                                                 Width="140" />
+                                                        <TextBlock Text="maps to"
+                                                                   VerticalAlignment="Center" />
+                                                        <TextBox Text="{Binding Value}"
+                                                                 Width="140" />
+                                                        <Button IsVisible="{Binding IsVisible}"
+                                                                Command="{Binding $parent[StackPanel;1].((modifiers:Interpolation)DataContext).RemoveItemCommand,
+                                                                FallbackValue={x:Null}}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{StaticResource TrashCanOutline}"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
                                 <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
@@ -355,6 +406,8 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
+                    
+                    <!-- Padding -->
                     <DataTemplate DataType="{x:Type modifiers:Padding}">
                         <Grid ColumnDefinitions="Auto *">
                             <Rectangle Grid.Column="0"
@@ -416,6 +469,8 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
+                    
+                    <!-- Substring -->
                     <DataTemplate DataType="{x:Type modifiers:Substring}">
                         <Grid ColumnDefinitions="Auto *">
                             <Rectangle Grid.Column="0"
@@ -497,7 +552,6 @@
                                           Command="{Binding AddModifierCommand}"
                                           CommandParameter="{Binding $self.Header}" />
                                 <MenuItem Header="Interpolation"
-                                          IsEnabled="False"
                                           Command="{Binding AddModifierCommand}"
                                           CommandParameter="{Binding $self.Header}" />
                                 <MenuItem Header="Padding"
