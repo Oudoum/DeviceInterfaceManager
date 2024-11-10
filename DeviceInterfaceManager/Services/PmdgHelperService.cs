@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using DeviceInterfaceManager.Models;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using Microsoft.FlightSimulator.SimConnect;
 
-namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+namespace DeviceInterfaceManager.Services;
 
-public class Helper
+public class PmdgHelperService
 {
     public static readonly CultureInfo EnglishCulture = CultureInfo.GetCultureInfo("en-US");
 
@@ -20,7 +21,7 @@ public class Helper
 
     public List<string> WatchedFields { get; } = [];
 
-    public IDictionary<string, object?> DynDict { get; } = new ExpandoObject();
+    public IDictionary<string, object?> DynDict { get; } = new Dictionary<string, object?>();
 
     public void ReceivePmdgData(object data)
     {
@@ -36,7 +37,7 @@ public class Helper
         }
     }
 
-    public void Init(ProfileCreatorModel profileCreatorModel)
+    public void InitializeProfile(ProfileCreatorModel profileCreatorModel)
     {
         foreach (OutputCreator output in profileCreatorModel.OutputCreators)
         {
@@ -153,7 +154,7 @@ public class Helper
 
         DynDict[propertyName] = newValue;
 
-        FieldChanged?.Invoke(null, new PmdgDataFieldChangedEventArgs(propertyName, newValue));
+        FieldChanged?.Invoke(this, new PmdgDataFieldChangedEventArgs(propertyName, newValue));
     }
 
     private static void CreateEvents<T>(SimConnect simConnect) where T : Enum
