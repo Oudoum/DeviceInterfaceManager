@@ -8,12 +8,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG.SDK;
+using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using Microsoft.FlightSimulator.SimConnect;
 
-namespace DeviceInterfaceManager.Models.FlightSim.MSFS;
+namespace DeviceInterfaceManager.Services;
 
-public class SimConnectClient
+public class SimConnectClientService
 {
     private const int WmUserSimConnect = 0x0402;
     private const int MessageSize = 1024;
@@ -22,12 +22,13 @@ public class SimConnectClient
     private SimConnect? _simConnect;
     private string? _aircraftTitle;
     private readonly SignalRClientService _signalRClientService;
+    private readonly PmdgHelperService _pmdgHelperService;
     
     public Action<string?>? AircraftTitleChanged;
-    public Helper PmdgHelper { get; private set; } = new();
-
-    public SimConnectClient(SignalRClientService signalRClientService)
+    
+    public SimConnectClientService(PmdgHelperService pmdgHelperService, SignalRClientService signalRClientService)
     {
+        _pmdgHelperService = pmdgHelperService;
         _signalRClientService = signalRClientService;
         _signalRClientService.Connected += () =>
         {
@@ -56,24 +57,24 @@ public class SimConnectClient
         return IntPtr.Zero;
     }
 
-    public async Task ConnectAsync(CancellationToken token)
+    public async Task<string?> ConnectAsync(CancellationToken token)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
-            return;
+            return null;
         }
 
         IPlatformHandle? platformHandle = desktop.MainWindow?.TryGetPlatformHandle();
         if (platformHandle is null || desktop.MainWindow is null)
         {
-            return;
+            return null;
         }
 
         Win32Properties.AddWndProcHookCallback(desktop.MainWindow, CustomWndProcHookCallback);
-        await CreateSimConnect(platformHandle.Handle, token);
+        return await CreateSimConnect(platformHandle.Handle, token);
     }
 
-    private async Task CreateSimConnect(nint handle, CancellationToken token)
+    private async Task<string?> CreateSimConnect(nint handle, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
@@ -93,6 +94,11 @@ public class SimConnectClient
                         _simConnect.OnRecvOpen += SimConnectOnOnRecvOpen;
                         _simConnect.OnRecvQuit += SimConnectOnOnRecvQuit;
                         _simConnect.OnRecvException += SimConnectOnOnRecvException;
+                        while (_aircraftTitle is null)
+                        {
+                            
+                        }
+
                         tcs.SetResult(true);
                     }
                     catch (Exception)
@@ -114,6 +120,8 @@ public class SimConnectClient
             {
             }
         }
+        
+        return _aircraftTitle;
     }
 
     private void SimConnectOnOnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
@@ -136,15 +144,7 @@ public class SimConnectClient
         RequestTitle();
 
         RegisterSimVar("CAMERA STATE", "Enum");
-
-        // _simConnect.OnRecvEnumerateInputEvents += SimConnectOnOnRecvEnumerateInputEvents;
-        // RegisterSimEvent("ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE");
-        //
-        // if (_simEvents.TryGetValue("ELECTRICAL_BUS_TO_BUS_CONNECTION_TOGGLE", out int id))
-        // {
-        //     _simConnect.TransmitClientEvent_EX1(0, (EventId)id, SimConnectGroupPriority.Standard, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY, 2, 8,0,0,0 );
-        // }
-
+        
         _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
         _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
     }
@@ -161,49 +161,30 @@ public class SimConnectClient
             return;
         }
         
-        PmdgHelper.RequestClientDataOnce(_simConnect);
+        _pmdgHelperService.RequestClientDataOnce(_simConnect);
     }
 
     private void SimConnectOnOnRecvClientData(SimConnect sender, SIMCONNECT_RECV_CLIENT_DATA data)
     {
-        Helper.DataRequestId dataRequestId = (Helper.DataRequestId)data.dwRequestID;
+        PmdgHelperService.DataRequestId dataRequestId = (PmdgHelperService.DataRequestId)data.dwRequestID;
         switch (dataRequestId)
         {
-            case Helper.DataRequestId.Data:
-                PmdgHelper.ReceivePmdgData(data.dwData[0]);
+            case PmdgHelperService.DataRequestId.Data:
+                _pmdgHelperService.ReceivePmdgData(data.dwData[0]);
                 break;
 
-            case Helper.DataRequestId.Cdu0:
-            case Helper.DataRequestId.Cdu1:
-            case Helper.DataRequestId.Cdu2:
+            case PmdgHelperService.DataRequestId.Cdu0:
+            case PmdgHelperService.DataRequestId.Cdu1:
+            case PmdgHelperService.DataRequestId.Cdu2:
                 _ = _signalRClientService.SendPmdgDataMessageAsync((byte)dataRequestId, ((Cdu.ScreenBytes)data.dwData[0]).Data);
                 break;
         }
     }
 
-    //Test
-    // private void SimConnectOnOnRecvEnumerateInputEvents(SimConnect sender, SIMCONNECT_RECV_ENUMERATE_INPUT_EVENTS data)
-    // {
-    //     for (int i = 0; i < data.dwArraySize; i++)
-    //     {
-    //         SIMCONNECT_INPUT_EVENT_DESCRIPTOR descriptor = (SIMCONNECT_INPUT_EVENT_DESCRIPTOR)data.rgData[i];
-    //         _inputEvents.Add(descriptor.Name, descriptor.Hash);
-    //     }
-    //
-    //     _simConnect?.SetInputEvent(_inputEvents["FMC_AS01B_1_Keyboard_N"], 1);
-    // }
-    //Test
-    // private void Test()
-    // {
-    //     _simConnect?.EnumerateInputEvents((RequestId)100);
-    // }
-
     private void SimConnectOnOnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
     {
         Disconnect();
     }
-
-    // private readonly Dictionary<string, ulong> _inputEvents = [];
 
     private static void SimConnectOnOnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
     {
@@ -230,12 +211,8 @@ public class SimConnectClient
         _simConnect.OnRecvOpen -= SimConnectOnOnRecvOpen;
         _simConnect.Dispose();
         _simConnect = null;
-
         _simVars.Clear();
         _simEvents.Clear();
-
-        PmdgHelper = new Helper();
-
         _aircraftTitle = null;
         
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null)
@@ -256,11 +233,11 @@ public class SimConnectClient
             
             if (_aircraftTitle.StartsWith("PMDG 737"))
             {
-                PmdgHelper.InitializePmdg737(_simConnect);
+                _pmdgHelperService.InitializePmdg737(_simConnect);
             }
             else if (_aircraftTitle.StartsWith("PMDG 777"))
             {
-                PmdgHelper.InitializePmdg777(_simConnect);
+                _pmdgHelperService.InitializePmdg777(_simConnect);
             }
 
             return;
@@ -291,7 +268,7 @@ public class SimConnectClient
 
     private readonly object _lockObject = new();
 
-    public void TransmitEvent(long data, Enum eventId)
+    public void TransmitEvent(double data, Enum eventId)
     {
         lock (_lockObject)
         {
@@ -304,7 +281,7 @@ public class SimConnectClient
         }
     }
 
-    private void TransmitEvent(long data0, long data1, Enum eventId)
+    private void TransmitEvent(double data0, double data1, Enum eventId)
     {
         lock (_lockObject)
         {
@@ -334,7 +311,7 @@ public class SimConnectClient
         }
     }
 
-    public void SetSimVar(long simVarValue, string simVarName)
+    public void SetSimVar(double simVarValue, string simVarName)
     {
         SetSimVars(simVarName, null, simVarValue);
     }
@@ -419,7 +396,7 @@ public class SimConnectClient
         _simConnect?.MapClientEventToSimEvent((EventId)id, simEventName);
     }
 
-    public void TransmitSimEvent(long data0, long data1, string simEventName)
+    public void TransmitSimEvent(double data0, double data1, string simEventName)
     {
         if (_simEvents.TryGetValue(simEventName, out int id))
         {
