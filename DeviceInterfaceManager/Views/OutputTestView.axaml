@@ -44,7 +44,7 @@
             <StackPanel Orientation="Vertical" Spacing="25">
 
                 <Border Classes="b1"
-                        IsVisible="{Binding !!InputOutputDevice.Dataline.Count}">
+                        IsVisible="{Binding !!DeviceService.Outputs.Dataline.Count}">
                     <StackPanel Orientation="Vertical"
                                 Width="150"
                                 Spacing="25"
@@ -58,7 +58,7 @@
                         <ComboBox
                             SelectedItem="{Binding SelectedDataline}"
                             DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding InputOutputDevice.Dataline.Components}" />
+                            ItemsSource="{Binding DeviceService.Outputs.Dataline.Components, FallbackValue={x:Null}}" />
                         <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
                             <Button Content="On" Command="{Binding SetDatalineCommand}">
                                 <Button.CommandParameter>
@@ -75,7 +75,7 @@
                 </Border>
 
                 <Border Classes="b1"
-                        IsVisible="{Binding !!InputOutputDevice.SevenSegment.Count}">
+                        IsVisible="{Binding !!DeviceService.Outputs.SevenSegment.Count}">
                     <StackPanel Orientation="Vertical"
                                 Width="150"
                                 Spacing="25"
@@ -89,7 +89,7 @@
                         <ComboBox
                             SelectedItem="{Binding SelectedSevenSegment}"
                             DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding InputOutputDevice.SevenSegment.Components}" />
+                            ItemsSource="{Binding DeviceService.Outputs.SevenSegment.Components, FallbackValue={x:Null}}" />
                         <TextBox
                             Watermark="Data"
                             HorizontalAlignment="Center"
@@ -102,7 +102,7 @@
                 </Border>
 
                 <Border Classes="b1"
-                        IsVisible="{Binding !!InputOutputDevice.AnalogOut.Count}">
+                        IsVisible="{Binding !!DeviceService.Outputs.Analog.Count}">
                     <StackPanel Orientation="Vertical"
                                 Spacing="25"
                                 Width="150"
@@ -113,9 +113,13 @@
                             <PathIcon Data="{StaticResource  SineWave}" />
                             <TextBlock Classes="tb1" Text="Analog" />
                         </StackPanel>
-                        <Slider Value="{Binding AnalogOutValue}"
+                        <ComboBox
+                            SelectedItem="{Binding SelectedAnalog}"
+                            DisplayMemberBinding="{Binding Position}"
+                            ItemsSource="{Binding DeviceService.Outputs.Analog.Components, FallbackValue={x:Null}}" />
+                        <Slider Value="{Binding AnalogValue}"
                                 Maximum="255"
-                                ToolTip.Tip="{Binding AnalogOutValue}"
+                                ToolTip.Tip="{Binding AnalogValue}"
                                 ToolTip.VerticalOffset="10"
                                 ToolTip.Placement="Top"/>
                     </StackPanel>
@@ -125,7 +129,7 @@
 
             <Border Classes="b1"
                     Grid.Column="1"
-                    IsVisible="{Binding !!InputOutputDevice.Led.Count}">
+                    IsVisible="{Binding !!DeviceService.Outputs.Led.Count}">
                 <StackPanel Orientation="Vertical"
                             Spacing="25"
                             Margin="25">
@@ -155,8 +159,8 @@
                         </Button>
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding InputOutputDevice.Led.Components}"
-                              IsVisible="{Binding !!InputOutputDevice.Led.Count}"
+                    <DataGrid ItemsSource="{Binding DeviceService.Outputs.Led.Components, FallbackValue={x:Null}}"
+                              IsVisible="{Binding !!DeviceService.Outputs.Led.Count}"
                               AutoGenerateColumns="False"
                               GridLinesVisibility="All"
                               MaxHeight="500"
