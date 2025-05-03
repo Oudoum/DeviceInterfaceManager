@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using Avalonia.Controls;
 using Avalonia.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Services.Devices;
@@ -24,7 +25,7 @@ public partial class HomeView : UserControl
 
         DataObject data = new();
         data.Set(nameof(ProfileCreatorModel), stackPanel.DataContext);
-        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
+        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link).ConfigureAwait(false);
     }
 
     private static void OnDrop(object? sender, DragEventArgs e)
@@ -57,12 +58,12 @@ public partial class HomeView : UserControl
                 }
                 break;
 
-            case "ProfileStackPanel" when data is ProfileCreatorModel profileCreatorModel && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == profileCreatorModel.DeviceName):
+            case "ProfileStackPanel" when data is Tuple<string, ProfileCreatorModel> profileCreatorModel && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == profileCreatorModel.Item2.DeviceName):
                 e.DragEffects = DragDropEffects.Link;
                 if (set)
                 {
-                    profileMapping.ProfileName = profileCreatorModel.ProfileName;
-                    profileMapping.DeviceName = profileCreatorModel.DeviceName;
+                    profileMapping.ProfileName = profileCreatorModel.Item1;
+                    profileMapping.DeviceName = profileCreatorModel.Item2.DeviceName;
                 }
                 break;
         }
