@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:devices="clr-namespace:DeviceInterfaceManager.Models.Devices"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -10,15 +9,12 @@
              x:Class="DeviceInterfaceManager.Views.OutputTestView"
              x:DataType="vm:OutputTestViewModel">
 
-    <Design.DataContext>
-        <vm:OutputTestViewModel />
-    </Design.DataContext>
-
     <Viewbox>
 
-        <Grid ColumnDefinitions="400,400" Margin="25">
+        <Grid ColumnDefinitions="Auto Auto Auto Auto"  Margin="25">
             <Grid.Styles>
                 <Style Selector="Border.b1">
+                    <Setter Property="Margin" Value="5"/>
                     <Setter Property="BorderThickness" Value="3" />
                     <Setter Property="BorderBrush" Value="DimGray" />
                     <Setter Property="CornerRadius" Value="15" />
@@ -41,94 +37,9 @@
                 </Style>
             </Grid.Styles>
 
-            <StackPanel Orientation="Vertical" Spacing="25">
-
-                <Border Classes="b1"
-                        IsVisible="{Binding !!DeviceService.Outputs.Dataline.Count}">
-                    <StackPanel Orientation="Vertical"
-                                Width="150"
-                                Spacing="25"
-                                Margin="25">
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    Spacing="10">
-                            <PathIcon Data="{StaticResource LightningBolt}" />
-                            <TextBlock Classes="tb1" Text="Dataline" />
-                        </StackPanel>
-                        <ComboBox
-                            SelectedItem="{Binding SelectedDataline}"
-                            DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding DeviceService.Outputs.Dataline.Components, FallbackValue={x:Null}}" />
-                        <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
-                            <Button Content="On" Command="{Binding SetDatalineCommand}">
-                                <Button.CommandParameter>
-                                    <sys:Boolean>True</sys:Boolean>
-                                </Button.CommandParameter>
-                            </Button>
-                            <Button Content="Off" Command="{Binding SetDatalineCommand}">
-                                <Button.CommandParameter>
-                                    <sys:Boolean>False</sys:Boolean>
-                                </Button.CommandParameter>
-                            </Button>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="b1"
-                        IsVisible="{Binding !!DeviceService.Outputs.SevenSegment.Count}">
-                    <StackPanel Orientation="Vertical"
-                                Width="150"
-                                Spacing="25"
-                                Margin="25">
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    Spacing="10">
-                            <PathIcon Data="{StaticResource  Numeric7BoxOutline}" />
-                            <TextBlock Classes="tb1" Text="7 Segment" />
-                        </StackPanel>
-                        <ComboBox
-                            SelectedItem="{Binding SelectedSevenSegment}"
-                            DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding DeviceService.Outputs.SevenSegment.Components, FallbackValue={x:Null}}" />
-                        <TextBox
-                            Watermark="Data"
-                            HorizontalAlignment="Center"
-                            HorizontalContentAlignment="Center"
-                            FontSize="18"
-                            MinWidth="100"
-                            Text="{Binding SevenSegmentText}"
-                            FontWeight="Bold" />
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="b1"
-                        IsVisible="{Binding !!DeviceService.Outputs.Analog.Count}">
-                    <StackPanel Orientation="Vertical"
-                                Spacing="25"
-                                Width="150"
-                                Margin="25">
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    Spacing="10">
-                            <PathIcon Data="{StaticResource  SineWave}" />
-                            <TextBlock Classes="tb1" Text="Analog" />
-                        </StackPanel>
-                        <ComboBox
-                            SelectedItem="{Binding SelectedAnalog}"
-                            DisplayMemberBinding="{Binding Position}"
-                            ItemsSource="{Binding DeviceService.Outputs.Analog.Components, FallbackValue={x:Null}}" />
-                        <Slider Value="{Binding AnalogValue}"
-                                Maximum="255"
-                                ToolTip.Tip="{Binding AnalogValue}"
-                                ToolTip.VerticalOffset="10"
-                                ToolTip.Placement="Top"/>
-                    </StackPanel>
-                </Border>
-
-            </StackPanel>
-
+            <!-- LED -->
             <Border Classes="b1"
-                    Grid.Column="1"
+                    Grid.Column="0"
                     IsVisible="{Binding !!DeviceService.Outputs.Led.Count}">
                 <StackPanel Orientation="Vertical"
                             Spacing="25"
@@ -143,20 +54,12 @@
                     <StackPanel Orientation="Horizontal"
                                 Spacing="15"
                                 HorizontalAlignment="Center">
-                        <Button Content="All On"
-                                Command="{Binding SetAllLedCommand}"
-                                HorizontalAlignment="Stretch">
-                            <Button.CommandParameter>
-                                <sys:Boolean>True</sys:Boolean>
-                            </Button.CommandParameter>
-                        </Button>
                         <Button Content="All Off"
-                                Command="{Binding SetAllLedCommand}"
-                                HorizontalAlignment="Stretch">
-                            <Button.CommandParameter>
-                                <sys:Boolean>False</sys:Boolean>
-                            </Button.CommandParameter>
-                        </Button>
+                                Command="{Binding TurnAllLedsOffCommand}"
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="All On"
+                                Command="{Binding TurnAllLedsOnCommand}"
+                                HorizontalAlignment="Stretch" />
                     </StackPanel>
 
                     <DataGrid ItemsSource="{Binding DeviceService.Outputs.Led.Components, FallbackValue={x:Null}}"
@@ -179,12 +82,215 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate DataType="devices:Component">
                                         <CheckBox
-                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).IsCheckedCommand,
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).TurnLedOnOffCommand,
                                             FallbackValue={x:Null}}"
                                             CommandParameter="{Binding}"
                                             IsChecked="{Binding IsSet}"
                                             HorizontalAlignment="Center"
                                             IsTabStop="False" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Dataline -->
+            <Border Classes="b1"
+                    Grid.Column="1"
+                    IsVisible="{Binding !!DeviceService.Outputs.Dataline.Count}">
+                <StackPanel Orientation="Vertical"
+                            Spacing="25"
+                            Margin="25">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                        <PathIcon Data="{StaticResource LightningBolt}" />
+                        <TextBlock Classes="tb1" Text="Dataline" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="15"
+                                HorizontalAlignment="Center">
+                        <Button Content="All Off"
+                                Command="{Binding TurnAllDatalinesOffCommand}"
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="All On"
+                                Command="{Binding TurnAllDatalinesOnCommand}"
+                                HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding DeviceService.Outputs.Dataline.Components, FallbackValue={x:Null}}"
+                              IsVisible="{Binding !!DeviceService.Outputs.Dataline.Count}"
+                              AutoGenerateColumns="False"
+                              GridLinesVisibility="All"
+                              MaxHeight="500"
+                              BorderBrush="DimGray"
+                              BorderThickness="3">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridCell Rectangle">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Position"
+                                                Binding="{ReflectionBinding Position}" />
+                            <DataGridTemplateColumn Header="On/Off"
+                                                    SortMemberPath="IsSet">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="devices:Component">
+                                        <CheckBox
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).TurnDatalineOnOffCommand,
+                                            FallbackValue={x:Null}}"
+                                            CommandParameter="{Binding}"
+                                            IsChecked="{Binding IsSet}"
+                                            HorizontalAlignment="Center"
+                                            IsTabStop="False" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- 7 Segment -->
+            <Border Classes="b1"
+                    Grid.Column="2"
+                    IsVisible="{Binding !!DeviceService.Outputs.SevenSegment.Count}">
+                <StackPanel Orientation="Vertical"
+                            Spacing="25"
+                            Margin="25">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                        <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
+                        <TextBlock Classes="tb1" Text="7 Segment" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="15"
+                                HorizontalAlignment="Center">
+                        <Button Content="All Clear"
+                                Command="{Binding ClearAllSevenSegmentsCommand}"
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="All Fill"
+                                Command="{Binding FillAllSevenSegmentsCommand}"
+                                HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding DeviceService.Outputs.SevenSegment.Components, FallbackValue={x:Null}}"
+                              IsVisible="{Binding !!DeviceService.Outputs.SevenSegment.Count}"
+                              AutoGenerateColumns="False"
+                              GridLinesVisibility="All"
+                              MaxHeight="500"
+                              BorderBrush="DimGray"
+                              BorderThickness="3">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridCell Rectangle">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Position"
+                                                Binding="{ReflectionBinding Position}" />
+                            <DataGridTemplateColumn Header="Value"
+                                                    SortMemberPath="Value">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="devices:Component">
+                                        <TextBox
+                                            Watermark="Data"
+                                            HorizontalAlignment="Center"
+                                            HorizontalContentAlignment="Center"
+                                            FontSize="18"
+                                            MinWidth="100"
+                                            Text="{Binding StringValue}"
+                                            FontWeight="Bold" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Set">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="devices:Component">
+                                        <Button
+                                            Content="Ok"
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).SetSevenSegmentCommand,
+                                            FallbackValue={x:Null}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- Analog -->
+            <Border Classes="b1"
+                    Grid.Column="3"
+                    IsVisible="{Binding !!DeviceService.Outputs.Analog.Count}">
+                <StackPanel Orientation="Vertical"
+                            Spacing="25"
+                            Margin="25">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                        <PathIcon Data="{StaticResource SineWave}" />
+                        <TextBlock Classes="tb1" Text="Analog" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="15"
+                                HorizontalAlignment="Center">
+                        <Button Content="All Min"
+                                Command="{Binding SetAllAnalogsMinCommand}"
+                                HorizontalAlignment="Stretch" />
+                        <Button Content="All Max"
+                                Command="{Binding SetAllAnalogsMaxCommand}"
+                                HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding DeviceService.Outputs.Analog.Components, FallbackValue={x:Null}}"
+                              IsVisible="{Binding !!DeviceService.Outputs.Analog.Count}"
+                              AutoGenerateColumns="False"
+                              GridLinesVisibility="All"
+                              MaxHeight="500"
+                              BorderBrush="DimGray"
+                              BorderThickness="3">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridCell Rectangle">
+                                <Setter Property="IsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Position"
+                                                Binding="{ReflectionBinding Position}" />
+                            <DataGridTemplateColumn Header="Value"
+                                                    SortMemberPath="Value">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="devices:Component">
+                                        <Slider Value="{Binding Value}"
+                                                Maximum="255"
+                                                ToolTip.Tip="{Binding Value}"
+                                                ToolTip.VerticalOffset="10"
+                                                ToolTip.Placement="Top" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Set">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="devices:Component">
+                                        <Button
+                                            Content="Ok"
+                                            Command="{Binding $parent.((vm:OutputTestViewModel)DataContext).SetAnalogCommand,
+                                            FallbackValue={x:Null}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
