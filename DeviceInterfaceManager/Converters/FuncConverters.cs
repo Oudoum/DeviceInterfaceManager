@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Linq;
 using Avalonia.Data.Converters;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
 namespace DeviceInterfaceManager.Converters;
 
-public class PmdgEventToStringConverter : IMultiValueConverter
+public static class FuncConverters
 {
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public static FuncMultiValueConverter<object?, string?> PmdgEventToStringMultiConverter { get; } = new(GetPmdgEventString);
+
+    private static string? GetPmdgEventString(IEnumerable<object?> events)
     {
-        if (values is not [string eventType, int pmdgEvent])
+        object?[] eventsList = events.ToArray();
+        if (eventsList is not [string eventType, int pmdgEvent])
         {
             return null;
         }
