@@ -8,7 +8,9 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 [JsonDerivedType(typeof(Comparison), typeDiscriminator: nameof(Comparison))]
 [JsonDerivedType(typeof(Interpolation), typeDiscriminator: nameof(Interpolation))]
 [JsonDerivedType(typeof(Padding), typeDiscriminator: nameof(Padding))]
+[JsonDerivedType(typeof(Inserting), typeDiscriminator: nameof(Inserting))]
 [JsonDerivedType(typeof(Substring), typeDiscriminator: nameof(Substring))]
+[JsonDerivedType(typeof(Blinking), typeDiscriminator: nameof(Blinking))]
 public interface IModifier : IActive, ICloneable
 {
     public void Apply(ref StringBuilder value);
