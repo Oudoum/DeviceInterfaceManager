@@ -38,7 +38,7 @@ public abstract class DeviceServiceBase  : IDeviceService
 
     public abstract Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken);
 
-    public abstract void Disconnect();
+    public abstract Task Disconnect();
 
     protected void OnSwitchPositionChanged(int position, bool isPressed)
     {
