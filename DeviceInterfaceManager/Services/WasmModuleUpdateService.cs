@@ -24,28 +24,54 @@ public class WasmModuleUpdateService
             return "Folder: \"" + WasmModuleFolder + "\" could not be located in the DIM directory!";
         }
 
-        if (!await AutoDetectCommunityFolder())
+        bool is2020Found = false;
+        bool is2020Updated = false;
+        if (await AutoDetectCommunityFolder("FlightSimulator"))
+        {
+            if (await WasmModulesAreDifferent())
+            {
+                CopyFolder(new DirectoryInfo(WasmModuleFolder), new DirectoryInfo(Path.Combine(_communityFolder!, WasmModuleFolder)));
+                is2020Updated = true;
+            }
+
+            is2020Found = true;
+        }
+
+        bool is2024Found = false;
+        bool is2024Updated = false;
+        if (await AutoDetectCommunityFolder("Limitless", " 2024"))
+        {
+            if (await WasmModulesAreDifferent())
+            {
+                CopyFolder(new DirectoryInfo(WasmModuleFolder), new DirectoryInfo(Path.Combine(_communityFolder!, WasmModuleFolder)));
+                is2024Updated = true;
+            }
+
+            is2024Found = true;
+        }
+
+        if (!is2020Found && !is2024Found)
         {
             return "Community folder could not be located!";
         }
 
-        if (!await WasmModulesAreDifferent())
+        return is2024Updated switch
         {
-            return "DIM Event WASM module is up to date!";
-        }
-
-        CopyFolder(new DirectoryInfo(WasmModuleFolder), new DirectoryInfo(Path.Combine(_communityFolder!, WasmModuleFolder)));
-
-        return "DIM Event WASM module was successfully installed!";
+            false when !is2020Updated => "DIM Event WASM module is up to date!",
+            false when is2020Updated => "DIM Event WASM module was successfully installed for 2020!",
+            true when is2020Updated => "DIM Event WASM module was successfully installed for 2020 and 2024!",
+            true => "DIM Event WASM module was successfully installed for 2024!",
+            _ => "DIM Event WASM module update status is unknown."
+        };
     }
 
-    private async Task<bool> AutoDetectCommunityFolder()
+    private async Task<bool> AutoDetectCommunityFolder(string name, string version = "")
     {
-        string searchPath = SearchPath(@"Microsoft Flight Simulator\UserCfg.opt", Environment.SpecialFolder.ApplicationData);
+        string searchPath = SearchPath($@"Microsoft Flight Simulator{version}\UserCfg.opt", Environment.SpecialFolder.ApplicationData);
 
         if (!File.Exists(searchPath))
         {
-            searchPath = SearchPath(@"Packages\Microsoft.FlightSimulator_8wekyb3d8bbwe\LocalCache\UserCfg.opt", Environment.SpecialFolder.LocalApplicationData);
+            searchPath = SearchPath($@"Packages\Microsoft.{name}_8wekyb3d8bbwe\LocalCache\UserCfg.opt", Environment.SpecialFolder.LocalApplicationData);
             if (!File.Exists(searchPath))
             {
                 return false;
@@ -104,7 +130,7 @@ public class WasmModuleUpdateService
     {
         await using FileStream stream = File.OpenRead(filename);
         byte[] hashBytes = await MD5.Create().ComputeHashAsync(stream);
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        return Convert.ToHexStringLower(hashBytes);
     }
 
     private static void CopyFolder(DirectoryInfo source, DirectoryInfo target)
