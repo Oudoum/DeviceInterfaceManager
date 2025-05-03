@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform;
 using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
+using Microsoft.Extensions.Logging;
 using Microsoft.FlightSimulator.SimConnect;
 
 namespace DeviceInterfaceManager.Services;
@@ -21,13 +21,16 @@ public class SimConnectClientService
 
     private SimConnect? _simConnect;
     private string? _aircraftTitle;
+    
+    private readonly ILogger _logger;
     private readonly SignalRClientService _signalRClientService;
     private readonly PmdgHelperService _pmdgHelperService;
-    
+
     public Action<string?>? AircraftTitleChanged;
-    
-    public SimConnectClientService(PmdgHelperService pmdgHelperService, SignalRClientService signalRClientService)
+
+    public SimConnectClientService(ILogger<SignalRClientService> logger, PmdgHelperService pmdgHelperService, SignalRClientService signalRClientService)
     {
+        _logger = logger;
         _pmdgHelperService = pmdgHelperService;
         _signalRClientService = signalRClientService;
         _signalRClientService.Connected += () =>
@@ -81,7 +84,7 @@ public class SimConnectClientService
             TaskCompletionSource<bool> tcs = new();
             try
             {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
                     try
                     {
@@ -96,7 +99,7 @@ public class SimConnectClientService
                         _simConnect.OnRecvException += SimConnectOnOnRecvException;
                         while (_aircraftTitle is null)
                         {
-                            
+                            await Task.Delay(TimeSpan.FromMilliseconds(10), token).ConfigureAwait(false);
                         }
 
                         tcs.SetResult(true);
@@ -107,20 +110,18 @@ public class SimConnectClientService
                     }
                 }, token);
 
-                if (!await tcs.Task)
-                {
-                    await Task.Delay(1000, token);
-                }
-                else
+                if (await tcs.Task)
                 {
                     break;
                 }
+
+                await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {
             }
         }
-        
+
         return _aircraftTitle;
     }
 
@@ -144,23 +145,25 @@ public class SimConnectClientService
         RequestTitle();
 
         RegisterSimVar("CAMERA STATE", "Enum");
-        
+
         _simConnect.OnRecvSimobjectData += SimConnectOnOnRecvSimobjectData;
         _simConnect.OnRecvClientData += SimConnectOnOnRecvClientData;
+        // _simConnect.OnRecvEnumerateInputEvents += OnSimConnectOnOnRecvEnumerateInputEvents;
+        // EnumerateInputEvents();
     }
 
     private void RequestTitle()
     {
         _simConnect?.RequestDataOnSimObject((RequestId)6, (DefineId)6, SimConnect.SIMCONNECT_OBJECT_ID_USER, SIMCONNECT_PERIOD.ONCE, 0, 0, 0, 0);
     }
-    
+
     private void ResendCduData()
     {
         if (_simConnect is null)
         {
             return;
         }
-        
+
         _pmdgHelperService.RequestClientDataOnce(_simConnect);
     }
 
@@ -186,15 +189,25 @@ public class SimConnectClientService
         Disconnect();
     }
 
-    private static void SimConnectOnOnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
+    private void SimConnectOnOnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
     {
-        foreach (object? item in Enum.GetValues(typeof(SIMCONNECT_EXCEPTION)))
+        string? exceptionName = Enum.GetName(typeof(SIMCONNECT_EXCEPTION), data.dwException);
+
+        if (exceptionName is not null)
         {
-            if ((int)(object)item == data.dwException)
+            SimVar? simVar = _simVars.Find(x => x.Id == data.dwSendID);
+
+            if (simVar is not null && (SIMCONNECT_EXCEPTION)data.dwException == SIMCONNECT_EXCEPTION.NAME_UNRECOGNIZED)
             {
-                Debug.WriteLine(item);
+                _logger.LogError("SimConnect Exception: {exceptionName} \"{simVar.Name}\"", exceptionName, simVar.Name);
+                return;
             }
+
+            _logger.LogError("SimConnect Exception: {exceptionName}", exceptionName);
+            return;
         }
+
+        _logger.LogError("SimConnect Unknown Exception");
     }
 
     public void Disconnect()
@@ -203,7 +216,8 @@ public class SimConnectClientService
         {
             return;
         }
-
+        
+        // _simConnect.OnRecvEnumerateInputEvents -= OnSimConnectOnOnRecvEnumerateInputEvents;
         _simConnect.OnRecvClientData -= SimConnectOnOnRecvClientData;
         _simConnect.OnRecvSimobjectData -= SimConnectOnOnRecvSimobjectData;
         _simConnect.OnRecvException -= SimConnectOnOnRecvException;
@@ -214,15 +228,15 @@ public class SimConnectClientService
         _simVars.Clear();
         _simEvents.Clear();
         _aircraftTitle = null;
-        
+
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop || desktop.MainWindow is null)
         {
             return;
         }
-        
+
         Win32Properties.RemoveWndProcHookCallback(desktop.MainWindow, CustomWndProcHookCallback);
     }
-    
+
     private void SimConnectOnOnRecvSimobjectData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
     {
         if (_simConnect is not null && data.dwRequestID == 6)
@@ -230,7 +244,7 @@ public class SimConnectClientService
             _aircraftTitle = ((String256)data.dwData[0]).value;
             AircraftTitleChanged?.Invoke(_aircraftTitle);
             _ = _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
-            
+
             if (_aircraftTitle.StartsWith("PMDG 737"))
             {
                 _pmdgHelperService.InitializePmdg737(_simConnect);
@@ -266,7 +280,27 @@ public class SimConnectClientService
 
     private readonly Dictionary<string, int> _simEvents = [];
 
-    private readonly object _lockObject = new();
+    private readonly Lock _lockObject = new();
+    
+    // private readonly Dictionary<string, ulong> _inputEvents = [];
+    //
+    // private void OnSimConnectOnOnRecvEnumerateInputEvents(SimConnect sender, SIMCONNECT_RECV_ENUMERATE_INPUT_EVENTS data)
+    // {
+    //     for (int i = 0; i < data.dwArraySize; i++)
+    //     {
+    //         SIMCONNECT_INPUT_EVENT_DESCRIPTOR descriptor = (SIMCONNECT_INPUT_EVENT_DESCRIPTOR)data.rgData[i];
+    //         _inputEvents.Add(descriptor.Name, descriptor.Hash);
+    //     }
+    //
+    //     _simConnect?.SetInputEvent(_inputEvents["A380X_PED_RMP_1_DIGIT_0_PB"], 100);
+    // }
+    //
+    //
+    // private void EnumerateInputEvents()
+    // {
+    //     _inputEvents.Clear();
+    //     _simConnect?.EnumerateInputEvents((RequestId)100);
+    // }
 
     public void TransmitEvent(double data, Enum eventId)
     {
