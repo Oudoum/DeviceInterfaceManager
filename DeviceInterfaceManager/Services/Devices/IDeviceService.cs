@@ -9,9 +9,8 @@ public interface IDeviceService : IInputService, IOutputService
     public string? Id { get; }
     public string? DeviceName { get; }
     public Geometry? Icon { get; }
-
     public Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken);
-    public void Disconnect();
+    public Task Disconnect();
 }
 
 public enum ConnectionStatus
