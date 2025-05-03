@@ -43,9 +43,6 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string SevenSegment = "7 Segment";
 
     [ObservableProperty]
-    private string? _profileName;
-
-    [ObservableProperty]
     private string? _description;
 
     [ObservableProperty]
@@ -61,10 +58,10 @@ public partial class ProfileCreatorModel : ObservableObject
 public partial class InputCreator : ObservableObject, IInputCreator, IActive, ICloneable
 {
     [ObservableProperty]
-    private Guid _id;
+    private Guid _id = Guid.NewGuid();
 
     [ObservableProperty]
-    private bool _isActive;
+    private bool _isActive = true;
 
     [ObservableProperty]
     private string? _description;
@@ -138,10 +135,10 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, ICloneable
 {
     [ObservableProperty]
-    private Guid _id;
+    private Guid _id = Guid.NewGuid();
 
     [ObservableProperty]
-    private bool _isActive;
+    private bool _isActive = true;
 
     [ObservableProperty]
     private string? _description;
