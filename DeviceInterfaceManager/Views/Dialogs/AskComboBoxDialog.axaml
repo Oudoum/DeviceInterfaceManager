@@ -9,6 +9,7 @@
     <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding Title}" />
         <ComboBox Margin="0,20,0,10"
+                  HorizontalAlignment="Stretch"
                   ItemsSource="{Binding ObservableCollection}"
                   SelectedItem="{Binding SelectedItem}">
             <ComboBox.ItemTemplate>
