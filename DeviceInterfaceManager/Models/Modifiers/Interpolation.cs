@@ -17,8 +17,8 @@ public partial class Interpolation : ObservableObject, IModifier
     public Interpolation()
     {
         Values = [];
-        Add(false);
-        Add(false);
+        AddItem();
+        AddItem();
     }
 
     private void ItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -88,12 +88,8 @@ public partial class Interpolation : ObservableObject, IModifier
     private double _max;
 
     [RelayCommand]
+    [property: JsonIgnore]
     private void AddItem()
-    {
-        Add(true);
-    }
-
-    private void Add(bool isVisible)
     {
         int count = Values.Count;
         double key = 0;
@@ -104,10 +100,11 @@ public partial class Interpolation : ObservableObject, IModifier
             value = Values.First().Value;
         }
 
-        Values.Add(new InterpolationKeyValuePair(100 * count - key * (count - 1), 1024 * count - value * (count - 1), isVisible));
+        Values.Add(new InterpolationKeyValuePair(100 * count - key * (count - 1), 1024 * count - value * (count - 1)));
     }
 
     [RelayCommand]
+    [property: JsonIgnore]
     private void RemoveItem(InterpolationKeyValuePair item)
     {
         Values.Remove(item);
@@ -198,14 +195,12 @@ public partial class Interpolation : ObservableObject, IModifier
 
     public partial class InterpolationKeyValuePair : ObservableObject, ICloneable
     {
-        public InterpolationKeyValuePair(double key, double value, bool isVisible)
+        public InterpolationKeyValuePair(double key, double value)
         {
             Key = key;
             Value = value;
-            IsVisible = isVisible;
         }
 
-        public bool IsVisible { get; }
         public double Key { get; set; }
 
         [ObservableProperty]
