@@ -12,6 +12,8 @@ public class ViewLocator : StrongViewLocator
     {
         Register<AskTextBoxDialogModel, AskTextBoxDialog>();
         Register<AskComboBoxDialogModel, AskComboBoxDialog>();
+        Register<SelectSerialPortDialogModel, SelectSerialPortDialog>();
+        Register<SelectInternetProtocolDialogModel, SelectInternetProtocolDialog>();
         Register<DeviceViewModel, DeviceView>();
         Register<HomeViewModel, HomeView>();
         Register<InformationViewModel, InformationView>();
