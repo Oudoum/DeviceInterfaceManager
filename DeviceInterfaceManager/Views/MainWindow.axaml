@@ -1,23 +1,31 @@
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:ui="using:FluentAvalonia.UI.Controls"
-        xmlns:vm="using:DeviceInterfaceManager.ViewModels"
-        xmlns:devices="clr-namespace:DeviceInterfaceManager.Services.Devices"
-        mc:Ignorable="d"
-        x:Class="DeviceInterfaceManager.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Width="1800"
-        Height="1000"
-        MinWidth="1000"
-        MinHeight="650"
-        WindowStartupLocation="CenterScreen"
-        Title="">
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:ui="using:FluentAvalonia.UI.Controls"
+               xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+               xmlns:devices="clr-namespace:DeviceInterfaceManager.Services.Devices"
+               mc:Ignorable="d"
+               x:Class="DeviceInterfaceManager.Views.MainWindow"
+               x:DataType="vm:MainWindowViewModel"
+               Width="1800"
+               Height="1000"
+               MinWidth="1000"
+               MinHeight="650"
+               WindowStartupLocation="CenterScreen"
+               Title="Device Interface Manager">
 
-    <Design.DataContext>
-        <vm:MainWindowViewModel  />
-    </Design.DataContext>
+    <Window.Styles>
+        <Style Selector="TextBlock#TitleText">
+            <Setter Property="Foreground" Value="Transparent" />
+        </Style>
+    </Window.Styles>
+    
+    <Interaction.Behaviors>
+        <EventTriggerBehavior EventName="Loaded">
+            <InvokeCommandAction Command="{Binding OnLoaded}" />
+        </EventTriggerBehavior>
+    </Interaction.Behaviors>
 
     <ui:NavigationView AlwaysShowHeader="False"
                        IsSettingsVisible="False"
