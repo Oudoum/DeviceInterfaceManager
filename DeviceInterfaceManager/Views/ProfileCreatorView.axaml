@@ -14,37 +14,38 @@
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
 
-    <Design.DataContext>
-        <vm:ProfileCreatorViewModel />
-    </Design.DataContext>
-
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
-        <converters:PmdgEventToStringConverter x:Key="PmdgEventToStringConverter" />
         <converters:LengthToBooleanConverter x:Key="LengthToBooleanConverter" />
         <b:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
         <b:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
     </UserControl.Resources>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto *">
 
         <StackPanel Grid.Row="0">
 
             <ui:CommandBar>
                 <ui:CommandBar.PrimaryCommands>
 
-                    <ui:CommandBarButton Label="Change" Command="{Binding ChangeDeviceCommand }">
-                        <ui:CommandBarButton.CommandParameter>
-                            <sys:Boolean>true</sys:Boolean>
-                        </ui:CommandBarButton.CommandParameter>
+                    <ui:CommandBarButton Label="New" Command="{Binding CreateProfileCommandCommand }">
                         <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource Devices}" />
+                            <ui:PathIconSource Data="{StaticResource FilePlusOutline}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
 
                     <ui:CommandBarButton Label="Load" Command="{Binding LoadProfileCommand}">
                         <ui:CommandBarButton.IconSource>
                             <ui:PathIconSource Data="{StaticResource FolderOpenOutline}" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+
+                    <ui:CommandBarButton Label="Change Device" Command="{Binding ChangeDeviceCommand }">
+                        <ui:CommandBarButton.CommandParameter>
+                            <sys:Boolean>False</sys:Boolean>
+                        </ui:CommandBarButton.CommandParameter>
+                        <ui:CommandBarButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource Devices}" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
 
@@ -96,15 +97,33 @@
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
 
-                    <ui:CommandBarToggleButton Label="Always On Top" IsCheckedChanged="ToggleButtonOnIsCheckedChanged">
+                    <ui:CommandBarToggleButton Label="Always On Top" IsCheckedChanged="ToggleButtonOnIsCheckedChanged"
+                                               HotKey="F1">
                         <ui:CommandBarToggleButton.IconSource>
                             <ui:PathIconSource Data="{StaticResource ArrowUpBoldBoxOutline}" />
                         </ui:CommandBarToggleButton.IconSource>
                     </ui:CommandBarToggleButton>
 
+                    <ui:CommandBarToggleButton Name="FlightSimValueToggleButton"
+                                               Label="Flight Sim Value"
+                                               HotKey="F3">
+                        <ui:CommandBarToggleButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource AirplaneTakeoff}" />
+                        </ui:CommandBarToggleButton.IconSource>
+                    </ui:CommandBarToggleButton>
+
+                    <ui:CommandBarToggleButton Name="OutputValueToggleButton"
+                                               Label="Output Value"
+                                               HotKey="F4">
+                        <ui:CommandBarToggleButton.IconSource>
+                            <ui:PathIconSource Data="{StaticResource AirplaneLanding}" />
+                        </ui:CommandBarToggleButton.IconSource>
+                    </ui:CommandBarToggleButton>
+
                     <ui:CommandBarButton Classes.start="{Binding !IsStarted}"
                                          Classes.stop="{Binding IsStarted}"
-                                         Classes.running="{Binding StartProfilesCommand.IsRunning}">
+                                         Classes.running="{Binding StartProfilesCommand.IsRunning}"
+                                         HotKey="F5">
                         <ui:CommandBarButton.Styles>
                             <Style Selector="ui|CommandBarButton.start">
                                 <Setter Property="Label" Value="Start" />
@@ -146,7 +165,6 @@
                 </ui:CommandBar.PrimaryCommands>
                 <ui:CommandBar.SecondaryCommands>
                     <ui:CommandBarSeparator />
-                    <!-- <ui:CommandBarButton IconSource="Cut" Label="Cut" /> -->
                 </ui:CommandBar.SecondaryCommands>
             </ui:CommandBar>
 
@@ -168,7 +186,7 @@
                     <ui:CommandBarElementContainer
                         IsHitTestVisible="{Binding InputOutputDevice, Converter={x:Static ObjectConverters.IsNotNull}}"
                         PointerPressed="InputElementOnPointerPressed">
-                        <TextBlock Text="{Binding ProfileCreatorModel.ProfileName, FallbackValue=''}" />
+                        <TextBlock Text="{Binding ProfileName, FallbackValue='---'}" />
                         <FlyoutBase.AttachedFlyout>
                             <Flyout Placement="BottomEdgeAlignedLeft">
                                 <TextBox Text="{Binding ProfileCreatorModel.Description, FallbackValue=''}"
@@ -422,18 +440,35 @@
                                     IsReadOnly="True"
                                     CellStyleClasses="Tip" />
 
-                                <DataGridTextColumn
+                                <DataGridTemplateColumn
                                     Header="Event Type"
                                     SortMemberPath="EventType"
-                                    Binding="{Binding EventType}"
-                                    IsReadOnly="True" />
+                                    IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Classes.hasMultiple="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Text="{Binding EventType}"
+                                                Margin="12"
+                                                VerticalAlignment="Center">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.hasMultiple">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Header="PMDG Event"
                                     SortMemberPath="PmdgEvent"
+                                    IsVisible="{Binding IsPmdgEventVisible}"
                                     IsReadOnly="True">
                                     <DataGridTextColumn.Binding>
-                                        <MultiBinding Converter="{StaticResource PmdgEventToStringConverter}">
+                                        <MultiBinding
+                                            Converter="{x:Static converters:FuncConverters.PmdgEventToStringMultiConverter}">
                                             <Binding Path="EventType" />
                                             <Binding Path="PmdgEvent" />
                                         </MultiBinding>
@@ -444,22 +479,27 @@
                                     Header="Event"
                                     SortMemberPath="Event"
                                     Binding="{Binding Event}"
+                                    IsVisible="{Binding IsEventVisible}"
                                     IsReadOnly="True" />
 
                                 <DataGridTextColumn
                                     Header="Mouse Press"
                                     SortMemberPath="PmdgMousePress"
                                     Binding="{Binding PmdgMousePress}"
+                                    IsVisible="{Binding IsMousePressVisible}"
                                     IsReadOnly="True" />
 
                                 <DataGridTextColumn
                                     Header="Mouse Release"
                                     SortMemberPath="PmdgMouseRelease"
                                     Binding="{Binding PmdgMouseRelease}"
+                                    IsVisible="{Binding IsMouseReleaseVisible}"
                                     IsReadOnly="True" />
 
-                                <DataGridTemplateColumn Header="Data Press" IsReadOnly="True"
-                                                        SortMemberPath="DataPress">
+                                <DataGridTemplateColumn Header="Data Press"
+                                                        SortMemberPath="DataPress"
+                                                        IsVisible="{Binding IsDataPressVisible}"
+                                                        IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
@@ -476,8 +516,10 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="Data Release" IsReadOnly="True"
-                                                        SortMemberPath="DataRelease">
+                                <DataGridTemplateColumn Header="Data Release"
+                                                        SortMemberPath="DataRelease"
+                                                        IsVisible="{Binding IsDataReleaseVisible}"
+                                                        IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
@@ -505,8 +547,7 @@
                 </TabItem.Content>
             </TabItem>
 
-            <TabItem Header="Output"
-                     IsSelected="True">
+            <TabItem Header="Output">
                 <TabItem.Content>
                     <Grid HorizontalAlignment="Left" RowDefinitions="*,Auto">
                         <DataGrid
@@ -525,6 +566,53 @@
                                 </Style>
                             </DataGrid.Styles>
                             <DataGrid.Columns>
+
+                                <DataGridTemplateColumn Header="Flight Sim Value"
+                                                        SortMemberPath="Value"
+                                                        IsVisible="{Binding IsChecked, ElementName=FlightSimValueToggleButton}"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding FlightSimValue}"
+                                                     IsVisible="{Binding FlightSimValue, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                     VerticalContentAlignment="Center"
+                                                     Foreground="Red"
+                                                     SelectionForegroundBrush="Red"
+                                                     SelectionBrush="DimGray"
+                                                     IsReadOnly="True"
+                                                     BorderThickness="0"
+                                                     CornerRadius="0"
+                                                     Background="Transparent">
+                                                <TextBox.Styles>
+                                                    <Style
+                                                        Selector="TextBox.valueIsNull /template/ DockPanel#PART_InnerDockPanel">
+                                                        <Setter Property="Cursor" Value="Arrow" />
+                                                    </Style>
+                                                </TextBox.Styles>
+                                            </TextBox>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Output Value"
+                                                        SortMemberPath="Value"
+                                                        IsVisible="{Binding IsChecked, ElementName=OutputValueToggleButton}"
+                                                        IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding OutputValue}"
+                                                     IsVisible="{Binding OutputValue, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                     VerticalContentAlignment="Center"
+                                                     Foreground="LimeGreen"
+                                                     SelectionForegroundBrush="LimeGreen"
+                                                     SelectionBrush="DimGray"
+                                                     IsReadOnly="True"
+                                                     BorderThickness="0"
+                                                     CornerRadius="0"
+                                                     Background="Transparent" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTemplateColumn Header="Active" SortMemberPath="IsActive">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -596,15 +684,14 @@
                                                         IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Grid
-                                                Classes.showToolTip="{Binding !!Outputs.Length}"
-                                                ToolTip.Placement="Bottom"
-                                                ToolTip.VerticalOffset="0">
+                                            <Grid Classes.showToolTip="{Binding !!Outputs.Length}"
+                                                  ToolTip.Placement="Bottom"
+                                                  ToolTip.VerticalOffset="0">
                                                 <TextBlock
                                                     Classes.hasMultiple="{Binding Outputs.Length, FallbackValue=0 ,Converter={StaticResource LengthToBooleanConverter}}"
+                                                    Text="{Binding Outputs[0], FallbackValue=''}"
                                                     Margin="12"
-                                                    VerticalAlignment="Center"
-                                                    Text="{Binding Outputs[0], FallbackValue=''}">
+                                                    VerticalAlignment="Center">
                                                     <TextBlock.Styles>
                                                         <Style Selector="TextBlock.hasMultiple">
                                                             <Setter Property="Foreground" Value="Red" />
@@ -634,13 +721,31 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
+                                <DataGridTemplateColumn
                                     Header="Data Type"
                                     SortMemberPath="DataType"
-                                    Binding="{Binding DataType}"
-                                    IsReadOnly="True" />
+                                    IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Classes.hasMultiple="{Binding Modifiers, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Text="{Binding DataType}"
+                                                Margin="12"
+                                                VerticalAlignment="Center">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.hasMultiple">
+                                                        <Setter Property="Foreground" Value="Red" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="PMDG Data" IsReadOnly="True" SortMemberPath="PmdgData">
+                                <DataGridTemplateColumn Header="PMDG Data"
+                                                        SortMemberPath="PmdgData"
+                                                        IsVisible="{Binding IsPmdgDataVisible}"
+                                                        IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
@@ -657,7 +762,10 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="Data" IsReadOnly="True" SortMemberPath="Data">
+                                <DataGridTemplateColumn Header="Data"
+                                                        SortMemberPath="Data"
+                                                        IsVisible="{Binding IsDataVisible}"
+                                                        IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
@@ -670,49 +778,6 @@
                                                     </MultiBinding>
                                                 </TextBlock.Text>
                                             </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <DataGridTextColumn
-                                    Header="Modifiers"
-                                    Binding="{Binding Modifiers.Length, FallbackValue=''}"
-                                    IsReadOnly="True" />
-
-                                <DataGridTemplateColumn Header="Flight Sim Value" SortMemberPath="Value"
-                                                        IsReadOnly="True">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Text="{Binding FlightSimValue}"
-                                                     IsVisible="{Binding FlightSimValue, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                     VerticalContentAlignment="Center"
-                                                     Foreground="Red"
-                                                     SelectionForegroundBrush="Red"
-                                                     IsReadOnly="True"
-                                                     BorderThickness="0"
-                                                     Background="Transparent">
-                                                <TextBox.Styles>
-                                                    <Style
-                                                        Selector="TextBox.valueIsNull /template/ DockPanel#PART_InnerDockPanel">
-                                                        <Setter Property="Cursor" Value="Arrow" />
-                                                    </Style>
-                                                </TextBox.Styles>
-                                            </TextBox>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <DataGridTemplateColumn Header="Output Value" SortMemberPath="Value" IsReadOnly="True">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBox Text="{Binding OutputValue}"
-                                                     IsVisible="{Binding OutputValue, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                     VerticalContentAlignment="Center"
-                                                     Foreground="LimeGreen"
-                                                     SelectionForegroundBrush="LimeGreen"
-                                                     IsReadOnly="True"
-                                                     BorderThickness="0"
-                                                     Background="Transparent" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
