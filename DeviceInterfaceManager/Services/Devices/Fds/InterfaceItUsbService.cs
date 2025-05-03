@@ -11,7 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using DeviceInterfaceManager.Models.Devices;
 
-namespace DeviceInterfaceManager.Services.Devices;
+namespace DeviceInterfaceManager.Services.Devices.Fds;
 
 public partial class InterfaceItUsbService : DeviceServiceBase
 {
@@ -108,7 +108,7 @@ public partial class InterfaceItUsbService : DeviceServiceBase
     private static bool _isOpen;
     private static int _disconnects;
 
-    public override void Disconnect()
+    public override Task Disconnect()
     {
         CheckError(interfaceIT_Switch_Enable_Callback(_session, false, _keyNotifyCallback = null));
         DisableDeviceFeatures();
@@ -117,13 +117,14 @@ public partial class InterfaceItUsbService : DeviceServiceBase
 
         if (_disconnects != TotalControllers && _totalControllers != -1)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         CheckError(interfaceIT_CloseControllers());
         _isOpen = false;
         _disconnects = 0;
         _totalControllers = -1;
+        return Task.CompletedTask;
     }
 
     private KeyNotifyCallback? _keyNotifyCallback;
