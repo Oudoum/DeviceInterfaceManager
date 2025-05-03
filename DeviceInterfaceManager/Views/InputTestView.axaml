@@ -7,12 +7,8 @@
              x:Class="DeviceInterfaceManager.Views.InputTestView"
              x:DataType="vm:InputTestViewModel">
 
-    <Design.DataContext>
-        <vm:InputTestViewModel />
-    </Design.DataContext>
-
     <Grid Margin="25"
-          RowDefinitions="* 9*">
+          RowDefinitions="Auto 9*">
 
         <Grid.Styles>
             <Style Selector="Border.border">
@@ -35,7 +31,7 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Grid HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
+                          VerticalAlignment="Top"
                           Width="120">
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock FontSize="22"
