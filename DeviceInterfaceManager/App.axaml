@@ -15,6 +15,10 @@
         <StyleInclude Source="Assets/Icons.axaml" />
         <StyleInclude Source="Styles/AutoCompleteBoxClearStyle.axaml" />
         <StyleInclude Source="Styles/ButtonClearStyle.axaml" />
+        <Style Selector="DataValidationErrors">
+            <Setter Property="Theme"
+                    Value="{StaticResource TooltipDataValidationErrors}" />
+        </Style>
     </Application.Styles>
 
 </Application>
