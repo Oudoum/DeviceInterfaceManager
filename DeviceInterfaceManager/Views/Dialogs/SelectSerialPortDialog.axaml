@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels.Dialogs"
+             xmlns:connections="clr-namespace:DeviceInterfaceManager.Models"
+             xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="DeviceInterfaceManager.Views.Dialogs.SelectSerialPortDialog"
+             x:DataType="vm:SelectSerialPortDialogModel">
+    <StackPanel Orientation="Vertical"
+                Spacing="25">
+        <TextBlock Text="{Binding Text}" />
+        <Grid ColumnDefinitions="Auto Auto"
+              HorizontalAlignment="Center"
+              Margin="20">
+            <ComboBox Grid.Column="0"
+                      Width="100"
+                      PlaceholderText="COM"
+                      ItemsSource="{Binding PortNames}"
+                      SelectedItem="{Binding PreSelectedConnection.ConnectionName, FallbackValue=''}">
+                <ComboBox.Styles>
+                    <Style Selector="ComboBox /template/ Popup#PART_Popup">
+                        <Setter Property="Placement" Value="LeftEdgeAlignedTop" />
+                    </Style>
+                </ComboBox.Styles>
+            </ComboBox>
+            <Button Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    Margin="10 0 10 0"
+                    Command="{Binding AddMappingCommand}">
+                <Button.Content>
+                    <PathIcon Data="{StaticResource PlusBox}" />
+                </Button.Content>
+            </Button>
+        </Grid>
+
+        <ListBox HorizontalAlignment="Center"
+                 BorderThickness="2"
+                 ItemsSource="{Binding FilteredConnections}"
+                 SelectedItem="{Binding SelectedConnection}"
+                 IsVisible="{Binding !!FilteredConnections.Count}"
+                 SelectionMode="Toggle">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type connections:FsCockpitConnection}">
+                    <Grid ColumnDefinitions="Auto Auto Auto">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding DriverName}"
+                                   Margin="0 0 20 0" />
+                        <TextBlock Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding ConnectionName}"
+                                   Margin="0 0 20 0" />
+                        <CheckBox Grid.Column="2"
+                                  IsChecked="{Binding HasHighTensionDetents}" />
+                        <Grid.ContextFlyout>
+                            <controls:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                <controls:CommandBarButton ToolTip.Tip="Delete"
+                                                           Command="{Binding $parent[UserControl].((vm:SelectSerialPortDialogModel)DataContext).RemoveMappingCommand,
+                                                         FallbackValue={x:Null}}"
+                                                           CommandParameter="{Binding}">
+                                    <controls:CommandBarButton.IconSource>
+                                        <controls:PathIconSource Data="{StaticResource TrashCanOutline}" />
+                                    </controls:CommandBarButton.IconSource>
+                                </controls:CommandBarButton>
+                            </controls:CommandBarFlyout>
+                        </Grid.ContextFlyout>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </StackPanel>
+</UserControl>
