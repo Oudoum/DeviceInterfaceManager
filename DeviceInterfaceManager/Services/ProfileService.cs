@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -96,7 +95,7 @@ public class ProfileService : IAsyncDisposable
 
     private void ProfileEntryIteration(OutputCreator outputCreator, SimConnectClientService.SimVar simVar)
     {
-        outputCreator.FlightSimValue = simVar.Data.ToString(PmdgHelperService.EnglishCulture);
+        outputCreator.FlightSimValue = simVar.Data.ToString(CultureInfo.InvariantCulture);
 
         ProfileIteration(outputCreator);
     }
@@ -112,7 +111,7 @@ public class ProfileService : IAsyncDisposable
                 case ProfileCreatorModel.MsfsSimConnect:
                     if (precondition.Data is not null)
                     {
-                        ProfileEntryIteration(precondition, new SimConnectClientService.SimVar(precondition.Data, Convert.ToDouble(precondition.FlightSimValue!)));
+                        ProfileEntryIteration(precondition, new SimConnectClientService.SimVar(precondition.Data, Convert.ToDouble(precondition.FlightSimValue, CultureInfo.InvariantCulture)));
                     }
 
                     break;
@@ -150,9 +149,9 @@ public class ProfileService : IAsyncDisposable
 
             //bool, byte, ushort, short, uint, int, float
             default:
-                double doubleValue = Convert.ToDouble(e.Value, PmdgHelperService.EnglishCulture);
+                double doubleValue = Convert.ToDouble(e.Value, CultureInfo.InvariantCulture);
                 doubleValue = Math.Round(doubleValue, 9);
-                outputCreator.FlightSimValue = doubleValue.ToString(PmdgHelperService.EnglishCulture);
+                outputCreator.FlightSimValue = doubleValue.ToString(CultureInfo.InvariantCulture);
                 break;
         }
 
@@ -195,7 +194,7 @@ public class ProfileService : IAsyncDisposable
         SetSendOutput(outputCreator, stringBuilder);
     }
 
-    private bool CheckPrecondition(IReadOnlyList<Precondition>? preconditions)
+    private bool CheckPrecondition(Precondition[]? preconditions)
     {
         if (preconditions is null)
         {
@@ -203,7 +202,7 @@ public class ProfileService : IAsyncDisposable
         }
 
         bool result = false;
-        for (int i = 0; i < preconditions.Count; i++)
+        for (int i = 0; i < preconditions.Length; i++)
         {
             Precondition precondition = preconditions[i];
             OutputCreator? matchingOutputCreator = _profileCreatorModel.OutputCreators.FirstOrDefault(oc => oc.Id == precondition.ReferenceId);
@@ -249,7 +248,6 @@ public class ProfileService : IAsyncDisposable
     private void SetSendOutput(OutputCreator outputCreator, StringBuilder stringBuilder)
     {
         outputCreator.OutputValue = stringBuilder.ToString();
-
         if (outputCreator.Outputs is null || string.IsNullOrEmpty(outputCreator.OutputValue))
         {
             return;
@@ -274,7 +272,7 @@ public class ProfileService : IAsyncDisposable
                     break;
                 
                 case ProfileCreatorModel.Analog:
-                    if (double.TryParse(outputCreator.OutputValue, out double analogValue))
+                    if (double.TryParse(outputCreator.OutputValue, CultureInfo.InvariantCulture, out double analogValue))
                     {
                         _deviceService.SetAnalogAsync(output, analogValue);
                     }
@@ -350,7 +348,7 @@ public class ProfileService : IAsyncDisposable
         FormatString(outputCreator, ref stringBuilder);
     }
 
-    private static void FormatString(IOutputCreator outputCreator, ref StringBuilder stringBuilder)
+    private static void FormatString(OutputCreator outputCreator, ref StringBuilder stringBuilder)
     {
         if (outputCreator.DigitCheckedSum is null && outputCreator.DecimalPointCheckedSum is null)
         {
@@ -523,6 +521,12 @@ public class ProfileService : IAsyncDisposable
                 {
                     //
                 }
+            }
+
+            if (inputCreator.DataPress is not null)
+            {
+                SendParameters(inputCreator, inputCreator.DataPress.Value, value);
+                continue;
             }
 
             SendParameters(inputCreator, value, 0);
