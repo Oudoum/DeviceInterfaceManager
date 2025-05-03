@@ -1,162 +1,307 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.Mvvm.Input;
 using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Services;
 using DeviceInterfaceManager.Services.Devices;
+
 using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
-public partial class HomeViewModel : ObservableRecipient
+public partial class HomeViewModel : ObservableObject
 {
     private readonly ILogger _logger;
     private readonly SimConnectClientService _simConnectClientService;
     private readonly PmdgHelperService _pmdgHelperService;
-
     private readonly ObservableCollection<IDeviceService> _inputOutputDevices;
-    private readonly ObservableCollection<ProfileCreatorModel> _profileCreatorModels = [];
 
-    public IEnumerable<ProfileCreatorModel> FilteredProfileCreatorModels { get; private set; } = [];
+    private readonly ObservableCollection<Tuple<string, ProfileCreatorModel>> _profileCreatorModelsByFileName = [];
+    private readonly List<ProfileService> _profiles = [];
+    private readonly FileSystemWatcher _watcher;
 
-    private IEnumerable<ProfileCreatorModel> GetFilteredProfileCreatorModels()
+    [ObservableProperty]
+    private IEnumerable<Tuple<string, ProfileCreatorModel>> _filteredProfileCreatorModelsByFileName = [];
+
+    private IEnumerable<Tuple<string, ProfileCreatorModel>> GetFilteredProfileCreatorModels()
     {
-        return IsFiltered ? _profileCreatorModels : _profileCreatorModels.Where(x => _inputOutputDevices.Any(y => y.DeviceName == x.DeviceName));
+        return _profileCreatorModelsByFileName.Where(x => _inputOutputDevices.Any(y => y.DeviceName == x.Item2.DeviceName));
     }
 
     [ObservableProperty]
-    private ObservableCollection<ProfileMapping>? _deviceProfileList;
-
-    private readonly List<ProfileService> _profiles = [];
+    private ObservableCollection<ProfileMapping> _profileMappings = [];
 
     [ObservableProperty]
     private string? _aircraftTitle;
 
-    public HomeViewModel(ILogger<HomeViewModel> logger,SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, ObservableCollection<IDeviceService> inputOutputDevices)
+
+    public HomeViewModel(ILogger<HomeViewModel> logger, SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, ObservableCollection<IDeviceService> inputOutputDevices, SettingsViewModel settingsViewModel)
     {
         _logger = logger;
         _simConnectClientService = simConnectClientService;
         _pmdgHelperService = pmdgHelperService;
-        _simConnectClientService.AircraftTitleChanged += s => AircraftTitle = s; 
-        
+        _simConnectClientService.AircraftTitleChanged += title => AircraftTitle = title;
+
         _inputOutputDevices = inputOutputDevices;
-        _inputOutputDevices.CollectionChanged += (_, _) =>
+        _inputOutputDevices.CollectionChanged += (_, _) => { FilteredProfileCreatorModelsByFileName = GetFilteredProfileCreatorModels(); };
+
+        ReadAllProfiles();
+        
+        _watcher = new FileSystemWatcher(App.ProfilesPath, "*.json");
+        _watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+        _watcher.EnableRaisingEvents = true;
+        EnableFileSystemWatcher();
+    }
+
+    private void EnableFileSystemWatcher()
+    {
+        _watcher.Changed += OnChanged;
+        _watcher.Created += OnChanged;
+        _watcher.Deleted += OnChanged;
+        _watcher.Renamed += OnRenamed;
+    }
+
+    private void DisableFileSystemWatcher()
+    {
+        _watcher.Renamed -= OnRenamed;
+        _watcher.Deleted -= OnChanged;
+        _watcher.Created -= OnChanged;
+        _watcher.Changed -= OnChanged;
+    }
+
+    private void OnChanged(object sender, FileSystemEventArgs e)
+    {
+        switch (e.ChangeType)
         {
-            FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
-            OnPropertyChanged(nameof(FilteredProfileCreatorModels));
-        };
+            case WatcherChangeTypes.Created:
+                AddProfile(e.FullPath);
+                break;
+
+            case WatcherChangeTypes.Deleted:
+                ReplaceProfilesCreatorModels(e.FullPath, remove:true);
+                break;
+
+            case WatcherChangeTypes.Changed:
+                ReplaceProfilesCreatorModels(e.FullPath);
+                break;
+        }
+        
+        FilteredProfileCreatorModelsByFileName = GetFilteredProfileCreatorModels();
     }
-    
-#if DEBUG
-    public HomeViewModel()
+
+    private void OnRenamed(object sender, RenamedEventArgs e)
     {
-        _logger = new LoggerFactory().CreateLogger<HomeViewModel>();
-        _pmdgHelperService = new PmdgHelperService();
-        _simConnectClientService = new SimConnectClientService(_pmdgHelperService ,Ioc.Default.GetRequiredService<SignalRClientService>());
-        _inputOutputDevices =
-        [
-            new DeviceSerialService()
-        ];
+        if (string.IsNullOrEmpty(e.OldName) || string.IsNullOrEmpty(e.Name))
+        {
+            return;
+        }
 
-        _profileCreatorModels =
-        [
-            new ProfileCreatorModel { DeviceName = "Device 1", ProfileName = "Profile 1" },
-            new ProfileCreatorModel { DeviceName = "Device 2", ProfileName = "Profile 2" }
-        ];
+        if (!e.Name.EndsWith(".json"))
+        {
+            AddProfile(e.OldFullPath);
+            return;
+        }
 
-        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 1", ProfileName = "Profile 1" });
-        DeviceProfileList?.Add(new ProfileMapping { DeviceName = "Device 2", ProfileName = "Profile 2" });
+        string name = Path.GetFileNameWithoutExtension(e.Name);
+        ReplaceProfilesCreatorModels(e.OldFullPath, name);
     }
-#endif
-    
-    protected override void OnActivated()
-    {
-        _profileCreatorModels.Clear();
 
+    private ProfileCreatorModel? DeserializeProfileCreatorModel(string fullPath)
+    {
+        string? allText = null;
+
+        for (int i = 0; i < 3; i++)
+        {
+            try
+            {
+                allText = File.ReadAllText(fullPath);
+                break;
+            }
+            catch (IOException)
+            {
+            }
+        }
+
+        if (allText is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ProfileCreatorModel>(allText);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "An error occurred: {Message}", e.Message);
+            return null;
+        }
+    }
+
+    private static string GetProfileName(string fullPath)
+    {
+        return Path.GetFileNameWithoutExtension(fullPath);
+    }
+
+    private void AddProfile(string fullPath)
+    {
+        string name = GetProfileName(fullPath);
+        ProfileCreatorModel? profileCreatorModel = DeserializeProfileCreatorModel(fullPath);
+
+        if (profileCreatorModel is not null)
+        {
+            _profileCreatorModelsByFileName.Add(new Tuple<string, ProfileCreatorModel>(name, profileCreatorModel));
+        }
+    }
+
+    private void ReplaceProfilesCreatorModels(string fullPath, string? newName = null, bool remove = false)
+    {
+        string oldName = Path.GetFileNameWithoutExtension(fullPath);
+
+        var tuple = _profileCreatorModelsByFileName.FirstOrDefault(x => x.Item1 == oldName);
+        if (tuple is null)
+        {
+            return;
+        }
+
+        if (remove)
+        {
+            _profileCreatorModelsByFileName.Remove(tuple);
+        }
+
+        int index = _profileCreatorModelsByFileName.IndexOf(tuple);
+        if (index == -1)
+        {
+            return;
+        }
+
+        ProfileCreatorModel? profileCreatorModel = tuple.Item2;
+
+        if (string.IsNullOrEmpty(newName))
+        {
+            profileCreatorModel = DeserializeProfileCreatorModel(fullPath);
+        }
+
+        if (profileCreatorModel is null)
+        {
+            return;
+        }
+
+        newName ??= oldName;
+        _profileCreatorModelsByFileName[index] = new Tuple<string, ProfileCreatorModel>(newName, profileCreatorModel);
+        FilteredProfileCreatorModelsByFileName = GetFilteredProfileCreatorModels();
+    }
+
+    private void ReadAllProfiles()
+    {
         if (!Directory.Exists(App.ProfilesPath))
         {
             return;
         }
 
-        if (DeviceProfileList is null && File.Exists(App.MappingsFile))
+        if (File.Exists(App.MappingsFile))
         {
-            DeviceProfileList = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(File.ReadAllText(App.MappingsFile)) ?? throw new InvalidOperationException();
-
-            DeviceProfileList.CollectionChanged += (_, _) => DeviceProfileListHasChanged = true;
-
-            foreach (ProfileMapping profileMapping in DeviceProfileList)
+            ObservableCollection<ProfileMapping>? profileMappings = null;
+            try
             {
-                profileMapping.PropertyChanged += (_, _) => DeviceProfileListHasChanged = true;
+                string allText = File.ReadAllText(App.MappingsFile);
+                profileMappings = JsonSerializer.Deserialize<ObservableCollection<ProfileMapping>>(allText);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occurred: {Message}", e.Message);
+            }
+
+            if (profileMappings is not null)
+            {
+                ProfileMappings = profileMappings;
+                ProfileMappings.CollectionChanged += (_, _) => DeviceProfileListHasChanged = true;
+
+                if (ProfileMappings.Count == 0)
+                {
+                    AddProfileMapping();
+                }
+
+                OnProfileMappingPropertyChanged(ProfileMappings[^1], new PropertyChangedEventArgs(null));
+
+                foreach (ProfileMapping profileMapping in ProfileMappings)
+                {
+                    profileMapping.PropertyChanged += OnProfileMappingPropertyChanged;
+                }
             }
         }
 
         string[] jsonFilePaths = Directory.GetFiles(App.ProfilesPath, "*.json");
         foreach (string filePath in jsonFilePaths)
         {
-            if (!filePath.EndsWith(".json"))
-            {
-                return;
-            }
-
-            try
-            {
-                _profileCreatorModels.Add(JsonSerializer.Deserialize<ProfileCreatorModel>(File.ReadAllText(filePath)) ?? throw new InvalidOperationException());
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "An error occurred: {Message}", e.Message);
-            }
+            AddProfile(filePath);
         }
+
+        FilteredProfileCreatorModelsByFileName = GetFilteredProfileCreatorModels();
     }
 
-    private bool _isFiltered;
-
-    public bool IsFiltered
+    private void OnProfileMappingPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        get => _isFiltered;
-        set
+        if (sender is not ProfileMapping changedProfileMapping)
         {
-            _isFiltered = value;
-            FilteredProfileCreatorModels = GetFilteredProfileCreatorModels();
-            OnPropertyChanged(nameof(FilteredProfileCreatorModels));
+            return;
         }
+
+        if (ProfileMappings[^1] != changedProfileMapping &&
+            string.IsNullOrEmpty(changedProfileMapping.DeviceName) &&
+            string.IsNullOrEmpty(changedProfileMapping.Id) &&
+            string.IsNullOrEmpty(changedProfileMapping.Aircraft))
+        {
+            RemoveProfileMapping(changedProfileMapping);
+            DeviceProfileListHasChanged = true;
+            return;
+        }
+
+        if (ProfileMappings[^1] != changedProfileMapping)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(changedProfileMapping.DeviceName) &&
+            string.IsNullOrEmpty(changedProfileMapping.Id) &&
+            string.IsNullOrEmpty(changedProfileMapping.Aircraft))
+        {
+            return;
+        }
+
+        AddProfileMapping();
+        DeviceProfileListHasChanged = true;
     }
 
     [RelayCommand]
-    private void Add()
+    private void AddProfileMapping()
     {
-        DeviceProfileList ??= [];
         ProfileMapping profileMapping = new();
-        profileMapping.PropertyChanged += (_, _) => DeviceProfileListHasChanged = true;
-        DeviceProfileList.Add(profileMapping);
+        profileMapping.PropertyChanged += OnProfileMappingPropertyChanged;
+        ProfileMappings.Add(profileMapping);
     }
 
     [RelayCommand]
-    private void Delete(ProfileMapping profileMapping)
+    private void RemoveProfileMapping(ProfileMapping profileMapping)
     {
-        DeviceProfileList?.Remove(profileMapping);
+        ProfileMappings.Remove(profileMapping);
     }
 
     [ObservableProperty]
     private bool _deviceProfileListHasChanged;
 
     [RelayCommand]
-    public void SaveMappings()
+    public void SaveProfileMappings()
     {
-        if (DeviceProfileList is null)
-        {
-            return;
-        }
-
-        string serialize = JsonSerializer.Serialize(DeviceProfileList);
+        string serialize = JsonSerializer.Serialize(ProfileMappings);
         File.WriteAllText(App.MappingsFile, serialize);
         DeviceProfileListHasChanged = false;
     }
@@ -165,7 +310,7 @@ public partial class HomeViewModel : ObservableRecipient
     private bool _isStarted;
 
     [RelayCommand(IncludeCancelCommand = true)]
-    private async Task StartProfilesAsync(CancellationToken token)
+    private async Task StartProfilesAsync(CancellationToken token = default)
     {
         IsStarted = !IsStarted;
 
@@ -180,31 +325,28 @@ public partial class HomeViewModel : ObservableRecipient
 
             AircraftTitle = null;
 
+            EnableFileSystemWatcher();
             return;
         }
 
+        DisableFileSystemWatcher();
         AircraftTitle = await _simConnectClientService.ConnectAsync(token);
 
         if (!token.IsCancellationRequested)
         {
-            if (DeviceProfileList is null)
-            {
-                return;
-            }
-
-            foreach (ProfileMapping profileMapping in DeviceProfileList)
+            foreach (ProfileMapping profileMapping in ProfileMappings)
             {
                 if (!profileMapping.IsActive)
                 {
                     continue;
                 }
-                
+
                 if (!string.IsNullOrEmpty(AircraftTitle) && !string.IsNullOrEmpty(profileMapping.Aircraft) && !AircraftTitle.Contains(profileMapping.Aircraft))
                 {
                     continue;
                 }
 
-                ProfileCreatorModel? profileCreatorModel = _profileCreatorModels.FirstOrDefault(x => x.ProfileName == profileMapping.ProfileName);
+                ProfileCreatorModel? profileCreatorModel = _profileCreatorModelsByFileName.FirstOrDefault(x => x.Item1 == profileMapping.ProfileName)?.Item2;
 
                 if (profileCreatorModel is null)
                 {
@@ -226,5 +368,6 @@ public partial class HomeViewModel : ObservableRecipient
         }
 
         IsStarted = !IsStarted;
+        EnableFileSystemWatcher();
     }
 }
