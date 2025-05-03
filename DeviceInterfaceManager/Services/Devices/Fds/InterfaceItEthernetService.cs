@@ -12,11 +12,11 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using DeviceInterfaceManager.Models.Devices;
 
-namespace DeviceInterfaceManager.Services.Devices;
+namespace DeviceInterfaceManager.Services.Devices.Fds;
 
 public class InterfaceItEthernetService : DeviceServiceBase
 {
-    public InterfaceItEthernetService(string iPAddress)
+    public InterfaceItEthernetService(string? iPAddress)
     {
         Id = iPAddress;
         Icon = (Geometry?)Application.Current!.FindResource("Ethernet");
@@ -69,7 +69,7 @@ public class InterfaceItEthernetService : DeviceServiceBase
         return ConnectionStatus.Connected;
     }
 
-    public override async void Disconnect()
+    public override async Task Disconnect()
     {
         await CloseStream();
     }
@@ -80,19 +80,33 @@ public class InterfaceItEthernetService : DeviceServiceBase
 
     private NetworkStream? _networkStream;
 
-    public static async Task<string> ReceiveControllerDiscoveryDataAsync()
+    public static async Task<List<string>> ReceiveControllerDiscoveryDataAsync()
     {
+        List<string> responses = [];
         UdpClient client = new() { EnableBroadcast = true };
         client.Send("D"u8, new IPEndPoint(IPAddress.Broadcast, 30303));
-        try
+
+        DateTime endTime = DateTime.UtcNow.AddSeconds(1);
+        while (DateTime.UtcNow < endTime)
         {
-            UdpReceiveResult result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1));
-            return result.RemoteEndPoint.Address.ToString();
+            try
+            {
+                var receiveTask = client.ReceiveAsync();
+                if (await Task.WhenAny(receiveTask, Task.Delay(endTime - DateTime.UtcNow)) != receiveTask)
+                {
+                    continue;
+                }
+
+                UdpReceiveResult result = await receiveTask;
+                responses.Add(result.RemoteEndPoint.Address.ToString());
+            }
+            catch (Exception)
+            {
+                //
+            }
         }
-        catch (Exception)
-        {
-            return string.Empty;
-        }
+
+        return responses;
     }
 
     private async Task<bool> PingHostAsync()
