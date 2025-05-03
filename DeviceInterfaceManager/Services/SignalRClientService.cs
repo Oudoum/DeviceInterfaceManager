@@ -28,7 +28,10 @@ public class SignalRClientService
     {
         if (!IPAddress.TryParse(ipAddress, out IPAddress? address))
         {
-            _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
+            if (ipAddress is not null)
+            {
+                _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
+            }
             address = IPAddress.Loopback;
         }
 
