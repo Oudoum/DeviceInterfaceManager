@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DeviceInterfaceManager.Models;
 
-public sealed partial class Settings : ObservableObject
+public partial class Settings : ObservableObject
 {
     [ObservableProperty]
     private bool _minimizedHide;
@@ -33,10 +33,10 @@ public sealed partial class Settings : ObservableObject
     private bool _fdsEthernet;
 
     [ObservableProperty]
-    private ObservableCollection<string>? _fdsEthernetConnections = [];
+    private bool _fsCockpit;
 
     [ObservableProperty]
-    private bool _fsCockpit;
+    private ObservableCollection<IConnection>? _connections = [];
 
     public static Settings CreateSettings()
     {
@@ -65,11 +65,44 @@ public sealed partial class Settings : ObservableObject
     {
         base.OnPropertyChanged(e);
 
-        if (e.PropertyName == nameof(FdsEthernetConnections) && FdsEthernetConnections is not null)
+        if (e.PropertyName == nameof(Connections) && Connections is not null)
         {
-            FdsEthernetConnections.CollectionChanged += (_, _) => SaveSettings();
+            Connections.CollectionChanged += (_, _) => SaveSettings();
         }
 
         SaveSettings();
     }
+}
+
+public partial class Connection : ObservableObject, IConnection
+{
+    public Connection()
+    {
+    }
+
+    public Connection(string driverName, string connectionName)
+    {
+        DriverName = driverName;
+        ConnectionName = connectionName;
+    }
+
+    [ObservableProperty]
+    private string? _driverName;
+
+    [ObservableProperty]
+    private string? _connectionName;
+}
+
+public partial class FsCockpitConnection : Connection
+{
+    public FsCockpitConnection()
+    {
+    }
+
+    public FsCockpitConnection(string driverName, string connectionName) : base(driverName, connectionName)
+    {
+    }
+
+    [ObservableProperty]
+    private bool _hasHighTensionDetents;
 }
