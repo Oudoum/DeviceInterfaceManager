@@ -7,10 +7,6 @@
              d:DesignHeight="500"
              x:Class="DeviceInterfaceManager.Views.PreconditionView"
              x:DataType="vm:BaseCreatorViewModel">
-    
-    <Design.DataContext>
-        <vm:OutputCreatorViewModel />
-    </Design.DataContext>
 
     <StackPanel Margin="20" MinWidth="400">
         <ListBox Height="158"
