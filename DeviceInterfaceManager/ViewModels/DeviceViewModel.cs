@@ -1,7 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using DeviceInterfaceManager.Services.Devices;
-using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
@@ -12,9 +10,9 @@ public class DeviceViewModel : ObservableObject
         DeviceService = deviceService;
         InformationViewModel = new InformationViewModel(deviceService);
         InputTestViewModel = new InputTestViewModel(deviceService);
-        OutputTestViewModel = new OutputTestViewModel(Ioc.Default.GetService<ILogger<OutputTestViewModel>>()!, deviceService);
+        OutputTestViewModel = new OutputTestViewModel(deviceService);
     }
-    
+
     public IDeviceService DeviceService { get; }
 
     public InformationViewModel InformationViewModel { get; }
