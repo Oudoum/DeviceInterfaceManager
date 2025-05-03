@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels.Dialogs"
+             xmlns:connections="clr-namespace:DeviceInterfaceManager.Models"
+             xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="DeviceInterfaceManager.Views.Dialogs.SelectInternetProtocolDialog"
+             x:DataType="vm:SelectInternetProtocolDialogModel">
+    <StackPanel Orientation="Vertical"
+                Spacing="25">
+        <TextBlock Text="{Binding Text}" />
+        <Button HorizontalAlignment="Center"
+                Content="Search"
+                Command="{Binding SearchForDevicesCommand}" />
+        <Grid ColumnDefinitions="Auto Auto"
+              HorizontalAlignment="Center"
+              Margin="20 0 20 20">
+            <TextBox Grid.Column="0"
+                     Text="{Binding PreSelectedConnection.ConnectionName, FallbackValue=''}" />
+            <Button Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    Margin="10 0 10 0"
+                    Command="{Binding AddMappingCommand}">
+                <Button.Content>
+                    <PathIcon Data="{StaticResource PlusBox}" />
+                </Button.Content>
+            </Button>
+        </Grid>
+
+        <ListBox HorizontalAlignment="Center"
+                 BorderThickness="2"
+                 ItemsSource="{Binding FilteredConnections}"
+                 SelectedItem="{Binding SelectedConnection}"
+                 IsVisible="{Binding !!FilteredConnections.Count}"
+                 SelectionMode="Toggle">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type connections:Connection}">
+                    <Grid ColumnDefinitions="Auto Auto Auto">
+                        <TextBlock Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding DriverName}"
+                                   Margin="0 0 20 0" />
+                        <TextBlock Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding ConnectionName}"
+                                   Margin="0 0 20 0" />
+                        <Grid.ContextFlyout>
+                            <controls:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                <controls:CommandBarButton ToolTip.Tip="Delete"
+                                                           Command="{Binding $parent[UserControl].((vm:SelectInternetProtocolDialogModel)DataContext).RemoveMappingCommand,
+                                                         FallbackValue={x:Null}}"
+                                                           CommandParameter="{Binding}">
+                                    <controls:CommandBarButton.IconSource>
+                                        <controls:PathIconSource Data="{StaticResource TrashCanOutline}" />
+                                    </controls:CommandBarButton.IconSource>
+                                </controls:CommandBarButton>
+                            </controls:CommandBarFlyout>
+                        </Grid.ContextFlyout>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </StackPanel>
+</UserControl>
