@@ -17,14 +17,11 @@
              x:Class="DeviceInterfaceManager.Views.OutputCreatorView"
              x:DataType="vm:OutputCreatorViewModel">
 
-    <Design.DataContext>
-        <vm:OutputCreatorViewModel />
-    </Design.DataContext>
-
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
         <converters:NullableCharConverter x:Key="NullableCharConverter" />
         <converters:DoubleToIntConverter x:Key="DoubleToIntConverter" />
+        <converters:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
     </UserControl.Resources>
 
     <Grid>
@@ -208,7 +205,7 @@
 
             <TabItem Header="Modify">
                 <TabItem.DataTemplates>
-                    
+
                     <!-- Transformation -->
                     <DataTemplate DataType="{x:Type modifiers:Transformation}">
                         <Grid ColumnDefinitions="Auto *">
@@ -253,7 +250,7 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
-                    
+
                     <!-- Comparison -->
                     <DataTemplate DataType="{x:Type modifiers:Comparison}">
                         <Grid ColumnDefinitions="Auto *">
@@ -323,7 +320,7 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
-                    
+
                     <!-- Interpolation -->
                     <DataTemplate DataType="{x:Type modifiers:Interpolation}">
                         <Grid ColumnDefinitions="Auto *">
@@ -362,28 +359,25 @@
                                     <ItemsControl ItemsSource="{Binding Values}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Margin="0,10,0,0"
-                                                        Padding="5">
-                                                    <StackPanel Orientation="Horizontal"
-                                                                Spacing="5">
-                                                        <StackPanel.Styles>
-                                                            <Style Selector="DataValidationErrors">
-                                                                <Setter Property="Theme" Value="{StaticResource TooltipDataValidationErrors}" />
-                                                            </Style>
-                                                        </StackPanel.Styles>
-                                                        <TextBlock Text="Input value"
-                                                                   VerticalAlignment="Center" />
-                                                        <TextBox Text="{Binding Key}"
-                                                                 Width="140" />
-                                                        <TextBlock Text="maps to"
-                                                                   VerticalAlignment="Center" />
-                                                        <TextBox Text="{Binding Value}"
-                                                                 Width="140" />
-                                                        <Button IsVisible="{Binding IsVisible}"
-                                                                Command="{Binding $parent[StackPanel;1].((modifiers:Interpolation)DataContext).RemoveItemCommand,
-                                                                FallbackValue={x:Null}}"
-                                                                CommandParameter="{Binding}">
-                                                            <PathIcon Data="{StaticResource TrashCanOutline}"/>
+                                                <Border Margin="0,10,0,0" Padding="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                        <TextBlock Text="Input value" VerticalAlignment="Center" />
+                                                        <TextBox Text="{Binding Key}" Width="140" />
+                                                        <TextBlock Text="maps to" VerticalAlignment="Center" />
+                                                        <TextBox Text="{Binding Value}" Width="140" />
+                                                        <Button
+                                                            Command="{Binding $parent[StackPanel;1].((modifiers:Interpolation)DataContext).RemoveItemCommand,
+                                                            FallbackValue={x:Null}}"
+                                                            CommandParameter="{Binding}">
+                                                            <Button.IsVisible>
+                                                                <MultiBinding
+                                                                    Converter="{StaticResource IndexToVisibilityConverter}">
+                                                                    <Binding />
+                                                                    <Binding
+                                                                        RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}" />
+                                                                </MultiBinding>
+                                                            </Button.IsVisible>
+                                                            <PathIcon Data="{StaticResource TrashCanOutline}" />
                                                         </Button>
                                                     </StackPanel>
                                                 </Border>
@@ -406,7 +400,7 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
-                    
+
                     <!-- Padding -->
                     <DataTemplate DataType="{x:Type modifiers:Padding}">
                         <Grid ColumnDefinitions="Auto *">
@@ -469,7 +463,65 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
-                    
+
+                    <!-- Inserting -->
+                    <DataTemplate DataType="{x:Type modifiers:Inserting}">
+                        <Grid ColumnDefinitions="Auto *">
+                            <Rectangle Grid.Column="0"
+                                       VerticalAlignment="Top"
+                                       Width="20"
+                                       Height="45"
+                                       Fill="Gray" />
+                            <Expander Grid.Column="1">
+                                <Expander.Header>
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="5">
+                                        <ToggleSwitch IsChecked="{Binding IsActive}"
+                                                      Margin="0 -3 0 0"
+                                                      OnContent=""
+                                                      OffContent="" />
+                                        <TextBlock Text="Padding"
+                                                   FontWeight="Bold"
+                                                   Width="100"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding
+                                                    StringFormat="Character: &quot;{0}&quot; | Position: {1}">
+                                                    <Binding Path="Character" />
+                                                    <Binding Path="Position" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Expander.Header>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Center"
+                                            Spacing="5">
+                                    <TextBox VerticalAlignment="Center"
+                                             MaxLength="1"
+                                             Text="{Binding Character, Converter={StaticResource NullableCharConverter}}" />
+                                    <TextBox VerticalAlignment="Center"
+                                             Watermark="Length"
+                                             Width="120"
+                                             Text="{Binding Position}" />
+                                </StackPanel>
+                            </Expander>
+                            <Grid.ContextFlyout>
+                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                                         Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
+                                                         FallbackValue={x:Null}}"
+                                                         CommandParameter="{Binding}">
+                                        <ui:CommandBarButton.IconSource>
+                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:CommandBarButton.IconSource>
+                                    </ui:CommandBarButton>
+                                </ui:CommandBarFlyout>
+                            </Grid.ContextFlyout>
+                        </Grid>
+                    </DataTemplate>
+
                     <!-- Substring -->
                     <DataTemplate DataType="{x:Type modifiers:Substring}">
                         <Grid ColumnDefinitions="Auto *">
@@ -535,6 +587,12 @@
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
+
+                    <!-- Blinking -->
+                    <DataTemplate DataType="{x:Type modifiers:Substring}">
+                        <TextBlock Text="Work in progress!" />
+                    </DataTemplate>
+
                 </TabItem.DataTemplates>
                 <Grid RowDefinitions="Auto *">
                     <DropDownButton Grid.Row="0"
@@ -557,7 +615,13 @@
                                 <MenuItem Header="Padding"
                                           Command="{Binding AddModifierCommand}"
                                           CommandParameter="{Binding $self.Header}" />
+                                <MenuItem Header="Inserting"
+                                          Command="{Binding AddModifierCommand}"
+                                          CommandParameter="{Binding $self.Header}" />
                                 <MenuItem Header="Substring"
+                                          Command="{Binding AddModifierCommand}"
+                                          CommandParameter="{Binding $self.Header}" />
+                                <MenuItem Header="Blinking"
                                           Command="{Binding AddModifierCommand}"
                                           CommandParameter="{Binding $self.Header}" />
                             </MenuFlyout>
