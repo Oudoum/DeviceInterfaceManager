@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -18,6 +21,8 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using HotAvalonia;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager;
 
@@ -33,13 +38,23 @@ public class App : Application
 
     public override void Initialize()
     {
+        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
 
         Directory.CreateDirectory(ProfilesPath);
 
         Ioc.Default.ConfigureServices(new ServiceCollection()
             .AddLogging(loggingBuilder => loggingBuilder.AddSerilog())
-            .AddSingleton<IDialogService, DialogService>(provider => new DialogService(new DialogManager(new ViewLocator(), new DialogFactory().AddFluent()), provider.GetService))
+            .AddSingleton<IDialogService, DialogService>(provider =>
+                new DialogService(
+                    new DialogManager(
+                        new ViewLocator(),
+                        new DialogFactory().AddFluent(),
+                        provider.GetService<ILogger<DialogManager>>()
+                    ),
+                    provider.GetService
+                )
+            )
             .AddSingleton<MainWindow>()
             .AddSingleton<MainWindowViewModel>()
             .AddSingleton<HomeViewModel>()
@@ -47,6 +62,8 @@ public class App : Application
             .AddSingleton<SettingsViewModel>()
             .AddTransient<AskTextBoxDialogModel>()
             .AddTransient<AskComboBoxDialogModel>()
+            .AddTransient<SelectSerialPortDialogModel>()
+            .AddTransient<SelectInternetProtocolDialogModel>()
             .AddSingleton<ObservableCollection<IDeviceService>>()
             .AddSingleton<PmdgHelperService>()
             .AddSingleton<SimConnectClientService>()
@@ -55,10 +72,8 @@ public class App : Application
             .BuildServiceProvider());
     }
 
-    public override async void OnFrameworkInitializationCompleted()
+    public override void OnFrameworkInitializationCompleted()
     {
-        // Line below is needed to remove Avalonia data validation.
-        // Without this line you will get duplicate validations from both Avalonia and CT
         BindingPlugins.DataValidators.RemoveAt(0);
         GC.KeepAlive(typeof(DialogService));
 
@@ -68,6 +83,12 @@ public class App : Application
         {
             case IClassicDesktopStyleApplicationLifetime desktop:
             {
+                if (IsApplicationAlreadyRunning())
+                {
+                    desktop.Shutdown();
+                    return;
+                }
+
                 DialogService.Show(null, MainWindowViewModel);
 
                 desktop.ShutdownRequested += (_, _) =>
@@ -77,7 +98,7 @@ public class App : Application
                         item.Disconnect();
                     }
 
-                    MainWindowViewModel.HomeViewModel.SaveMappings();
+                    MainWindowViewModel.HomeViewModel.SaveProfileMappings();
                 };
 
                 if (desktop.MainWindow is not null)
@@ -104,12 +125,25 @@ public class App : Application
             }
         }
 
-        if (!Design.IsDesignMode)
+        base.OnFrameworkInitializationCompleted();
+    }
+
+    private static bool IsApplicationAlreadyRunning()
+    {
+        Assembly? assembly = Assembly.GetEntryAssembly();
+
+        if (assembly is null)
         {
-            await SettingsViewModel.Startup();
+            return false;
         }
 
-        base.OnFrameworkInitializationCompleted();
+        string? assemblyName = assembly.GetName().Name;
+        if (string.IsNullOrEmpty(assemblyName))
+        {
+            return false;
+        }
+
+        return Process.GetProcesses().Count(p => p.ProcessName.Contains(assemblyName)) > 1;
     }
 
     private void HideWindow(Window mainWindow)
