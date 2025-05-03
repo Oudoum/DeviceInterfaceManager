@@ -34,9 +34,16 @@ public partial class Padding : ObservableObject, IModifier
 
     public void Apply(ref StringBuilder value)
     {
-        if (value.Length > Length)
+        int fullLength = CountDecimalPoints(value) + Length;
+
+        if (value.Length == fullLength)
         {
-            value.Length = Length;
+            return;
+        }
+        
+        if (value.Length > fullLength)
+        {
+            value.Length = fullLength;
             return;
         }
 
@@ -48,18 +55,32 @@ public partial class Padding : ObservableObject, IModifier
         switch (Direction)
         {
             case PaddingDirection.Left:
-                while (value.Length < Length)
+                while (value.Length < fullLength)
                 {
                     value.Insert(0, Character);
                 }
                 break;
 
             case PaddingDirection.Right:
-                value.Append(Character.Value, Length - value.Length);
+                value.Append(Character.Value, fullLength - value.Length);
                 break;
         }
     }
-    
+
+    private static int CountDecimalPoints(StringBuilder value)
+    {
+        int count = 0;
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '.')
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public object Clone()
     {
         return MemberwiseClone();
