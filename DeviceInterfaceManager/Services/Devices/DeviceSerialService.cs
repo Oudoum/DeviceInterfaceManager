@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -48,8 +49,8 @@ public class DeviceSerialService : DeviceServiceBase
         return Task.FromResult(ConnectionStatus.Connected);
     }
 
-    public override void Disconnect()
+    public override Task Disconnect()
     {
-        
+        return Task.CompletedTask;
     }
 }
