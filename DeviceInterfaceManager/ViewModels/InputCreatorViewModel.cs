@@ -45,22 +45,6 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         DeviceService.AnalogValueChanged += AnalogValueChanged;
     }
 
-#if DEBUG
-    public InputCreatorViewModel()
-    {
-        _inputCreator =
-            new InputCreator
-            {
-                IsActive = true,
-                Preconditions = [new Precondition()],
-                Description = "Description",
-                InputType = ProfileCreatorModel.Switch,
-                Input = 1
-            };
-        Components = new List<Component?>();
-    }
-#endif
-
     public void OnClosed()
     {
         DeviceService.SwitchPositionChanged -= SwitchPositionChanged;
@@ -71,7 +55,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
-        if (InputType == ProfileCreatorModel.Switch || GetPosition && e.IsPressed)
+        if (InputType == ProfileCreatorModel.Switch && GetPosition && e.IsPressed)
         {
             Component = Components?.FirstOrDefault(i => i?.Position == e.Position);
         }
