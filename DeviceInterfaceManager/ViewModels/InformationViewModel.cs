@@ -9,6 +9,6 @@ public class InformationViewModel : ObservableObject
     {
         DeviceService = deviceService;
     }
-    
+
     public IDeviceService DeviceService { get; }
 }
