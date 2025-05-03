@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -12,8 +11,6 @@ namespace DeviceInterfaceManager.Services;
 
 public class PmdgHelperService
 {
-    public static readonly CultureInfo EnglishCulture = CultureInfo.GetCultureInfo("en-US");
-
     public event EventHandler<PmdgDataFieldChangedEventArgs>? FieldChanged;
 
     private B737.Data? _pmdg737Data;
@@ -174,9 +171,9 @@ public class PmdgHelperService
         simConnect.AddToClientDataDefinition(definitionId, 0, (uint)Marshal.SizeOf<T>(), 0, 0);
         // Register the data area structure
         simConnect.RegisterStruct<SIMCONNECT_RECV_CLIENT_DATA, T>(definitionId);
-        // Sign up for notification of data change once
+        // Sign up to notify data change once
         RequestClientData(simConnect, clientDataId, definitionId, requestId, SIMCONNECT_CLIENT_DATA_PERIOD.ONCE);
-        // Sign up for notification of data on set
+        // Sign up to notify data on set
         RequestClientData(simConnect, clientDataId, definitionId, requestId, SIMCONNECT_CLIENT_DATA_PERIOD.ON_SET);
     }
 
@@ -197,7 +194,7 @@ public class PmdgHelperService
 
     private static void RequestClientData(SimConnect simConnect, Enum clientDataId, Enum definitionId, Enum requestId, SIMCONNECT_CLIENT_DATA_PERIOD period)
     {
-        // Sign up for notification of data change
+        // Sign up to notify data change
         simConnect.RequestClientData(
             clientDataId,
             requestId,
