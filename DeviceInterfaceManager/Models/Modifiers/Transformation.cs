@@ -21,7 +21,14 @@ public partial class Transformation : ObservableObject, IModifier
 
         try
         {
-            value = new StringBuilder(((double)(calcExpression.Evaluate() ?? value)).ToString(CultureInfo.InvariantCulture));
+            double? result = (double?)calcExpression.Evaluate();
+
+            if (result is null)
+            {
+                return;
+            }
+            
+            value = new StringBuilder(result.Value.ToString(CultureInfo.InvariantCulture));
         }
         catch (Exception)
         {
