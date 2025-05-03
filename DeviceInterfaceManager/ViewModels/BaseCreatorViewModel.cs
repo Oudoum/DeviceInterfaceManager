@@ -26,32 +26,6 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
         SelectedOutputCreator = OutputCreators.FirstOrDefault(oc => SelectedPrecondition is not null && oc.Id == SelectedPrecondition.ReferenceId);
     }
 
-#if DEBUG
-    protected BaseCreatorViewModel()
-    {
-        DeviceService = new DeviceSerialService();
-        OutputCreators =
-        [
-            new OutputCreator
-            {
-                IsActive = true,
-                Preconditions = [new Precondition()],
-                Description = "Description 1",
-                OutputType = ProfileCreatorModel.Led,
-                Outputs = [1, 2, 3]
-            },
-            new OutputCreator
-            {
-                IsActive = true,
-                Preconditions = [new Precondition()],
-                Description = "Description 2",
-                OutputType = ProfileCreatorModel.Led,
-                Outputs = [1, 2, 3]
-            }
-        ];
-    }
-#endif
-
     public virtual Precondition[]? Copy()
     {
         if (Preconditions is null || Preconditions.Count == 0)
