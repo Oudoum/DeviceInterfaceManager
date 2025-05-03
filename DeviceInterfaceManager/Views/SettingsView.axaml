@@ -10,10 +10,6 @@
              x:Class="DeviceInterfaceManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-    <Design.DataContext>
-        <vm:SettingsViewModel />
-    </Design.DataContext>
-
     <ScrollViewer Padding="20 20 20 0">
         <StackPanel Spacing="8">
 
@@ -88,42 +84,16 @@
                 <ui:SettingsExpanderItem Content="Flightdeck Solutions E-Series">
                     <ui:SettingsExpanderItem.Footer>
                         <StackPanel Orientation="Horizontal"
-                                    Spacing="25">
-                            <Button Content="Search"
-                                    Command="{Binding GetInterfaceItEthernetDevicesCommand}" />
-                            <Button Content="Add"
-                                    Command="{Binding AddInterfaceItEthernetConnectionCommand}"
-                                    CommandParameter="{Binding #TextBox.Text}" />
-                            <TextBox Name="TextBox"
-                                     Classes="clearButton"
-                                     Watermark="127.0.0.1"
-                                     VerticalAlignment="Center"
-                                     HorizontalContentAlignment="Center"
-                                     Width="120" />
-                            <ToggleSwitch IsChecked="{Binding Settings.FdsEthernet }"
-                                          Command="{Binding ToggleFdsEthernetCommand }" />
+                                    Spacing="10">
+                            <Button Command="{Binding ChangeInterfaceItEthernetDeviceCommand}"
+                                    IsEnabled="{Binding !Settings.FdsEthernet}">
+                                <Button.Content>
+                                    <PathIcon Data="{StaticResource CogOutline}" />
+                                </Button.Content>
+                            </Button>
+                            <ToggleSwitch IsChecked="{Binding Settings.FdsEthernet}"
+                                          Command="{Binding ToggleFdsEthernetCommand}" />
                         </StackPanel>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-                <ui:SettingsExpanderItem>
-                    <ui:SettingsExpanderItem.Footer>
-                        <ItemsControl ItemsSource="{Binding Settings.FdsEthernetConnections}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}"
-                                               Background="Transparent">
-                                        <TextBlock.ContextFlyout>
-                                            <MenuFlyout>
-                                                <MenuItem Header="Remove"
-                                                          Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).RemoveInterfaceItEthernetConnectionCommand,
-                                                          FallbackValue={x:Null}}"
-                                                          CommandParameter="{Binding}" />
-                                            </MenuFlyout>
-                                        </TextBlock.ContextFlyout>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
@@ -160,12 +130,40 @@
                         <ToggleSwitch IsEnabled="False" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
-                
+
                 <!-- FSCockpit -->
                 <ui:SettingsExpanderItem Content="FSCockpit">
                     <ui:SettingsExpanderItem.Footer>
-                        <ToggleSwitch IsChecked="{Binding Settings.FsCockpit}"
-                                      Command="{Binding ToggleFsCockpitCommand}" />
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <Button Command="{Binding ChangeFsCockpitDeviceCommand}"
+                                    IsEnabled="{Binding !Settings.FsCockpit}">
+                                <Button.Content>
+                                    <PathIcon Data="{StaticResource CogOutline}" />
+                                </Button.Content>
+                            </Button>
+                            <ToggleSwitch IsChecked="{Binding Settings.FsCockpit}"
+                                          Command="{Binding ToggleFsCockpitCommand}" />
+                        </StackPanel>
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+
+                <!-- Connections -->
+                <ui:SettingsExpanderItem IsVisible="{Binding !!Settings.Connections.Count}">
+                    <ui:SettingsExpanderItem.Footer>
+                        <ItemsControl ItemsSource="{Binding Settings.Connections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="* *">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding DriverName}"
+                                                   Margin="0 0 20 0" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ConnectionName}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
             </ui:SettingsExpander>
@@ -203,7 +201,7 @@
                                  Text="{Binding Settings.IpAddress}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="120"
-                                 MaxWidth="220"/>
+                                 MaxWidth="220" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
@@ -214,13 +212,7 @@
                                  Text="{Binding Settings.Port}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="90"
-                                 MaxWidth="180">
-                            <TextBox.Styles>
-                                <Style Selector="DataValidationErrors">
-                                    <Setter Property="Theme" Value="{StaticResource TooltipDataValidationErrors}" />
-                                </Style>
-                            </TextBox.Styles>
-                        </TextBox>
+                                 MaxWidth="180" />
                     </ui:SettingsExpanderItem.Footer>
                 </ui:SettingsExpanderItem>
 
