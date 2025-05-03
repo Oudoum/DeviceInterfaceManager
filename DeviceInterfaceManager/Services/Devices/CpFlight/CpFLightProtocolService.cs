@@ -40,12 +40,12 @@ namespace DeviceInterfaceManager.Services.Devices.CpFlight
 
         public override Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(ConnectionStatus.Connected);
         }
 
         public override Task Disconnect()
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         // protected override void DataReceived(byte[] data)
