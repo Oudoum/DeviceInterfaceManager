@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using DeviceInterfaceManager.Models.Devices;
 
-namespace DeviceInterfaceManager.Services.Devices
+namespace DeviceInterfaceManager.Services.Devices.CpFlight
 {
-    public class CpFLightProtocolService : DeviceSerialServiceBase
+    public class CpFLightProtocolService : DeviceServiceBase
     {
-        public CpFLightProtocolService() : base("COM3", 38400)
+        public CpFLightProtocolService()
         {
             Inputs.Builder inputsBuilder = new();
             Outputs.Builder outputsBuilder = new();
@@ -37,10 +38,20 @@ namespace DeviceInterfaceManager.Services.Devices
             return Task.CompletedTask;
         }
 
-        protected override void DataReceived(byte[] data)
+        public override Task<ConnectionStatus> ConnectAsync(CancellationToken cancellationToken)
         {
-            string hex = BitConverter.ToString(data);
+            throw new NotImplementedException();
         }
+
+        public override Task Disconnect()
+        {
+            throw new NotImplementedException();
+        }
+
+        // protected override void DataReceived(byte[] data)
+        // {
+        //     string hex = BitConverter.ToString(data);
+        // }
         
         
         
