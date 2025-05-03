@@ -16,7 +16,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
       - name: Publish Application
         run: dotnet publish DeviceInterfaceManager/DeviceInterfaceManager.csproj -c Release -o publish -r win-x64
       - name: Create Velopack Release
