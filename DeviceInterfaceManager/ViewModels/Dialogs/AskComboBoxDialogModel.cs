@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using DeviceInterfaceManager.Models.Devices;
 using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.ViewModels.Dialogs;
