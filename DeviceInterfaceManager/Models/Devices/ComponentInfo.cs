@@ -22,8 +22,8 @@ public class ComponentInfo
     {
         var enumerable = components as Component[] ?? components.ToArray();
         Components = enumerable;
-        First = enumerable.MinBy(x => x.Position)?.Position ?? default;
-        Last = enumerable.MaxBy(x => x.Position)?.Position ?? default;
+        First = enumerable.MinBy(x => x.Position)?.Position ?? 0;
+        Last = enumerable.MaxBy(x => x.Position)?.Position ?? 0;
     }
 
     public int Count => Components.Count();
@@ -86,6 +86,10 @@ public partial class Component : ObservableObject
     [ObservableProperty]
     [property: JsonIgnore]
     private int _value;
+
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private string? _stringValue;
 
     public static IEnumerable<Component> GetComponents(int first, int last)
     {
