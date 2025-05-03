@@ -1,38 +1,23 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using DeviceInterfaceManager.Services.Devices;
 using FluentAvalonia.UI.Controls;
-using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly ILogger _logger;
-    
-    public MainWindowViewModel(ILogger<MainWindowViewModel> logger, HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IDeviceService> inputOutputDevices)
+    public MainWindowViewModel(HomeViewModel homeViewModel, ProfileCreatorViewModel profileCreatorViewModel, SettingsViewModel settingsViewModel, ObservableCollection<IDeviceService> inputOutputDevices)
     {
-        _logger = logger;
         HomeViewModel = homeViewModel;
         ProfileCreatorViewModel = profileCreatorViewModel;
         _settingsViewModel = settingsViewModel;
         InputOutputDevices = inputOutputDevices;
         InputOutputDevices.CollectionChanged += InputOutputDevicesOnCollectionChanged;
     }
-
-#if DEBUG
-    public MainWindowViewModel()
-    {
-        _logger = new LoggerFactory().CreateLogger<MainWindowViewModel>();
-        HomeViewModel = new HomeViewModel();
-        ProfileCreatorViewModel = new ProfileCreatorViewModel();
-        _settingsViewModel = new SettingsViewModel();
-        InputOutputDevices = [];
-    }
-#endif
 
     public HomeViewModel HomeViewModel { get; }
 
@@ -51,6 +36,15 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private object? _selectedItem;
+    
+    public async Task OnLoaded()
+    {
+        await _settingsViewModel.StartupAsync();
+        if (_settingsViewModel.Settings.AutoHide)
+        {
+            await HomeViewModel.StartProfilesCommand.ExecuteAsync(null);
+        }
+    }
 
     partial void OnSelectedItemChanged(object? value)
     {
@@ -78,18 +72,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                 CurrentViewModel = existingViewModel;
                 break;
-
-            default:
-                CurrentViewModel = CurrentViewModel;
-                break;
         }
-
-        if (CurrentViewModel == HomeViewModel)
-        {
-            HomeViewModel.IsActive = true;
-        }
-
-        HomeViewModel.IsActive = false;
     }
 
     private void InputOutputDevicesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
