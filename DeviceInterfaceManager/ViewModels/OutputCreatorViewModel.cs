@@ -52,44 +52,6 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         SearchPmdgData = PmdgData;
     }
 
-#if DEBUG
-    public OutputCreatorViewModel()
-    {
-        OutputsCollection =
-        [
-            1,
-            2,
-            3
-        ];
-
-        _outputCreator = new OutputCreator
-        {
-            IsActive = true,
-            Preconditions = [new Precondition()],
-            Description = "Description",
-            OutputType = ProfileCreatorModel.Led,
-            Outputs = OutputsCollection.ToArray()
-        };
-        Components =
-        [
-            new Component(1),
-            new Component(2),
-            new Component(3),
-            new Component(4)
-        ];
-        Digits = CreateDigits(3, 1, 1);
-
-        ModifiersCollection =
-        [
-            new Transformation(),
-            new Comparison(),
-            new Interpolation(),
-            new Padding(),
-            new Substring()
-        ];
-    }
-#endif
-
     public override Precondition[]? Copy()
     {
         _outputCreator.Description = GetDescription();
@@ -506,8 +468,16 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                 ModifiersCollection.Add(new Padding());
                 break;
 
+            case nameof(Inserting):
+                ModifiersCollection.Add(new Inserting());
+                break;
+
             case nameof(Substring):
                 ModifiersCollection.Add(new Substring());
+                break;
+
+            case nameof(Blinking):
+                ModifiersCollection.Add(new Blinking());
                 break;
         }
     }
