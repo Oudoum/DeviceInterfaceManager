@@ -11,12 +11,9 @@
              x:Class="DeviceInterfaceManager.Views.InputCreatorView"
              x:DataType="vm:InputCreatorViewModel">
 
-    <Design.DataContext>
-        <vm:InputCreatorViewModel />
-    </Design.DataContext>
-
     <UserControl.Resources>
         <converters:NullableConverter x:Key="NullableConverter" />
+        <converters:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
     </UserControl.Resources>
 
     <Grid>
@@ -29,6 +26,12 @@
                         </Style>
                         <Style Selector="TextBox.secondParameter">
                             <Setter Property="Watermark" Value="Parameter 1" />
+                        </Style>
+                        <Style Selector="TextBlock.switchData">
+                            <Setter Property="Text" Value="Data Press" />
+                        </Style>
+                        <Style Selector="TextBlock.analogData">
+                            <Setter Property="Text" Value="Data" />
                         </Style>
                     </StackPanel.Styles>
 
@@ -122,6 +125,8 @@
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 AcceptsTab="True"
                                  Watermark="SimVar/K:Event/H:Event/RPN"
                                  Text="{Binding Event}" />
                     </Grid>
@@ -173,18 +178,24 @@
                         </Grid>
                     </Grid>
 
-                    <!-- Data Press -->
-                    <Grid ColumnDefinitions="* 2*"
-                          IsEnabled="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNull}}">
-                        <Grid.IsVisible>
+                    <!-- Data Press / Data -->
+                    <Grid ColumnDefinitions="* 2*">
+                        <Grid.IsEnabled>
                             <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                <Binding Path="!IsRpn" />
-                                <Binding Path="!IsAnalog" />
+                                <Binding Path="PmdgMousePress" Converter="{x:Static ObjectConverters.IsNull}"/>
+                                <Binding Path="!IsRpn"></Binding>
+                            </MultiBinding>
+                        </Grid.IsEnabled>
+                        <Grid.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                <Binding Path="IsKEvent"/>
+                                <Binding Path="!IsAnalog"></Binding>
                             </MultiBinding>
                         </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
-                                   VerticalAlignment="Center"
-                                   Text="Data Press" />
+                                   Classes="switchData"
+                                   Classes.analogData="{Binding IsAnalog}"
+                                   VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1"
                                     IsEnabled="{Binding !OnRelease}"
                                     Spacing="10">
@@ -198,6 +209,7 @@
                                 <TextBox.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                                         <Binding Path="IsKEvent" />
+                                        <Binding Path="!IsAnalog"/>
                                         <Binding Path="DataPress" Converter="{x:Static ObjectConverters.IsNotNull}" />
                                     </MultiBinding>
                                 </TextBox.IsVisible>
@@ -264,16 +276,28 @@
             <TabItem Header="Interpolation" IsVisible="{Binding IsAnalog}">
                 <Grid RowDefinitions="Auto *">
                     <StackPanel Grid.Row="0">
-                        <Button Content="Create"
-                                Command="{Binding CreateInterpolationCommand}"
-                                Margin="0 25 0 0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Top" />
-                        <Button Content="Destroy"
-                                Command="{Binding DestroyInterpolationCommand}"
-                                Margin="0 25 0 0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Top" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
+                            <Button Command="{Binding CreateInterpolationCommand}"
+                                    IsVisible="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNull}}"
+                                    Margin="0 25 0 0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top">
+                                <PathIcon Data="{StaticResource PlaylistPlus}" />
+                            </Button>
+                            <ToggleSwitch IsChecked="{Binding Interpolation.IsActive, FallbackValue=False}"
+                                          IsVisible="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                          Margin="0 15 -10 0"
+                                          VerticalAlignment="Bottom"
+                                          OnContent="Enabled"
+                                          OffContent="Disabled" />
+                            <Button Command="{Binding DestroyInterpolationCommand}"
+                                    IsVisible="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Margin="0 25 0 0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top">
+                                <PathIcon Data="{StaticResource DeleteForeverOutline}" />
+                            </Button>
+                        </StackPanel>
                         <StackPanel
                             IsVisible="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull} }">
                             <TextBlock HorizontalAlignment="Center"
@@ -287,10 +311,11 @@
                                     </MultiBinding>
                                 </TextBlock.Text>
                             </TextBlock>
-                            <Button Content="Add"
-                                    Margin="0 0 0 25"
+                            <Button Margin="0 0 0 25"
                                     Command="{Binding Interpolation.AddItemCommand, FallbackValue={x:Null}}"
-                                    HorizontalAlignment="Stretch" />
+                                    HorizontalAlignment="Center">
+                                <PathIcon Data="{StaticResource PlusBox}" />
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                     <ScrollViewer Grid.Row="1">
@@ -300,12 +325,6 @@
                                     <StackPanel Orientation="Horizontal"
                                                 Margin="25 0 0 25"
                                                 Spacing="5">
-                                        <StackPanel.Styles>
-                                            <Style Selector="DataValidationErrors">
-                                                <Setter Property="Theme"
-                                                        Value="{StaticResource TooltipDataValidationErrors}" />
-                                            </Style>
-                                        </StackPanel.Styles>
                                         <TextBlock Text="Input value"
                                                    VerticalAlignment="Center" />
                                         <TextBox Text="{Binding Key}"
@@ -314,10 +333,17 @@
                                                    VerticalAlignment="Center" />
                                         <TextBox Text="{Binding Value}"
                                                  Width="140" />
-                                        <Button IsVisible="{Binding IsVisible}"
-                                                Command="{Binding $parent[UserControl].((vm:InputCreatorViewModel)DataContext).Interpolation.RemoveItemCommand,
+                                        <Button
+                                            Command="{Binding $parent[UserControl].((vm:InputCreatorViewModel)DataContext).Interpolation.RemoveItemCommand,
                                                 FallbackValue={x:Null}}"
-                                                CommandParameter="{Binding}">
+                                            CommandParameter="{Binding}">
+                                            <Button.IsVisible>
+                                                <MultiBinding Converter="{StaticResource IndexToVisibilityConverter}">
+                                                    <Binding />
+                                                    <Binding
+                                                        RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}" />
+                                                </MultiBinding>
+                                            </Button.IsVisible>
                                             <PathIcon Data="{StaticResource TrashCanOutline}" />
                                         </Button>
                                     </StackPanel>
