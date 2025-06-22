@@ -249,7 +249,9 @@ public class SimConnectClientService
             {
                 _pmdgHelperService.InitializePmdg737(_simConnect);
             }
-            else if (_aircraftTitle.StartsWith("PMDG 777"))
+            else if (_aircraftTitle.StartsWith("PMDG 777") ||
+                     _aircraftTitle.StartsWith("777-200ER") ||
+                     _aircraftTitle.StartsWith("777F"))
             {
                 _pmdgHelperService.InitializePmdg777(_simConnect);
             }
