@@ -225,11 +225,6 @@ public partial class HomeViewModel : ObservableObject
                 ProfileMappings = profileMappings;
                 ProfileMappings.CollectionChanged += (_, _) => DeviceProfileListHasChanged = true;
 
-                if (ProfileMappings.Count == 0)
-                {
-                    AddProfileMapping();
-                }
-
                 OnProfileMappingPropertyChanged(ProfileMappings[^1], new PropertyChangedEventArgs(null));
 
                 foreach (ProfileMapping profileMapping in ProfileMappings)
@@ -237,6 +232,11 @@ public partial class HomeViewModel : ObservableObject
                     profileMapping.PropertyChanged += OnProfileMappingPropertyChanged;
                 }
             }
+        }
+
+        if (ProfileMappings.Count == 0)
+        {
+            AddProfileMapping();
         }
 
         string[] jsonFilePaths = Directory.GetFiles(App.ProfilesPath, "*.json");
@@ -281,7 +281,6 @@ public partial class HomeViewModel : ObservableObject
         DeviceProfileListHasChanged = true;
     }
 
-    [RelayCommand]
     private void AddProfileMapping()
     {
         ProfileMapping profileMapping = new();
@@ -289,7 +288,6 @@ public partial class HomeViewModel : ObservableObject
         ProfileMappings.Add(profileMapping);
     }
 
-    [RelayCommand]
     private void RemoveProfileMapping(ProfileMapping profileMapping)
     {
         ProfileMappings.Remove(profileMapping);
