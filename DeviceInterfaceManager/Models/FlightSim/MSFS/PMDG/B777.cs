@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 
 using System.Runtime.InteropServices;
+// ReSharper disable CollectionNeverQueried.Global
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
@@ -192,7 +193,7 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_CargoFireDisch_Sw;                // MOMENTARY SWITCH
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunCargoDISCH;
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_FireOvhtTest_Sw;              // MOMENTARY SWITCH
-        public byte FIRE_APUHandle;                       // 0: IN (NORMAL)  1: PULLED OUT  2: TURNED LEFT  3: TURNED RIGHT  (2 & 3 ane momnentary positions)
+        public byte FIRE_APUHandle;                       // 0: IN (NORMAL)  1: PULLED OUT  2: TURNED LEFT  3: TURNED RIGHT  (2 & 3 ane momentary positions)
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_APUHandleUnlock_Sw;           // MOMENTARY SWITCH resets when handle pulled
         [MarshalAs(UnmanagedType.I1)] public bool FIRE_annunAPU_BTL_DISCH;
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleIlluminated;
@@ -490,7 +491,7 @@ public static class B777
         [MarshalAs(UnmanagedType.I1)] public bool XPDR_Ident_Sw_Pushed;              // MOMENTARY action
 
         // Engine Fire 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] FIRE_EngineHandle;             // ENG 1/ENG2   0: IN (NORMAL)  1: PULLED OUT  2: TURNED LEFT  3: TURNED RIGHT  (2 & 3 are momenentary positions)
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)] public byte[] FIRE_EngineHandle;             // ENG 1/ENG2   0: IN (NORMAL)  1: PULLED OUT  2: TURNED LEFT  3: TURNED RIGHT  (2 & 3 are momentary positions)
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_EngineHandleUnlock_Sw;     // ENG 1/ENG2   MOMENTARY SWITCH resets when handle pulled
         [MarshalAs(UnmanagedType.ByValArray, ArraySubType = UnmanagedType.I1, SizeConst = 2)] public bool[] FIRE_annunENG_BTL_DISCH;            // ENG 1/ENG2
 

@@ -1,13 +1,14 @@
 //------------------------------------------------------------------------------
 //
 //  PMDG 737 NG3 external connection SDK
-//  Copyright (c) 2022 Precision Manuals Development Group
+//  Copyright (c) 2025 Precision Manuals Development Group
 //
 //  Converted from unmanaged to managed code by Oudoum
 // 
 //------------------------------------------------------------------------------
 
 using System.Runtime.InteropServices;
+// ReSharper disable CollectionNeverQueried.Global
 
 namespace DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 
@@ -462,7 +463,7 @@ public static class B737
         public byte COMM_GrdCall_PressCount;                    // incremented with each button press
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public byte[] COMM_SelectedMic;                           // array: 0=capt, 1=F/O, 2=observer.
                                                                                                                        // values: 0=VHF1 1=VHF2 2=VHF3 3=HF1 4=HF2 5=FLT 6=SVC 7=PA
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public uint[] COMM_ReceiverSwitches;                      // Bit flags for selector receivers (see ACP_SEL_RECV_VHF1 etc): [0]=Capt, [1]=FO, [2]=Overhead
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)] public uint[] COMM_ReceiverSwitches;                      // Bit flags for selector receivers (see ACP_SEL_RECV_VHF1 etc.): [0]=Capt, [1]=FO, [2]=Overhead
         [MarshalAs(UnmanagedType.I1)] public bool TRIM_StabTrimMainElecSw_NORMAL;
         [MarshalAs(UnmanagedType.I1)] public bool TRIM_StabTrimAutoPilotSw_NORMAL;
         [MarshalAs(UnmanagedType.I1)] public bool PED_annunParkingBrake;
@@ -930,7 +931,7 @@ public static class B737
         EVT_AUX_FUEL_LEFT_MAINT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 2034,
         EVT_AUX_FUEL_RIGHT_MAINT_SWITCH = THIRD_PARTY_EVENT_ID_MIN + 2035,
 
-        // 737MAX Stuff
+        // 737 MAX Stuff
         EVT_MAX_MFD_INFO_BUTTON = THIRD_PARTY_EVENT_ID_MIN + 2040,
         EVT_MAX_MFD_ENG_TFR_BUTTON = THIRD_PARTY_EVENT_ID_MIN + 2041,
         //Left
