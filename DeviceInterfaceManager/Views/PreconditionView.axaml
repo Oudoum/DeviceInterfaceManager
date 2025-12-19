@@ -4,11 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              mc:Ignorable="d"
-             d:DesignHeight="500"
              x:Class="DeviceInterfaceManager.Views.PreconditionView"
              x:DataType="vm:BaseCreatorViewModel">
 
-    <StackPanel Margin="20" MinWidth="400">
+    <StackPanel Margin="20 0 20 0" MinWidth="400">
         <ListBox Height="158"
                  BorderBrush="DarkGray"
                  BorderThickness="1"
@@ -159,10 +158,35 @@
                             <Setter Property="Margin" Value=" 0 0 2 0" />
                         </Style>
                         <Style Selector="ToggleButton:checked Path.toggleButtonChecked">
-                            <Setter Property="Fill" Value="DodgerBlue"/>
+                            <Setter Property="Fill" Value="DodgerBlue" />
                         </Style>
                         <Style Selector="ToggleButton:checked TextBlock.toggleButtonChecked">
-                            <Setter Property="Foreground" Value="DodgerBlue"/>
+                            <Setter Property="Foreground" Value="DodgerBlue" />
+                        </Style>
+                    </StackPanel.Styles>
+                </StackPanel>
+            </Grid>
+            
+            <!-- Value usage -->
+            <Grid ColumnDefinitions="* 2*" >
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Use Output Value" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20">
+                    <ToggleButton IsChecked="{Binding SelectedPrecondition.UseOutputValue, FallbackValue='False'}">
+                            <Viewbox>
+                                <Canvas>
+                                    <Path Classes.useOutputValue="{Binding SelectedPrecondition.UseOutputValue, FallbackValue='False'}" />
+                                </Canvas>
+                            </Viewbox>
+                    </ToggleButton>
+                    <StackPanel.Styles>
+                        <Style Selector="Path">
+                            <Setter Property="Data" Value="{StaticResource AirplaneTakeoff}" />
+                        </Style>
+                        <Style Selector="Path.useOutputValue">
+                            <Setter Property="Data" Value="{StaticResource AirplaneLanding}" />
+                            <Setter Property="Fill" Value="DodgerBlue" />
                         </Style>
                     </StackPanel.Styles>
                 </StackPanel>

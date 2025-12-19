@@ -2,14 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-             xmlns:idd="clr-namespace:Avalonia.Xaml.Interactions.DragAndDrop;assembly=Avalonia.Xaml.Interactions.DragAndDrop"
-             xmlns:b="using:DeviceInterfaceManager.Behaviors"
              xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:converters="clr-namespace:DeviceInterfaceManager.Converters"
              xmlns:vm="clr-namespace:DeviceInterfaceManager.ViewModels"
              xmlns:m="clr-namespace:DeviceInterfaceManager.Models"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:behaviors="clr-namespace:DeviceInterfaceManager.Behaviors"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
              x:Class="DeviceInterfaceManager.Views.ProfileCreatorView"
              x:DataType="vm:ProfileCreatorViewModel">
@@ -17,8 +15,9 @@
     <UserControl.Resources>
         <converters:NullableKeyValuePairConverter x:Key="NullableKeyValuePairConverter" />
         <converters:LengthToBooleanConverter x:Key="LengthToBooleanConverter" />
-        <b:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
-        <b:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
+        <converters:EnumToLongConverter x:Key="EnumToLongConverter" />
+        <behaviors:InputCreatorDataGridDropHandler x:Key="InputCreatorDataGridDropHandler" />
+        <behaviors:OutputCreatorDataGridDropHandler x:Key="OutputCreatorDataGridDropHandler" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto *">
@@ -247,13 +246,13 @@
                 </Style>
                 <Style Selector="DataGrid DataGridRowHeader">
                     <Setter Property="AreSeparatorsVisible" Value="True" />
-                    <Setter Property="(i:Interaction.Behaviors)">
-                        <i:BehaviorCollectionTemplate>
-                            <i:BehaviorCollection>
-                                <b:ContextDragWithDirectionBehavior HorizontalDragThreshold="3"
+                    <Setter Property="(Interaction.Behaviors)">
+                        <BehaviorCollectionTemplate>
+                            <BehaviorCollection>
+                                <ContextDragWithDirectionBehavior HorizontalDragThreshold="3"
                                                                     VerticalDragThreshold="3" />
-                            </i:BehaviorCollection>
-                        </i:BehaviorCollectionTemplate>
+                            </BehaviorCollection>
+                        </BehaviorCollectionTemplate>
                     </Setter>
                     <Setter Property="ContextFlyout">
                         <ui:FAMenuFlyout Placement="Bottom" ShowMode="TransientWithDismissOnPointerMoveAway">
@@ -356,13 +355,13 @@
                                             ConverterParameter='Key'}" />
                                 </Style>
                                 <Style Selector="DataGrid">
-                                    <Setter Property="(i:Interaction.Behaviors)">
-                                        <i:BehaviorCollectionTemplate>
-                                            <i:BehaviorCollection>
-                                                <idd:ContextDropBehavior
+                                    <Setter Property="(Interaction.Behaviors)">
+                                        <BehaviorCollectionTemplate>
+                                            <BehaviorCollection>
+                                                <ContextDropBehavior
                                                     Handler="{StaticResource InputCreatorDataGridDropHandler}" />
-                                            </i:BehaviorCollection>
-                                        </i:BehaviorCollectionTemplate>
+                                            </BehaviorCollection>
+                                        </BehaviorCollectionTemplate>
                                     </Setter>
                                 </Style>
                             </DataGrid.Styles>
@@ -462,50 +461,21 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Header="PMDG Event"
-                                    SortMemberPath="PmdgEvent"
-                                    IsVisible="{Binding IsPmdgEventVisible}"
-                                    IsReadOnly="True">
-                                    <DataGridTextColumn.Binding>
-                                        <MultiBinding
-                                            Converter="{x:Static converters:FuncConverters.PmdgEventToStringMultiConverter}">
-                                            <Binding Path="EventType" />
-                                            <Binding Path="PmdgEvent" />
-                                        </MultiBinding>
-                                    </DataGridTextColumn.Binding>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn
                                     Header="Event"
                                     SortMemberPath="Event"
                                     Binding="{Binding Event}"
-                                    IsVisible="{Binding IsEventVisible}"
-                                    IsReadOnly="True" />
-
-                                <DataGridTextColumn
-                                    Header="Mouse Press"
-                                    SortMemberPath="PmdgMousePress"
-                                    Binding="{Binding PmdgMousePress}"
-                                    IsVisible="{Binding IsMousePressVisible}"
-                                    IsReadOnly="True" />
-
-                                <DataGridTextColumn
-                                    Header="Mouse Release"
-                                    SortMemberPath="PmdgMouseRelease"
-                                    Binding="{Binding PmdgMouseRelease}"
-                                    IsVisible="{Binding IsMouseReleaseVisible}"
                                     IsReadOnly="True" />
 
                                 <DataGridTemplateColumn Header="Data Press"
                                                         SortMemberPath="DataPress"
-                                                        IsVisible="{Binding IsDataPressVisible}"
                                                         IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}{1}">
-                                                        <Binding Path="DataPress" />
+                                                        <Binding Path="DataPress"
+                                                                 Converter="{StaticResource EnumToLongConverter}" />
                                                         <Binding Path="DataPress2"
                                                                  StringFormat="{} │ {0}"
                                                                  TargetNullValue="" />
@@ -518,14 +488,14 @@
 
                                 <DataGridTemplateColumn Header="Data Release"
                                                         SortMemberPath="DataRelease"
-                                                        IsVisible="{Binding IsDataReleaseVisible}"
                                                         IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}{1}">
-                                                        <Binding Path="DataRelease" />
+                                                        <Binding Path="DataRelease"
+                                                                 Converter="{StaticResource EnumToLongConverter}" />
                                                         <Binding Path="DataRelease2"
                                                                  StringFormat="{} │ {0}"
                                                                  TargetNullValue="" />
@@ -555,13 +525,13 @@
                             FallbackValue={x:Null}}">
                             <DataGrid.Styles>
                                 <Style Selector="DataGrid">
-                                    <Setter Property="(i:Interaction.Behaviors)">
-                                        <i:BehaviorCollectionTemplate>
-                                            <i:BehaviorCollection>
-                                                <idd:ContextDropBehavior
+                                    <Setter Property="(Interaction.Behaviors)">
+                                        <BehaviorCollectionTemplate>
+                                            <BehaviorCollection>
+                                                <ContextDropBehavior
                                                     Handler="{StaticResource OutputCreatorDataGridDropHandler}" />
-                                            </i:BehaviorCollection>
-                                        </i:BehaviorCollectionTemplate>
+                                            </BehaviorCollection>
+                                        </BehaviorCollectionTemplate>
                                     </Setter>
                                 </Style>
                             </DataGrid.Styles>
@@ -742,29 +712,8 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTemplateColumn Header="PMDG Data"
-                                                        SortMemberPath="PmdgData"
-                                                        IsVisible="{Binding IsPmdgDataVisible}"
-                                                        IsReadOnly="True">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Margin="12" VerticalAlignment="Center">
-                                                <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0} {1}">
-                                                        <Binding Path="PmdgData" />
-                                                        <Binding Path="PmdgDataArrayIndex"
-                                                                 StringFormat="{}[{0}]"
-                                                                 TargetNullValue="" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
                                 <DataGridTemplateColumn Header="Data"
                                                         SortMemberPath="Data"
-                                                        IsVisible="{Binding IsDataVisible}"
                                                         IsReadOnly="True">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>

@@ -14,6 +14,7 @@
     <UserControl.Resources>
         <converters:NullableConverter x:Key="NullableConverter" />
         <converters:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
+        <converters:EnumToLongConverter x:Key="EnumToLongConverter" />
     </UserControl.Resources>
 
     <Grid>
@@ -95,15 +96,15 @@
                         </Grid.IsVisible>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
-                                   Text="PMDG Event" />
+                                   Text="Event" />
                         <AutoCompleteBox Grid.Column="1"
                                          Watermark="Search..."
                                          FilterMode="ContainsOrdinal"
-                                         SelectedItem="{Binding PmdgEventName}"
+                                         SelectedItem="{Binding Event}"
                                          ItemsSource="{Binding PmdgEventEnumerable}"
                                          Text="{Binding SearchPmdgEvent}"
                                          Classes="clearButton rightEdgeAlignedBottomPopup"
-                                         Classes.selected="{Binding PmdgEventName, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                         Classes.selected="{Binding Event, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <AutoCompleteBox.Styles>
                                 <Style Selector="AutoCompleteBox.selected">
                                     <Style Selector="^ /template/ TextBox#PART_TextBox">
@@ -131,34 +132,8 @@
                                  Text="{Binding Event}" />
                     </Grid>
 
-                    <!-- On Release -->
-                    <Grid ColumnDefinitions="*,2*">
-                        <Grid.IsEnabled>
-                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                <Binding Path="DataPress" Converter="{x:Static ObjectConverters.IsNull}" />
-                                <Binding Path="DataRelease" Converter="{x:Static ObjectConverters.IsNull}" />
-                            </MultiBinding>
-                        </Grid.IsEnabled>
-                        <Grid.IsVisible>
-                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                    <Binding Path="IsRpn" />
-                                    <Binding Path="IsKEvent" />
-                                </MultiBinding>
-                                <Binding Path="!IsAnalog" />
-                            </MultiBinding>
-                        </Grid.IsVisible>
-                        <TextBlock Grid.Column="0"
-                                   VerticalAlignment="Center"
-                                   Text="OnRelease" />
-                        <CheckBox Grid.Column="1"
-                                  Margin="0 0 0 5"
-                                  IsChecked="{Binding OnRelease}" />
-                    </Grid>
-
                     <!-- Mouse Press -->
-                    <Grid ColumnDefinitions="*,2*"
-                          IsEnabled="{Binding DataPress, Converter={x:Static ObjectConverters.IsNull}}">
+                    <Grid ColumnDefinitions="*,2*">
                         <Grid.IsVisible>
                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                 <Binding Path="IsPmdg" />
@@ -169,23 +144,19 @@
                                    VerticalAlignment="Center"
                                    Text="Mouse Press" />
                         <Grid Grid.Column="1">
-                            <ComboBox HorizontalAlignment="Stretch"
-                                      SelectedItem="{Binding PmdgMousePress}"
+                            <ComboBox x:Name="MousePressComboBox"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedItem="{Binding DataPress, Converter={StaticResource EnumToLongConverter}}"
                                       ItemsSource="{Binding PmdgMouseFlags}" />
                             <Button Classes="clear"
                                     Command="{Binding ClearPmdgMousePressCommand}"
-                                    IsVisible="{Binding PmdgMousePress, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    IsVisible="{Binding #MousePressComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- Data Press / Data -->
-                    <Grid ColumnDefinitions="* 2*">
-                        <Grid.IsEnabled>
-                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                <Binding Path="PmdgMousePress" Converter="{x:Static ObjectConverters.IsNull}"/>
-                                <Binding Path="!IsRpn"></Binding>
-                            </MultiBinding>
-                        </Grid.IsEnabled>
+                    <Grid ColumnDefinitions="* 2*"
+                          IsEnabled="{Binding #MousePressComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}">
                         <Grid.IsVisible>
                             <MultiBinding Converter="{x:Static BoolConverters.Or}">
                                 <Binding Path="IsKEvent"/>
@@ -197,7 +168,6 @@
                                    Classes.analogData="{Binding IsAnalog}"
                                    VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1"
-                                    IsEnabled="{Binding !OnRelease}"
                                     Spacing="10">
                             <TextBox Classes="clearButton"
                                      Classes.normalParameter="{Binding !IsKEvent}"
@@ -218,8 +188,7 @@
                     </Grid>
 
                     <!-- Mouse Release -->
-                    <Grid ColumnDefinitions="*,2*"
-                          IsEnabled="{Binding DataRelease, Converter={x:Static ObjectConverters.IsNull}}">
+                    <Grid ColumnDefinitions="*,2*">
                         <Grid.IsVisible>
                             <MultiBinding Converter="{x:Static BoolConverters.And}">
                                 <Binding Path="IsPmdg" />
@@ -230,29 +199,24 @@
                                    VerticalAlignment="Center"
                                    Text="Mouse Release" />
                         <Grid Grid.Column="1">
-                            <ComboBox HorizontalAlignment="Stretch"
-                                      SelectedItem="{Binding PmdgMouseRelease}"
+                            <ComboBox x:Name="MouseReleaseComboBox"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedItem="{Binding DataRelease, Converter={StaticResource EnumToLongConverter}}"
                                       ItemsSource="{Binding PmdgMouseFlags}" />
                             <Button Classes="clear"
                                     Command="{Binding ClearPmdgMouseReleaseCommand}"
-                                    IsVisible="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    IsVisible="{Binding #MouseReleaseComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
                         </Grid>
                     </Grid>
 
                     <!-- Data Release -->
                     <Grid ColumnDefinitions="* 2*"
-                          IsEnabled="{Binding PmdgMouseRelease, Converter={x:Static ObjectConverters.IsNull}}">
-                        <Grid.IsVisible>
-                            <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                <Binding Path="!IsRpn" />
-                                <Binding Path="!IsAnalog" />
-                            </MultiBinding>
-                        </Grid.IsVisible>
+                          IsEnabled="{Binding #MouseReleaseComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}"
+                          IsVisible="{Binding !IsAnalog}">
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
                         <StackPanel Grid.Column="1"
-                                    IsEnabled="{Binding !OnRelease}"
                                     Spacing="10">
                             <TextBox Classes="clearButton"
                                      Classes.normalParameter="{Binding !IsKEvent}"
