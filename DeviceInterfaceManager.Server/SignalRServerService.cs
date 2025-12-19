@@ -22,7 +22,10 @@ public class SignalRServerService
     {
         if (!IPAddress.TryParse(ipAddress, out IPAddress? address))
         {
-            _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
+            if (!string.IsNullOrEmpty(ipAddress))
+            {
+                _logger.LogError("{ipAddress} is not a valid IP-Address. Reverting to default.", ipAddress);
+            }
             address = IPAddress.Loopback;
         }
 
