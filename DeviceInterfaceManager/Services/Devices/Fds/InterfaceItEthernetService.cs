@@ -11,16 +11,21 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using DeviceInterfaceManager.Models.Devices;
+using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager.Services.Devices.Fds;
 
 public class InterfaceItEthernetService : DeviceServiceBase
 {
-    public InterfaceItEthernetService(string? iPAddress)
+    private readonly ILogger _logger;
+
+    public InterfaceItEthernetService(string? iPAddress, ILogger logger)
     {
+        _logger = logger;
         Id = iPAddress;
         Icon = (Geometry?)Application.Current!.FindResource("Ethernet");
     }
+
     public override async Task SetLedAsync(int position, bool isEnabled)
     {
         try
@@ -30,9 +35,21 @@ public class InterfaceItEthernetService : DeviceServiceBase
                 await _networkStream.WriteAsync(Encoding.ASCII.GetBytes("B1:LED:" + position + ":" + Convert.ToUInt16(isEnabled) + "\r\n"));
             }
         }
-        catch (Exception)
+        catch (ObjectDisposedException e)
         {
-            // ignored
+            _logger.LogError(e, "[{Id}] Network stream was disposed.", Id);
+        }
+        catch (InvalidOperationException e)
+        {
+            _logger.LogError(e, "[{Id}] Invalid operation occurred.", Id);
+        }
+        catch (IOException e)
+        {
+            _logger.LogError(e, "[{Id}] I/O error occurred.", Id);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("[{Id}] Operation was canceled.", Id);
         }
     }
 
@@ -80,19 +97,23 @@ public class InterfaceItEthernetService : DeviceServiceBase
 
     private NetworkStream? _networkStream;
 
-    public static async Task<List<string>> ReceiveControllerDiscoveryDataAsync()
+    public static async Task<List<string>> ReceiveControllerDiscoveryDataAsync(ILogger logger)
     {
-        List<string> responses = [];
-        UdpClient client = new() { EnableBroadcast = true };
+        using UdpClient client = new();
+        client.EnableBroadcast = true;
         client.Send("D"u8, new IPEndPoint(IPAddress.Broadcast, 30303));
 
-        DateTime endTime = DateTime.UtcNow.AddSeconds(1);
-        while (DateTime.UtcNow < endTime)
+        List<string> responses = [];
+        using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+
+        try
         {
-            try
+            while (!cts.Token.IsCancellationRequested)
             {
-                var receiveTask = client.ReceiveAsync();
-                if (await Task.WhenAny(receiveTask, Task.Delay(endTime - DateTime.UtcNow)) != receiveTask)
+                var receiveTask = client.ReceiveAsync(cts.Token).AsTask();
+                Task completedTask = await Task.WhenAny(receiveTask, Task.Delay(500, cts.Token));
+
+                if (completedTask != receiveTask)
                 {
                     continue;
                 }
@@ -100,10 +121,18 @@ public class InterfaceItEthernetService : DeviceServiceBase
                 UdpReceiveResult result = await receiveTask;
                 responses.Add(result.RemoteEndPoint.Address.ToString());
             }
-            catch (Exception)
-            {
-                //
-            }
+        }
+        catch (SocketException e)
+        {
+            logger.LogError(e, "Network issue occurred.");
+        }
+        catch (ObjectDisposedException e)
+        {
+            logger.LogError(e, "UdpClient was disposed.");
+        }
+        catch (IOException e)
+        {
+            logger.LogError(e, "I/O error occurred.");
         }
 
         return responses;
@@ -113,9 +142,10 @@ public class InterfaceItEthernetService : DeviceServiceBase
     {
         if (Id is null)
         {
+            _logger.LogWarning("Connection attempt failed: Id is null.");
             return false;
         }
-        
+
         using Ping ping = new();
         return (await ping.SendPingAsync(Id)).Status == IPStatus.Success;
     }
@@ -124,33 +154,39 @@ public class InterfaceItEthernetService : DeviceServiceBase
     {
         if (Id is null)
         {
+            _logger.LogWarning("Connection attempt failed: Id is null.");
             return false;
         }
-        
+
         while (!cancellationToken.IsCancellationRequested)
+        {
             try
             {
                 _tcpClient = new TcpClient();
                 await _tcpClient.ConnectAsync(Id, TcpPort, cancellationToken);
                 _networkStream = _tcpClient.GetStream();
                 await GetInterfaceItEthernetDataAsync(cancellationToken);
+                _logger.LogInformation("[{Id}] Successfully connected to host.", Id);
                 return true;
+            }
+            catch (ArgumentNullException e)
+            {
+                _logger.LogError(e, "[{Id}] ArgumentNullException: Invalid connection parameters.", Id);
+                await CloseStream();
+                return false;
+            }
+            catch (SocketException e)
+            {
+                _logger.LogError(e, "[{Id}] SocketException: Failed to connect to host.", Id);
+                await CloseStream();
+                return false;
             }
             catch (OperationCanceledException)
             {
                 await CloseStream();
                 return false;
             }
-            catch (ArgumentNullException)
-            {
-                await CloseStream();
-                return false;
-            }
-            catch (SocketException)
-            {
-                await CloseStream();
-                return false;
-            }
+        }
 
         return false;
     }
@@ -180,8 +216,19 @@ public class InterfaceItEthernetService : DeviceServiceBase
                         }
                     }
                 }
-                catch (IOException)
+                catch (ObjectDisposedException e)
                 {
+                    _logger.LogError(e, "[{Id}] Network stream was disposed.", Id);
+                    return;
+                }
+                catch (InvalidOperationException e)
+                {
+                    _logger.LogError(e, "[{Id}] Invalid operation occurred.", Id);
+                    return;
+                }
+                catch (IOException e)
+                {
+                    _logger.LogError(e, "[{Id}] I/O error occurred.", Id);
                     return;
                 }
                 catch (OperationCanceledException)
@@ -194,14 +241,17 @@ public class InterfaceItEthernetService : DeviceServiceBase
                     switch (ethernetData)
                     {
                         case "STATE=2":
+                            _logger.LogInformation("[{Id}] State two reached.", Id);
                             isInitializing = true;
                             break;
 
                         case "STATE=3":
+                            _logger.LogInformation("[{Id}] State three reached.", Id);
                             isSwitchIdentifying = true;
                             break;
 
                         case "STATE=4":
+                            _logger.LogInformation("[{Id}] State four reached.", Id);
                             isInitializing = false;
                             isSwitchIdentifying = false;
                             break;
@@ -273,7 +323,7 @@ public class InterfaceItEthernetService : DeviceServiceBase
         OnAnalogInValueChanged(1, value);
     }
 
-    private void GetInterfaceItEthernetInfoData(Inputs.Builder inputsBuilder,Outputs.Builder outputsBuilder, string ethernetData)
+    private void GetInterfaceItEthernetInfoData(Inputs.Builder inputsBuilder, Outputs.Builder outputsBuilder, string ethernetData)
     {
         int index = ethernetData.IndexOf('=');
         if (index < 0)
@@ -294,7 +344,7 @@ public class InterfaceItEthernetService : DeviceServiceBase
         }
     }
 
-    private static void GetConfigData(Inputs.Builder inputsBuilder,Outputs.Builder outputsBuilder, string value)
+    private static void GetConfigData(Inputs.Builder inputsBuilder, Outputs.Builder outputsBuilder, string value)
     {
         string[] config = value.Split(":");
 
@@ -330,7 +380,7 @@ public class InterfaceItEthernetService : DeviceServiceBase
         }
     }
 
-    private static ComponentInfo GetComponentInfo(IReadOnlyList<string> config)
+    private static ComponentInfo GetComponentInfo(string[] config)
     {
         return new ComponentInfo(Convert.ToInt32(config[3]), Convert.ToInt32(config[5]));
     }
@@ -340,12 +390,31 @@ public class InterfaceItEthernetService : DeviceServiceBase
         try
         {
             await ResetAllOutputsAsync();
-            _networkStream?.Write(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
-            _tcpClient?.Close();
+            if (_networkStream is not null)
+            {
+                await _networkStream.WriteAsync(Encoding.ASCII.GetBytes("DISCONNECT" + "\r\n"));
+            }
         }
-        catch (Exception)
+        catch (ObjectDisposedException e)
         {
-            // ignored
+            _logger.LogError(e, "[{Id}] Network stream was disposed.", Id);
+        }
+        catch (InvalidOperationException e)
+        {
+            _logger.LogError(e, "[{Id}] Invalid operation occurred.", Id);
+        }
+        catch (IOException e)
+        {
+            _logger.LogError(e, "[{Id}] I/O error occurred.", Id);
+        }
+        finally
+        {
+            if (_networkStream is not null)
+            {
+                await _networkStream.DisposeAsync();
+            }
+
+            _tcpClient?.Close();
         }
     }
 }
