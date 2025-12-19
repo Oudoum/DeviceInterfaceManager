@@ -46,12 +46,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [ObservableProperty]
     private ProfileCreatorModel? _profileCreatorModel;
 
-    partial void OnProfileCreatorModelChanged(ProfileCreatorModel? value)
-    {
-        CheckOutputColumns();
-        CheckInputColumns();
-    }
-
     private string? _previousProfileName;
     
     [ObservableProperty]
@@ -481,7 +475,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
             case InputCreator inputCreator:
                 _ = ProfileCreatorModel.InputCreators.Remove(inputCreator);
-                CheckInputColumns();
                 return;
 
             case OutputCreator when !await ShowConfirmationDialogAsync("output row"):
@@ -489,7 +482,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
             case OutputCreator outputCreator:
                 _ = ProfileCreatorModel.OutputCreators.Remove(outputCreator);
-                CheckOutputColumns();
                 return;
 
             case IList selectedItems:
@@ -554,8 +546,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     {
                         ProfileCreatorModel.InputCreators.Remove(inputCreator);
                     }
-
-                    CheckInputColumns();
                 }
 
                 if (clonedOutputCreators.Count > 0)
@@ -564,8 +554,6 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     {
                         ProfileCreatorModel.OutputCreators.Remove(outputCreator);
                     }
-
-                    CheckOutputColumns();
                 }
 
                 break;
@@ -671,81 +659,8 @@ public partial class ProfileCreatorViewModel : ObservableObject
         if (inputResult == ContentDialogResult.Primary)
         {
             inputCreator.Preconditions = inputCreatorViewModel.Copy();
-            CheckInputColumns();
         }
     }
-
-    private void CheckInputColumns()
-    {
-        if (ProfileCreatorModel is null)
-        {
-            return;
-        }
-
-        bool eventVisibility = false;
-        bool pmdgEventVisibility = false;
-        bool mousePressVisibility = false;
-        bool mouseReleaseVisibility = false;
-        bool dataPressVisibility = false;
-        bool dataReleaseVisibility = false;
-        foreach (InputCreator inputCreator in ProfileCreatorModel.InputCreators)
-        {
-            if (!string.IsNullOrEmpty(inputCreator.Event))
-            {
-                eventVisibility = true;
-            }
-
-            if (inputCreator.PmdgEvent is not null)
-            {
-                pmdgEventVisibility = true;
-            }
-
-            if (inputCreator.PmdgMousePress is not null)
-            {
-                mousePressVisibility = true;
-            }
-
-            if (inputCreator.PmdgMouseRelease is not null)
-            {
-                mouseReleaseVisibility = true;
-            }
-
-            if (inputCreator.DataPress is not null)
-            {
-                dataPressVisibility = true;
-            }
-
-            if (inputCreator.DataRelease is not null)
-            {
-                dataReleaseVisibility = true;
-            }
-        }
-
-        IsEventVisible = eventVisibility;
-        IsPmdgEventVisible = pmdgEventVisibility;
-        IsMousePressVisible = mousePressVisibility;
-        IsMouseReleaseVisible = mouseReleaseVisibility;
-        IsDataPressVisible = dataPressVisibility;
-        IsDataReleaseVisible = dataReleaseVisibility;
-    }
-
-    [ObservableProperty]
-    private bool _isEventVisible;
-
-    [ObservableProperty]
-    private bool _isPmdgEventVisible;
-
-    [ObservableProperty]
-    private bool _isMousePressVisible;
-
-    [ObservableProperty]
-    private bool _isMouseReleaseVisible;
-
-    [ObservableProperty]
-    private bool _isDataPressVisible;
-
-    [ObservableProperty]
-    private bool _isDataReleaseVisible;
 
     [RelayCommand]
     private async Task EditOutput(OutputCreator outputCreator)
@@ -781,42 +696,8 @@ public partial class ProfileCreatorViewModel : ObservableObject
         if (outputResult == ContentDialogResult.Primary)
         {
             outputCreator.Preconditions = outputCreatorViewModel.Copy();
-
-            CheckOutputColumns();
         }
     }
-
-    private void CheckOutputColumns()
-    {
-        if (ProfileCreatorModel is null)
-        {
-            return;
-        }
-
-        bool dataVisibility = false;
-        bool pmdgDataVisibility = false;
-        foreach (OutputCreator outputCreator in ProfileCreatorModel.OutputCreators)
-        {
-            if (!string.IsNullOrEmpty(outputCreator.Data))
-            {
-                dataVisibility = true;
-            }
-            
-            if (!string.IsNullOrEmpty(outputCreator.PmdgData))
-            {
-                pmdgDataVisibility = true;
-            }
-        }
-        
-        IsDataVisible = dataVisibility;
-        IsPmdgDataVisible = pmdgDataVisibility;
-    }
-
-    [ObservableProperty]
-    private bool _isDataVisible;
-    
-    [ObservableProperty]
-    private bool _isPmdgDataVisible;
 
     [ObservableProperty]
     private bool _isStarted;

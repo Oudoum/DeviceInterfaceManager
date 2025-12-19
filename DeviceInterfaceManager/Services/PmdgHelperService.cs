@@ -43,7 +43,7 @@ public class PmdgHelperService
                 continue;
             }
 
-            if (string.IsNullOrEmpty(output.PmdgData))
+            if (string.IsNullOrEmpty(output.Data))
             {
                 continue;
             }
@@ -72,10 +72,10 @@ public class PmdgHelperService
 
     public static string? ConvertDataToPmdgDataFieldName(OutputCreator output)
     {
-        string? pmdgDataFieldName = output.PmdgData;
-        if (output.PmdgDataArrayIndex is not null)
+        string? pmdgDataFieldName = output.Data;
+        if (!string.IsNullOrEmpty(output.Unit))
         {
-            pmdgDataFieldName = pmdgDataFieldName + '_' + output.PmdgDataArrayIndex;
+            pmdgDataFieldName = pmdgDataFieldName + '_' + output.Unit;
         }
 
         return pmdgDataFieldName;

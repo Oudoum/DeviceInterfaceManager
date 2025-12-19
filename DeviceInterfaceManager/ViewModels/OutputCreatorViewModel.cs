@@ -40,16 +40,10 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
         DataType = outputCreator.DataType;
         Data = outputCreator.Data;
+        SearchPmdgData = Data;
         Unit = outputCreator.Unit;
-        PmdgData = outputCreator.PmdgData;
-        PmdgDataArrayIndex = outputCreator.PmdgDataArrayIndex;
-        ModifiersCollection = new ObservableCollection<IModifier>(outputCreator.Modifiers ?? []);
-        IsPadded = outputCreator.IsPadded;
-        PaddingCharacter = outputCreator.PaddingCharacter;
-        Digits = CreateDigits(outputCreator.DigitCount, outputCreator.DigitCheckedSum, outputCreator.DecimalPointCheckedSum);
-        DigitCount = outputCreator.DigitCount;
-
-        SearchPmdgData = PmdgData;
+        ModifiersCollection = new ObservableCollection<IModifier>(outputCreator.Modifiers ?? []); 
+        Display = outputCreator.Display;
     }
 
     public override Precondition[]? Copy()
@@ -65,19 +59,14 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         _outputCreator.DataType = DataType;
         _outputCreator.Data = Data;
         _outputCreator.Unit = Unit;
-        _outputCreator.PmdgData = PmdgData;
-        _outputCreator.PmdgDataArrayIndex = PmdgDataArrayIndex;
         _outputCreator.Modifiers = ModifiersCollection.Count switch
         {
             > 0 => ModifiersCollection.ToArray(),
             0 => null,
             _ => _outputCreator.Modifiers
-        };
-
-        _outputCreator.IsPadded = IsPadded;
-        _outputCreator.PaddingCharacter = PaddingCharacter;
-        _outputCreator.DigitCount = DigitCount;
-        SetCheckedSum();
+        }; 
+        
+        _outputCreator.Display = Display;
         return base.Copy();
     }
 
@@ -98,42 +87,17 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             return Description;
         }
 
-        if (Data is not null)
+        if (Data is null)
         {
-            if (Unit is not null)
-            {
-                return Data + " [" + Unit + "]";
-            }
-
             return Data;
         }
 
-        if (PmdgData is null)
+        if (Unit is not null)
         {
-            return null;
+            return Data + " [" + Unit + "]";
         }
 
-        if (PmdgDataArrayIndex is not null)
-        {
-            return PmdgData + " [" + PmdgDataArrayIndex + "]";
-        }
-
-        return PmdgData;
-    }
-
-    private void SetCheckedSum()
-    {
-        if (Digits.Count > 0)
-        {
-            foreach (DigitFormatting digit in Digits)
-            {
-                DigitCheckedSum = digit.GetDigitCheckedSum(DigitCheckedSum);
-                DecimalPointCheckedSum = digit.GetDecimalPointCheckedSum(DecimalPointCheckedSum);
-            }
-        }
-
-        _outputCreator.DigitCheckedSum = DigitCheckedSum;
-        _outputCreator.DecimalPointCheckedSum = DecimalPointCheckedSum;
+        return Data;
     }
 
     public string? Description { get; set; }
@@ -146,9 +110,6 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         switch (value)
         {
             case ProfileCreatorModel.Led:
-                Components = GetComponents(value);
-                break;
-
             case ProfileCreatorModel.Dataline:
                 Components = GetComponents(value);
                 break;
@@ -156,18 +117,16 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
             case ProfileCreatorModel.SevenSegment:
                 Components = GetComponents(value);
                 IsDisplay = true;
-                IsPadded = false;
+                Display = new Display();
                 return;
-            
+
             case ProfileCreatorModel.Analog:
                 Components = GetComponents(value);
                 break;
         }
 
         IsDisplay = false;
-        IsPadded = null;
-        PaddingCharacterPair = null;
-        DigitCount = null;
+        Display = null;
     }
 
     private IEnumerable<Component?>? GetComponents(string? value)
@@ -316,7 +275,8 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         IsPmdg777 = false;
         IsPmdg = false;
         SearchPmdgData = null;
-        PmdgData = null;
+        Data = null;
+        Unit = null;
     }
 
     [ObservableProperty]
@@ -360,7 +320,6 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         Data = null;
         Unit = null;
         SearchPmdgData = null;
-        PmdgData = null;
     }
 
     [ObservableProperty]
@@ -390,6 +349,14 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         {
             Data = null;
         }
+
+        if (!(DataType == ProfileCreatorModel.Pmdg737 | DataType == ProfileCreatorModel.Pmdg747 | DataType == ProfileCreatorModel.Pmdg777))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(PmdgDataArrayIndices));
+        Unit = PmdgDataArrayIndices.FirstOrDefault();
     }
 
     [ObservableProperty]
@@ -404,40 +371,28 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private string? _pmdgData;
-
-    partial void OnPmdgDataChanged(string? value)
-    {
-        OnPropertyChanged(nameof(PmdgDataArrayIndices));
-        PmdgDataArrayIndex = PmdgDataArrayIndices.FirstOrDefault();
-    }
-
-    [ObservableProperty]
     private string? _searchPmdgData;
 
     [ObservableProperty]
     private IEnumerable<string?>? _pmdgDataEnumerable;
 
-    [ObservableProperty]
-    private int? _pmdgDataArrayIndex;
+    public string?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
 
-    public int?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
-
-    private int?[] GetPmdgDataArrayIndices()
+    private string?[] GetPmdgDataArrayIndices()
     {
-        if (string.IsNullOrEmpty(PmdgData))
+        if (string.IsNullOrEmpty(Data))
         {
             return [];
         }
 
-        if (IsPmdg737 && typeof(B737.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute1 && attribute1.Value != UnmanagedType.ByValTStr && attribute1.SizeConst is var size1)
+        if (IsPmdg737 && typeof(B737.Data).GetField(Data)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute1 && attribute1.Value != UnmanagedType.ByValTStr && attribute1.SizeConst is var size1)
         {
-            return new int?[size1].Select((_, i) => i).Cast<int?>().ToArray();
+            return Enumerable.Range(0, size1).Select(i => i.ToString()).ToArray();
         }
 
-        if (IsPmdg777 && typeof(B777.Data).GetField(PmdgData)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute2 && attribute2.Value != UnmanagedType.ByValTStr && attribute2.SizeConst is var size2)
+        if (IsPmdg777 && typeof(B777.Data).GetField(Data)?.GetCustomAttribute<MarshalAsAttribute>() is { } attribute2 && attribute2.Value != UnmanagedType.ByValTStr && attribute2.SizeConst is var size2)
         {
-            return new int?[size2].Select((_, i) => i).Cast<int?>().ToArray();
+            return Enumerable.Range(0, size2).Select(i => i.ToString()).ToArray();
         }
 
         return [];
@@ -489,92 +444,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool? _isPadded;
-
-    public static Dictionary<string, char?> PaddingCharacters => new() { ["Zero"] = '0', ["Space"] = ' ' };
-
-    public KeyValuePair<string, char?>? PaddingCharacterPair
-    {
-        get
-        {
-            if (PaddingCharacter is null)
-            {
-                return null;
-            }
-
-            return PaddingCharacters.First(s => s.Value == PaddingCharacter);
-        }
-        set
-        {
-            PaddingCharacter = value?.Value;
-            OnPropertyChanged();
-        }
-    }
-
-    [RelayCommand]
-    private void ClearPaddingCharacter()
-    {
-        PaddingCharacterPair = null;
-    }
-
-    [ObservableProperty]
-    private char? _paddingCharacter;
-
-    public byte[] DigitCounts { get; } = [1, 2, 3, 4, 5, 6, 7, 8];
-
-    [RelayCommand]
-    private void ClearDigitCount()
-    {
-        DigitCount = null;
-    }
-
-    [ObservableProperty]
-    private byte? _digitCount;
-
-    partial void OnDigitCountChanged(byte? value)
-    {
-        if (value is null)
-        {
-            Digits.Clear();
-            return;
-        }
-
-        if (Digits.Count > value)
-        {
-            for (int i = Digits.Count - 1; i >= value; i--)
-            {
-                Digits[i].IsDigitChecked = false;
-                Digits[i].IsDecimalPointChecked = false;
-                Digits.RemoveAt(i);
-            }
-
-            return;
-        }
-
-        for (int i = Digits.Count; i < value; i++)
-        {
-            Digits.Add(new DigitFormatting(i + 1));
-        }
-    }
-
-    [ObservableProperty]
-    private ObservableCollection<DigitFormatting> _digits;
-
-    private static ObservableCollection<DigitFormatting> CreateDigits(byte? digitCount, byte? digitCheckedSum, byte? decimalPointCheckedSum)
-    {
-        ObservableCollection<DigitFormatting> digits = [];
-        for (int i = 0; i < digitCount; i++)
-        {
-            DigitFormatting digitFormatting = new(i + 1, digitCheckedSum, decimalPointCheckedSum);
-            digits.Add(digitFormatting);
-        }
-
-        return digits;
-    }
-
-    public byte? DigitCheckedSum { get; set; }
-
-    public byte? DecimalPointCheckedSum { get; set; }
+    private Display? _display;
 
     private async Task SetOutputPosition(int position, bool isEnabled)
     {

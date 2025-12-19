@@ -2,7 +2,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using DeviceInterfaceManager.Models.Modifiers;
 
 #pragma warning disable CS0657 // Not a valid attribute location for this declaration
@@ -99,18 +98,6 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
     private long? _dataRelease2;
 
     [ObservableProperty]
-    private int? _pmdgEvent;
-
-    [ObservableProperty]
-    private Mouse? _pmdgMousePress;
-
-    [ObservableProperty]
-    private Mouse? _pmdgMouseRelease;
-
-    [ObservableProperty]
-    private bool _onRelease;
-    
-    [ObservableProperty]
     private Interpolation? _interpolation;
 
     [ObservableProperty]
@@ -167,28 +154,10 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
     private string? _unit;
 
     [ObservableProperty]
-    private string? _pmdgData;
-
-    [ObservableProperty]
-    private int? _pmdgDataArrayIndex;
-
-    [ObservableProperty]
     private IModifier[]? _modifiers;
 
     [ObservableProperty]
-    private bool? _isPadded;
-
-    [ObservableProperty]
-    private char? _paddingCharacter;
-
-    [ObservableProperty]
-    private byte? _digitCount;
-
-    [ObservableProperty]
-    private byte? _digitCheckedSum;
-
-    [ObservableProperty]
-    private byte? _decimalPointCheckedSum;
+    private Display? _display;
 
     [ObservableProperty]
     [property: JsonIgnore]
@@ -240,4 +209,7 @@ public partial class Precondition : ObservableObject, IPrecondition
 
     [ObservableProperty]
     private bool _isOrOperator;
+
+    [ObservableProperty]
+    private bool _useOutputValue;
 }

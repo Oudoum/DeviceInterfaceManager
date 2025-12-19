@@ -14,19 +14,7 @@ public interface IOutputCreator : IDescription
 
     public string? Unit { get; set; }
 
-    public string? PmdgData { get; set; }
-
-    public int? PmdgDataArrayIndex { get; set; }
-
     public IModifier[]? Modifiers { get; set; }
 
-    public bool? IsPadded { get; set; }
-
-    public char? PaddingCharacter { get; set; }
-
-    public byte? DigitCount { get; set; }
-
-    public byte? DigitCheckedSum { get; set; }
-
-    public byte? DecimalPointCheckedSum { get; set; }
+    public Display? Display { get; set; }
 }

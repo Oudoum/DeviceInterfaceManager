@@ -1,5 +1,3 @@
-using DeviceInterfaceManager.Models.Devices;
-using DeviceInterfaceManager.Models.FlightSim.MSFS.PMDG;
 using DeviceInterfaceManager.Models.Modifiers;
 
 namespace DeviceInterfaceManager.Models;
@@ -22,13 +20,5 @@ public interface IInputCreator : IDescription
 
     public long? DataRelease2 { get; set; }
 
-    public int? PmdgEvent { get; set; }
-
-    public Mouse? PmdgMousePress { get; set; }
-
-    public Mouse? PmdgMouseRelease { get; set; }
-
-    public bool OnRelease { get; set; }
-    
     public Interpolation? Interpolation { get; set; }
 }

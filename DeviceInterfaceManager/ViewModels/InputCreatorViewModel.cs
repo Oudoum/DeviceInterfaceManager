@@ -26,20 +26,12 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         Component = Components?.FirstOrDefault(x => x?.Position == inputCreator.Input);
         EventType = inputCreator.EventType;
         Event = inputCreator.Event;
+        SearchPmdgEvent = Event;
         DataPress = inputCreator.DataPress;
         DataPress2 = inputCreator.DataPress2;
         DataRelease = inputCreator.DataRelease;
         DataRelease2 = inputCreator.DataRelease2;
-        PmdgEvent = inputCreator.PmdgEvent;
-        PmdgMousePress = inputCreator.PmdgMousePress;
-        PmdgMouseRelease = inputCreator.PmdgMouseRelease;
-        OnRelease = inputCreator.OnRelease;
         Interpolation = inputCreator.Interpolation;
-
-        if (PmdgEvent is not null)
-        {
-            SearchPmdgEvent = GetPmdgEventName();
-        }
 
         DeviceService.SwitchPositionChanged += SwitchPositionChanged;
         DeviceService.AnalogValueChanged += AnalogValueChanged;
@@ -80,10 +72,6 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         _inputCreator.DataPress2 = DataPress2;
         _inputCreator.DataRelease = DataRelease;
         _inputCreator.DataRelease2 = DataRelease2;
-        _inputCreator.PmdgEvent = PmdgEvent;
-        _inputCreator.PmdgMousePress = PmdgMousePress;
-        _inputCreator.PmdgMouseRelease = PmdgMouseRelease;
-        _inputCreator.OnRelease = OnRelease;
         _inputCreator.Interpolation = Interpolation;
         return base.Copy();
     }
@@ -95,12 +83,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
             return Description;
         }
 
-        if (Event is not null)
-        {
-            return Event;
-        }
-
-        return PmdgEventName ?? null;
+        return Event ?? null;
     }
 
     public string? Description { get; set; }
@@ -110,7 +93,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private string? _inputType;
-    
+
     partial void OnInputTypeChanged(string? value)
     {
         switch (value)
@@ -120,7 +103,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                 DestroyInterpolation();
                 IsAnalog = false;
                 break;
-                
+
             case ProfileCreatorModel.Analog:
                 Components = GetComponents(value);
                 IsAnalog = true;
@@ -128,9 +111,6 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                 DataPress2 = null;
                 DataRelease = null;
                 DataRelease2 = null;
-                OnRelease = false;
-                ClearPmdgMousePress();
-                ClearPmdgMouseRelease();
                 break;
         }
     }
@@ -152,7 +132,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     [ObservableProperty]
     private Component? _component;
-    
+
     public int? Input { get; set; }
 
     private string? _eventType;
@@ -204,9 +184,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsRpn = false;
         IsPmdg737 = false;
         IsPmdg777 = false;
+        ResetEventType();
         DataPress2 = null;
         DataRelease2 = null;
-        ResetEventType();
     }
 
     [ObservableProperty]
@@ -243,9 +223,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsPmdg737 = false;
         IsPmdg777 = false;
         ResetEventType();
-        DataPress = null;
         DataPress2 = null;
-        DataRelease = null;
         DataRelease2 = null;
     }
 
@@ -289,8 +267,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         IsRpn = false;
         IsPmdg = true;
         Event = null;
+        ClearPmdgMousePress();
+        ClearPmdgMouseRelease();
         SearchPmdgEvent = null;
-        OnRelease = false;
         DataPress2 = null;
         DataRelease2 = null;
     }
@@ -298,11 +277,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     private void ResetEventType()
     {
         IsPmdg = false;
-        PmdgEvent = null;
-        PmdgEventName = null;
+        Event = null;
         ClearPmdgMousePress();
         ClearPmdgMouseRelease();
-        OnRelease = false;
     }
 
     [ObservableProperty]
@@ -328,51 +305,21 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     [ObservableProperty]
     private long? _dataRelease2;
 
-    public int? PmdgEvent { get; set; }
-
-    [ObservableProperty]
-    private string? _pmdgEventName;
-
     [ObservableProperty]
     private string? _searchPmdgEvent;
 
     partial void OnSearchPmdgEventChanged(string? value)
     {
-        if (IsPmdg737 && Enum.TryParse(value, true, out B737.Event pmdg737Event))
+        if (IsPmdg737 && Enum.TryParse(value, true, out B737.Event _))
         {
-            PmdgEvent = (int)pmdg737Event;
-            PmdgEventName = value;
+            Event = value;
             return;
         }
 
-        if (IsPmdg777 && Enum.TryParse(value, true, out B777.Event pmdg777Event))
+        if (IsPmdg777 && Enum.TryParse(value, true, out B777.Event _))
         {
-            PmdgEvent = (int)pmdg777Event;
-            PmdgEventName = value;
-            return;
+            Event = value;
         }
-
-        PmdgEvent = null;
-    }
-
-    private string? GetPmdgEventName()
-    {
-        if (PmdgEvent is null)
-        {
-            return null;
-        }
-
-        if (IsPmdg737)
-        {
-            return Enum.GetName((B737.Event)PmdgEvent);
-        }
-
-        if (IsPmdg777)
-        {
-            return Enum.GetName((B777.Event)PmdgEvent);
-        }
-
-        return null;
     }
 
     [ObservableProperty]
@@ -388,39 +335,18 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
         Mouse.WheelUp
     ];
 
-    [ObservableProperty]
-    private Mouse? _pmdgMousePress;
-
     [RelayCommand]
-    private void ClearPmdgMousePress()
-    {
-        PmdgMousePress = null;
-    }
-
-    [ObservableProperty]
-    private Mouse? _pmdgMouseRelease;
-
+    private void ClearPmdgMousePress() => DataPress = null;
+    
     [RelayCommand]
-    private void ClearPmdgMouseRelease()
-    {
-        PmdgMouseRelease = null;
-    }
-
-    [ObservableProperty]
-    private bool _onRelease;
+    private void ClearPmdgMouseRelease() => DataRelease = null;
     
     [ObservableProperty]
     private Interpolation? _interpolation;
 
     [RelayCommand]
-    private void CreateInterpolation()
-    {
-        Interpolation ??= new Interpolation();
-    }
-    
+    private void CreateInterpolation() => Interpolation ??= new Interpolation();
+
     [RelayCommand]
-    private void DestroyInterpolation()
-    {
-        Interpolation = null;
-    }
+    private void DestroyInterpolation() => Interpolation = null;
 }

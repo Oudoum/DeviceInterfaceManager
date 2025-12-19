@@ -133,7 +133,7 @@ public class ProfileService : IAsyncDisposable
     {
         foreach (OutputCreator outputCreator in _profileCreatorModel.OutputCreators.Where(x =>
                      x is { IsActive: true, DataType: ProfileCreatorModel.Pmdg737 or ProfileCreatorModel.Pmdg777 } &&
-                     (x.PmdgData == e.PmdgDataName || (x.PmdgDataArrayIndex is not null && x.PmdgData + '_' + x.PmdgDataArrayIndex == e.PmdgDataName))))
+                     (x.Data == e.PmdgDataName || (!string.IsNullOrEmpty(x.Unit) && x.Data + '_' + x.Unit == e.PmdgDataName))))
         {
             ProfileEntryIteration(outputCreator, e);
         }
@@ -190,7 +190,7 @@ public class ProfileService : IAsyncDisposable
             }
         }
 
-        SetDisplayValue(outputCreator, ref stringBuilder);
+        outputCreator.Display?.SetDisplayValue(ref stringBuilder);
         SetSendOutput(outputCreator, stringBuilder);
     }
 
@@ -214,7 +214,7 @@ public class ProfileService : IAsyncDisposable
             bool comparisonResult = true;
             if (precondition.IsActive)
             {
-                comparisonResult = CheckComparison(matchingOutputCreator.FlightSimValue, precondition.ComparisonValue, precondition.Operator);
+                comparisonResult = CheckComparison(precondition.UseOutputValue ? matchingOutputCreator.OutputValue : matchingOutputCreator.FlightSimValue, precondition.ComparisonValue, precondition.Operator);
             }
 
             if (i == 0)
@@ -281,127 +281,6 @@ public class ProfileService : IAsyncDisposable
         }
     }
 
-    private static void SetDisplayValue(OutputCreator outputCreator, ref StringBuilder stringBuilder)
-    {
-        if (outputCreator.OutputType != ProfileCreatorModel.SevenSegment)
-        {
-            return;
-        }
-
-        if (outputCreator.DigitCount is not null)
-        {
-            _ = stringBuilder.Replace(".", string.Empty);
-            if (stringBuilder.Length > outputCreator.DigitCount)
-            {
-                byte digitCount = outputCreator.DigitCount.Value;
-                switch (stringBuilder[digitCount] - '0')
-                {
-                    case > 5:
-                    {
-                        stringBuilder.Length = digitCount;
-                        int carry = 1;
-                        for (int i = digitCount - 1; i >= 0; i--)
-                        {
-                            int digit = stringBuilder[i] - '0' + carry;
-                            carry = digit / 10;
-                            stringBuilder[i] = (char)(digit % 10 + '0');
-                        }
-
-                        if (carry > 0)
-                        {
-                            _ = stringBuilder.Insert(0, carry);
-                        }
-
-                        break;
-                    }
-
-                    case <= 5:
-                        stringBuilder.Length = digitCount;
-                        break;
-                }
-            }
-        }
-
-        if (outputCreator.IsPadded == true)
-        {
-            if (outputCreator.PaddingCharacter is not null && outputCreator.DigitCount is not null)
-            {
-                int dotCount = 0;
-                for (int i = 0; i < stringBuilder.Length; i++)
-                {
-                    if (stringBuilder[i] == '.')
-                    {
-                        dotCount++;
-                    }
-                }
-
-                while (stringBuilder.Length < outputCreator.DigitCount + dotCount) _ = stringBuilder.Insert(0, outputCreator.PaddingCharacter);
-            }
-        }
-
-        if (outputCreator.DigitCount is null)
-        {
-            return;
-        }
-
-        _ = stringBuilder.Append('0', outputCreator.DigitCount.Value - stringBuilder.Length);
-        FormatString(outputCreator, ref stringBuilder);
-    }
-
-    private static void FormatString(OutputCreator outputCreator, ref StringBuilder stringBuilder)
-    {
-        if (outputCreator.DigitCheckedSum is null && outputCreator.DecimalPointCheckedSum is null)
-        {
-            return;
-        }
-
-        if (outputCreator.DigitCheckedSum is not null)
-        {
-            for (int i = 0; i < outputCreator.DigitCount; i++)
-            {
-                if ((outputCreator.DigitCheckedSum & (1 << i)) == 0)
-                {
-                    stringBuilder[i] = ' ';
-                    continue;
-                }
-
-                if (stringBuilder.Length <= i)
-                {
-                    _ = stringBuilder.Append(outputCreator.PaddingCharacter);
-                }
-            }
-        }
-
-        if (outputCreator.DecimalPointCheckedSum is null)
-        {
-            return;
-        }
-
-        {
-            byte decimalPointCount = 0;
-            for (int i = 0; i < outputCreator.DigitCount + decimalPointCount; i++)
-            {
-                if ((outputCreator.DecimalPointCheckedSum & (1 << (i - decimalPointCount))) == 0 || stringBuilder.Length <= i)
-                {
-                    continue;
-                }
-
-                if (stringBuilder.Length > i + 1 && stringBuilder[i + 1] == '.')
-                {
-                    i++;
-                    decimalPointCount++;
-                    continue;
-                }
-
-                _ = stringBuilder.Insert(i + 1, '.');
-                i++;
-                decimalPointCount++;
-            }
-        }
-    }
-
-    #region Inputs
-
     private void SwitchPositionChanged(object? sender, SwitchPositionChangedEventArgs e)
     {
         SendEvent(e.Position, e.IsPressed);
@@ -419,14 +298,15 @@ public class ProfileService : IAsyncDisposable
 
             switch (inputCreator.EventType)
             {
-                //HTML Event(H:Event), Reverse Polish Notation (RPN)
-                case ProfileCreatorModel.Rpn when !string.IsNullOrEmpty(inputCreator.Event) && isPressed == !inputCreator.OnRelease:
+                //HTML Event [H], Reverse Polish Notation (RPN)
+                case ProfileCreatorModel.Rpn when !string.IsNullOrEmpty(inputCreator.Event) && ((isPressed && inputCreator.DataPress is null)
+                                                                                                || (!isPressed && inputCreator.DataRelease is not null)):
                     _simConnectClientService.SendWasmEvent(inputCreator.Event);
                     continue;
 
-                //Key Event ID (K:Event[K]) with one parameter
-                case ProfileCreatorModel.KEvent when inputCreator.Event is not null && ((isPressed && inputCreator is { DataPress: null, OnRelease: false })
-                                                                                        || (!isPressed && inputCreator is { DataRelease: null, OnRelease: true })):
+                //Key Event ID [K] with one parameter
+                case ProfileCreatorModel.KEvent when !string.IsNullOrEmpty(inputCreator.Event) && ((isPressed && inputCreator.DataPress is not null)
+                                                                                                   || (!isPressed && inputCreator.DataRelease is not null)):
                     _simConnectClientService.TransmitSimEvent(inputCreator.Event);
                     continue;
             }
@@ -454,14 +334,6 @@ public class ProfileService : IAsyncDisposable
 
                     break;
 
-                case 0 when inputCreator.PmdgMouseRelease is not null:
-                    firstParameter = (uint)inputCreator.PmdgMouseRelease.Value;
-                    break;
-
-                case 1 when inputCreator.PmdgMousePress is not null:
-                    firstParameter = (uint)inputCreator.PmdgMousePress.Value;
-                    break;
-
                 default:
                     continue;
             }
@@ -474,24 +346,32 @@ public class ProfileService : IAsyncDisposable
     {
         switch (inputCreator.EventType)
         {
-            //Simulation Variable (SimVar[A]), Local Variable (L:Var[L]))
+            //Simulation Variable [A] and Local Variable [L]
             case ProfileCreatorModel.MsfsSimConnect when inputCreator.Event is not null:
                 _simConnectClientService.SetSimVar(firstParameter, inputCreator.Event);
                 return;
 
-            //Key Event ID (K:Event[K]) with one or more parameters
+            //Key Event ID [K] with one or more parameters
             case ProfileCreatorModel.KEvent when inputCreator.Event is not null:
                 _simConnectClientService.TransmitSimEvent(firstParameter, secondParameter, inputCreator.Event);
                 return;
 
             //PMDG 737
-            case ProfileCreatorModel.Pmdg737 when inputCreator.PmdgEvent is not null:
-                _simConnectClientService.TransmitEvent(firstParameter, (B737.Event)inputCreator.PmdgEvent.Value);
+            case ProfileCreatorModel.Pmdg737 when inputCreator.Event is not null:
+                if (Enum.TryParse(inputCreator.Event, out B737.Event b737Event))
+                {
+                    _simConnectClientService.TransmitEvent(firstParameter, b737Event);
+                }
+
                 return;
 
             //PMDG 777
-            case ProfileCreatorModel.Pmdg777 when inputCreator.PmdgEvent is not null:
-                _simConnectClientService.TransmitEvent(firstParameter, (B777.Event)inputCreator.PmdgEvent.Value);
+            case ProfileCreatorModel.Pmdg777 when inputCreator.Event is not null:
+                if (Enum.TryParse(inputCreator.Event, out B777.Event b777Event))
+                {
+                    _simConnectClientService.TransmitEvent(firstParameter, b777Event);
+                }
+
                 return;
         }
     }
@@ -532,8 +412,6 @@ public class ProfileService : IAsyncDisposable
             SendParameters(inputCreator, value, 0);
         }
     }
-
-    #endregion
 
     public async ValueTask DisposeAsync()
     {
