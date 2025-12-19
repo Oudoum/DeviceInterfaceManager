@@ -31,9 +31,9 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Rpn = "RPN/H-Events";
     public const string XPlane = "XPlane";
 
-    //Input & Output
+    //Inputs & Outputs
     public const string Analog = "Analog";
-    
+
     //Inputs
     public const string Switch = "Switch";
 
