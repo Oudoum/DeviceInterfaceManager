@@ -21,7 +21,7 @@ public class SimConnectClientService
 
     private SimConnect? _simConnect;
     private string? _aircraftTitle;
-    
+
     private readonly ILogger _logger;
     private readonly SignalRClientService _signalRClientService;
     private readonly PmdgHelperService _pmdgHelperService;
@@ -309,7 +309,7 @@ public class SimConnectClientService
         lock (_lockObject)
         {
             _simConnect?.TransmitClientEvent(
-                0,
+                SimConnect.SIMCONNECT_OBJECT_ID_USER,
                 eventId,
                 (uint)data,
                 SimConnectGroupPriority.Highest,
@@ -322,7 +322,7 @@ public class SimConnectClientService
         lock (_lockObject)
         {
             _simConnect?.TransmitClientEvent_EX1(
-                0,
+                SimConnect.SIMCONNECT_OBJECT_ID_USER,
                 (EventId)eventId,
                 SimConnectGroupPriority.Highest,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY,
