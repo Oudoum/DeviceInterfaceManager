@@ -32,7 +32,7 @@ public class FsCockpitSerialPortService : SerialPortService
         SendData((byte)DeviceCommands.GetFirmwareVersion);
 
         CancellationTokenSource cts = new();
-        Task delayTask = Task.Delay(3000, cts.Token);
+        Task delayTask = Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
 
         while (string.IsNullOrEmpty(PanelModelPrefix) || string.IsNullOrEmpty(SerialNumber))
         {
