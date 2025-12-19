@@ -245,7 +245,8 @@ public class SimConnectClientService
             AircraftTitleChanged?.Invoke(_aircraftTitle);
             _ = _signalRClientService.SendTitleMessageAsync(_aircraftTitle);
 
-            if (_aircraftTitle.StartsWith("PMDG 737"))
+            if (_aircraftTitle.StartsWith("PMDG 737") ||
+                _aircraftTitle.StartsWith("737"))
             {
                 _pmdgHelperService.InitializePmdg737(_simConnect);
             }
