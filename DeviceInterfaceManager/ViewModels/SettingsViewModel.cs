@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -31,6 +30,10 @@ public partial class SettingsViewModel : ObservableObject
     private readonly SignalRClientService _signalRClientService;
     private readonly IDialogService _dialogService;
 
+    private CancellationTokenSource? _fdsUsbCts;
+    private CancellationTokenSource? _fdsEnetCts;
+    private CancellationTokenSource? _fsCockpitCts;
+
     public SettingsViewModel(ILogger<SettingsViewModel> logger, ObservableCollection<IDeviceService> inputOutputDevices, SignalRServerService signalRServerService, SignalRClientService signalRClientService, IDialogService dialogService)
     {
         _logger = logger;
@@ -48,39 +51,46 @@ public partial class SettingsViewModel : ObservableObject
 
         CurrentVersion = updateManager.CurrentVersion?.ToFullString();
 
+        if (Settings.Server)
+        {
+            await StartServerAsync();
+        }
+
         if (Settings.CheckForUpdates)
         {
-            await CheckForUpdatesCommand.ExecuteAsync(updateManager);
+            await CheckForUpdatesAsync(updateManager);
         }
 
         if (Settings.FdsUsb)
         {
-            await ToggleFdsUsbCommand.ExecuteAsync(null);
+            await ToggleFdsUsbAsync();
         }
 
         if (Settings.FdsEthernet)
         {
-            await ToggleFdsEthernetCommand.ExecuteAsync(null);
+            await ToggleFdsEthernetAsync();
         }
 
         if (Settings.FsCockpit)
         {
-            await ToggleFsCockpitCommand.ExecuteAsync(null);
+            await ToggleFsCockpitAsync();
         }
+    }
 
-        if (Settings.Server)
-        {
-            await StartServerCommand.ExecuteAsync(null);
-        }
+    public void Disconnect()
+    {
+        _fdsUsbCts?.Cancel();
+        _fdsEnetCts?.Cancel();
+        _fsCockpitCts?.Cancel();
     }
 
     [ObservableProperty]
     private string? _currentVersion;
 
-    private UpdateManager CreateUpdateManager()
+    private static UpdateManager CreateUpdateManager()
     {
         GithubSource githubSource = new("https://github.com/Oudoum/DeviceInterfaceManager", null, false);
-        return new UpdateManager(githubSource, logger: _logger);
+        return new UpdateManager(githubSource);
     }
 
     [ObservableProperty]
@@ -113,19 +123,18 @@ public partial class SettingsViewModel : ObservableObject
     private string? _wasmModuleUpdaterMessage;
 
     [RelayCommand]
-    private async Task UpdateDimWasmModuleAsync()
-    {
-        WasmModuleUpdaterMessage = await WasmModuleUpdateService.Create().InstallWasmModule();
-    }
+    private async Task UpdateDimWasmModuleAsync() => WasmModuleUpdaterMessage = await WasmModuleUpdateService.Create().InstallWasmModule();
 
     [RelayCommand]
-    private static void OpenUserDataFolder()
-    {
-        Process.Start("explorer.exe", App.UserDataPath);
-    }
+    private static void OpenUserDataFolder() => Process.Start("explorer.exe", App.UserDataPath);
 
-    private void DisconnectAndRemove<T>() where T : IDeviceService
+    private async Task DisconnectAndRemove<T>(CancellationTokenSource? cancellationTokenSource) where T : IDeviceService
     {
+        if (cancellationTokenSource is not null)
+        { 
+            await cancellationTokenSource.CancelAsync();
+        }
+
         foreach (IDeviceService inputOutputDevice in _inputOutputDevices.ToArray())
         {
             if (inputOutputDevice is not T)
@@ -133,11 +142,10 @@ public partial class SettingsViewModel : ObservableObject
                 continue;
             }
 
-            inputOutputDevice.Disconnect();
+            await inputOutputDevice.Disconnect();
             _inputOutputDevices.Remove(inputOutputDevice);
         }
     }
-
 
     private bool _isStarted;
 
@@ -157,37 +165,32 @@ public partial class SettingsViewModel : ObservableObject
         _isStarted = true;
     }
 
-    #region FdsUsb
-
     [RelayCommand]
-    private async Task ToggleFdsUsbAsync(CancellationToken cancellationToken = default)
+    private async Task ToggleFdsUsbAsync()
     {
         if (!Settings.FdsUsb)
         {
-            DisconnectAndRemove<InterfaceItUsbService>();
+            await DisconnectAndRemove<InterfaceItUsbService>(_fdsUsbCts);
             return;
         }
 
+        _fdsUsbCts = new CancellationTokenSource();
         for (int i = 0; i < InterfaceItUsbService.TotalControllers; i++)
         {
             InterfaceItUsbService interfaceItUsbService = new();
-            if (await interfaceItUsbService.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+            if (await interfaceItUsbService.ConnectAsync(_fdsUsbCts.Token) == ConnectionStatus.Connected)
             {
                 _inputOutputDevices.Add(interfaceItUsbService);
             }
         }
     }
 
-    #endregion
-
-    #region FdsEthernet
-
     [RelayCommand]
-    private async Task ToggleFdsEthernetAsync(CancellationToken cancellationToken = default)
+    private async Task ToggleFdsEthernetAsync()
     {
         if (!Settings.FdsEthernet)
         {
-            DisconnectAndRemove<InterfaceItEthernetService>();
+            await DisconnectAndRemove<InterfaceItEthernetService>(_fdsEnetCts);
             return;
         }
 
@@ -196,6 +199,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        _fdsEnetCts = new CancellationTokenSource();
         foreach (IConnection connection in Settings.Connections)
         {
             if (connection is not Connection interfaceItEthernetConnection ||
@@ -206,8 +210,8 @@ public partial class SettingsViewModel : ObservableObject
                 continue;
             }
 
-            InterfaceItEthernetService interfaceItEthernetService = new(connection.ConnectionName);
-            if (await interfaceItEthernetService.ConnectAsync(cancellationToken) == ConnectionStatus.Connected)
+            InterfaceItEthernetService interfaceItEthernetService = new(connection.ConnectionName, _logger);
+            if (await interfaceItEthernetService.ConnectAsync(_fdsEnetCts.Token) == ConnectionStatus.Connected)
             {
                 _inputOutputDevices.Add(interfaceItEthernetService);
             }
@@ -215,21 +219,14 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ChangeInterfaceItEthernetDeviceAsync()
-    {
-        await ChangeInternetProtocolDeviceAsync(ProfileCreatorModel.FdsEnet);
-    }
-
-    #endregion
-
-    #region FsCockpit
+    private async Task ChangeInterfaceItEthernetDeviceAsync() => await ChangeInternetProtocolDeviceAsync(ProfileCreatorModel.FdsEnet);
 
     [RelayCommand]
-    private async Task ToggleFsCockpitAsync(CancellationToken cancellationToken = default)
+    private async Task ToggleFsCockpitAsync()
     {
         if (!Settings.FsCockpit)
         {
-            DisconnectAndRemove<FsCockpitServiceBase>();
+            await DisconnectAndRemove<FsCockpitServiceBase>(_fsCockpitCts);
             return;
         }
 
@@ -238,6 +235,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        _fsCockpitCts = new CancellationTokenSource();
         foreach (IConnection connection in Settings.Connections)
         {
             if (connection is not FsCockpitConnection fsCockpitConnection ||
@@ -249,7 +247,7 @@ public partial class SettingsViewModel : ObservableObject
             }
 
             FsCockpitSerialPortService fsCockpitService = new(fsCockpitConnection.ConnectionName, fsCockpitConnection.HasHighTensionDetents);
-            IDeviceService? deviceService = await fsCockpitService.GetDeviceServiceAsync(cancellationToken);
+            IDeviceService? deviceService = await fsCockpitService.GetDeviceServiceAsync(_fsCockpitCts.Token);
             if (deviceService is not null)
             {
                 _inputOutputDevices.Add(deviceService);
@@ -263,80 +261,39 @@ public partial class SettingsViewModel : ObservableObject
         await ChangeSerialPortDeviceAsync(ProfileCreatorModel.FsCockpit);
     }
 
-    #endregion
-
-    private void AddDevices(IEnumerable<IDeviceService>? devices)
+    private async Task ChangeDeviceAsync<TSelectConnectionDialogModel>(string driverName, string title, string text) where TSelectConnectionDialogModel : SelectConnectionDialogModel
     {
-        if (devices is null)
+        TSelectConnectionDialogModel dialogModel = _dialogService.CreateViewModel<TSelectConnectionDialogModel>();
+        dialogModel.DriverName = driverName;
+        dialogModel.Text = text;
+
+        if (Settings.Connections is not null)
         {
-            return;
+            dialogModel.Connections = new ObservableCollection<IConnection>(Settings.Connections);
         }
 
-        foreach (IDeviceService device in devices)
+        ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
         {
-            _inputOutputDevices.Add(device);
+            Content = dialogModel,
+            Title = title,
+            PrimaryButtonText = "OK",
+            SecondaryButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary
+        });
+
+        if (result == ContentDialogResult.Primary)
+        {
+            Settings.Connections = dialogModel.Connections;
         }
     }
 
     private async Task ChangeSerialPortDeviceAsync(string driverName)
     {
-        SelectSerialPortDialogModel dialogModel = _dialogService.CreateViewModel<SelectSerialPortDialogModel>();
-        dialogModel.DriverName = driverName;
-        dialogModel.Text = "Select a serial port.";
-        if (Settings.Connections is not null)
-        {
-            ObservableCollection<IConnection> connections = [];
-            foreach (IConnection connection in Settings.Connections)
-            {
-                connections.Add(connection);
-            }
-
-            dialogModel.Connections = connections;
-        }
-
-        ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
-        {
-            Content = dialogModel,
-            Title = "COM Connections",
-            PrimaryButtonText = "OK",
-            SecondaryButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
-        });
-
-        if (result == ContentDialogResult.Primary)
-        {
-            Settings.Connections = dialogModel.Connections;
-        }
+        await ChangeDeviceAsync<SelectSerialPortDialogModel>(driverName, "COM Connections", "Select a serial port.");
     }
-
+ 
     private async Task ChangeInternetProtocolDeviceAsync(string driverName)
     {
-        SelectInternetProtocolDialogModel dialogModel = _dialogService.CreateViewModel<SelectInternetProtocolDialogModel>();
-        dialogModel.DriverName = driverName;
-        dialogModel.Text = "Add an IP-Address.";
-        if (Settings.Connections is not null)
-        {
-            ObservableCollection<IConnection> connections = [];
-            foreach (IConnection connection in Settings.Connections)
-            {
-                connections.Add(connection);
-            }
-
-            dialogModel.Connections = connections;
-        }
-
-        ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
-        {
-            Content = dialogModel,
-            Title = "IP Connections",
-            PrimaryButtonText = "OK",
-            SecondaryButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
-        });
-
-        if (result == ContentDialogResult.Primary)
-        {
-            Settings.Connections = dialogModel.Connections;
-        }
+        await ChangeDeviceAsync<SelectInternetProtocolDialogModel>(driverName, "IP Connections", "Add an IP-Address.");
     }
 }
