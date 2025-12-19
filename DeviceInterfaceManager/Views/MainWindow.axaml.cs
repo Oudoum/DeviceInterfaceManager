@@ -20,8 +20,11 @@ public partial class MainWindow : AppWindow
             return;
         }
         
-        DataObject data = new();
-        data.Set(nameof(IDeviceService), stackPanel.DataContext);
-        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link);
+        DataTransfer data = new();
+        DataTransferItem item = new();
+        item.Set(DataFormat.CreateStringApplicationFormat("DeviceId"), ((IDeviceService)stackPanel.DataContext).Id);
+        item.Set(DataFormat.CreateStringApplicationFormat("DeviceName"), ((IDeviceService)stackPanel.DataContext).DeviceName);
+        data.Add(item);
+        await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Link).ConfigureAwait(false);
     }
 }
