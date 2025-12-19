@@ -2,7 +2,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using DeviceInterfaceManager.Models;
-using DeviceInterfaceManager.Services.Devices;
 
 namespace DeviceInterfaceManager.Views;
 
@@ -18,14 +17,17 @@ public partial class HomeView : UserControl
 
     private async void ProfileListOnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsRightButtonPressed || sender is not StackPanel { DataContext: not null } stackPanel)
+        if (!e.GetCurrentPoint(this).Properties.IsRightButtonPressed || sender is not StackPanel { DataContext: Tuple<string, ProfileCreatorModel> tuple })
         {
             return;
         }
 
-        DataObject data = new();
-        data.Set(nameof(ProfileCreatorModel), stackPanel.DataContext);
-        await DragDrop.DoDragDrop(e, data, DragDropEffects.Link).ConfigureAwait(false);
+        DataTransfer data = new();
+        DataTransferItem item = new();
+        item.Set(DataFormat.CreateStringApplicationFormat("ProfileName"), tuple.Item1);
+        item.Set(DataFormat.CreateStringApplicationFormat("DeviceName"), tuple.Item2.DeviceName);
+        data.Add(item);
+        await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Link).ConfigureAwait(false);
     }
 
     private static void OnDrop(object? sender, DragEventArgs e)
@@ -35,8 +37,6 @@ public partial class HomeView : UserControl
 
     private static void DropLogic(DragEventArgs e, bool set = false)
     {
-        object? data = e.Data.Get(nameof(IDeviceService)) ?? e.Data.Get(nameof(ProfileCreatorModel));
-
         if (e.Source is not Control control)
         {
             return;
@@ -47,24 +47,40 @@ public partial class HomeView : UserControl
             return;
         }
 
+        string? profileName = e.DataTransfer.TryGetValue(DataFormat.CreateStringApplicationFormat("ProfileName"));
+        string? deviceId = e.DataTransfer.TryGetValue(DataFormat.CreateStringApplicationFormat("DeviceId"));
+        string? deviceName = e.DataTransfer.TryGetValue(DataFormat.CreateStringApplicationFormat("DeviceName"));
+
         switch (control.Name)
         {
-            case "DeviceStackPanel" when data is IDeviceService inputOutputDevice && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == inputOutputDevice.DeviceName):
+            case "DeviceStackPanel" when profileName is null:
+                if (!string.IsNullOrEmpty(profileMapping.DeviceName) && profileMapping.DeviceName != deviceName)
+                {
+                    break;
+                }
+
                 e.DragEffects = DragDropEffects.Link;
                 if (set)
                 {
-                    profileMapping.Id = inputOutputDevice.Id;
-                    profileMapping.DeviceName = inputOutputDevice.DeviceName;
+                    profileMapping.Id = deviceId;
+                    profileMapping.DeviceName = deviceName;
                 }
+
                 break;
 
-            case "ProfileStackPanel" when data is Tuple<string, ProfileCreatorModel> profileCreatorModel && (string.IsNullOrEmpty(profileMapping.DeviceName) || profileMapping.DeviceName == profileCreatorModel.Item2.DeviceName):
+            case "ProfileStackPanel" when profileName is not null:
+                if (!string.IsNullOrEmpty(profileMapping.DeviceName) && profileMapping.DeviceName != deviceName)
+                {
+                    break;
+                }
+
                 e.DragEffects = DragDropEffects.Link;
                 if (set)
                 {
-                    profileMapping.ProfileName = profileCreatorModel.Item1;
-                    profileMapping.DeviceName = profileCreatorModel.Item2.DeviceName;
+                    profileMapping.ProfileName = profileName;
+                    profileMapping.DeviceName = deviceName;
                 }
+
                 break;
         }
     }
