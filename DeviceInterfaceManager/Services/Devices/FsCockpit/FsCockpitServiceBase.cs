@@ -299,6 +299,8 @@ public abstract class FsCockpitServiceBase : DeviceServiceBase
     public const string AirbusN2PfdCpt = Airbus + "24";
     public const string AirbusN2PfdFo = Airbus + "25";
     public const string AirbusAcpPro = Airbus + "28";
+    public const string AirbusSidestickCpt = Airbus + "29";
+    public const string AirbusSidestickFo = Airbus + "30";
 
     private static Dictionary<string, string> PanelModels { get; } = new()
     {
@@ -323,6 +325,8 @@ public abstract class FsCockpitServiceBase : DeviceServiceBase
         { AirbusAbLgsPtiClk, "Airbus AB/LGS/PTI/CLK" },
         { AirbusN2PfdCpt, "Airbus N2PFD CPT" },
         { AirbusN2PfdFo, "Airbus N2PFD FO" },
-        { AirbusAcpPro, "Airbus ACP Pro" }
+        { AirbusAcpPro, "Airbus ACP Pro" },
+        { AirbusSidestickCpt, "Airbus Sidestick CPT" },
+        { AirbusSidestickFo, "Airbus Sidestick FO" }
     };
 }
