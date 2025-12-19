@@ -22,7 +22,6 @@ using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using HotAvalonia;
-using Microsoft.Extensions.Logging;
 
 namespace DeviceInterfaceManager;
 
@@ -49,8 +48,7 @@ public class App : Application
                 new DialogService(
                     new DialogManager(
                         new ViewLocator(),
-                        new DialogFactory().AddFluent(),
-                        provider.GetService<ILogger<DialogManager>>()
+                        new DialogFactory().AddFluent()
                     ),
                     provider.GetService
                 )
@@ -93,6 +91,7 @@ public class App : Application
 
                 desktop.ShutdownRequested += (_, _) =>
                 {
+                    SettingsViewModel.Disconnect();
                     foreach (IDeviceService item in InputOutputDevices)
                     {
                         item.Disconnect();
