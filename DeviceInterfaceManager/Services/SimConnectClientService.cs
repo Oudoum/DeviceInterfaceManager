@@ -312,7 +312,7 @@ public class SimConnectClientService
                 0,
                 eventId,
                 (uint)data,
-                SimConnectGroupPriority.Standard,
+                SimConnectGroupPriority.Highest,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
         }
     }
@@ -324,7 +324,7 @@ public class SimConnectClientService
             _simConnect?.TransmitClientEvent_EX1(
                 0,
                 (EventId)eventId,
-                SimConnectGroupPriority.Standard,
+                SimConnectGroupPriority.Highest,
                 SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY,
                 (uint)data0,
                 (uint)data1,
