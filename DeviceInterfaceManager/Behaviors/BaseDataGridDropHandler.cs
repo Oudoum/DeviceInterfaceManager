@@ -29,8 +29,8 @@ public abstract class BaseDataGridDropHandler<T> : DropHandlerBase
                 return valid;
             }
 
+            string? direction = e.DataTransfer.TryGetValue(DataFormat.CreateStringPlatformFormat("direction"));
             DataGridRow row = FindDataGridRowFromChildView(c);
-            string direction = e.Data.Contains("direction") ? (string)e.Data.Get("direction")! : "down";
             ApplyDraggingStyleToRow(row, direction);
             ClearDraggingStyleFromAllRows(sender, row);
             return valid;
@@ -163,21 +163,21 @@ public abstract class BaseDataGridDropHandler<T> : DropHandlerBase
             return;
         }
 
-        foreach (Control? r in presenter.Children.Where(r => r != exceptThis))
+        foreach (Control r in presenter.Children.Where(r => r != exceptThis))
         {
             r.Classes.Remove(RowDraggingUpStyleClass);
             r.Classes.Remove(RowDraggingDownStyleClass);
         }
     }
 
-    private static void ApplyDraggingStyleToRow(StyledElement row, string direction)
+    private static void ApplyDraggingStyleToRow(StyledElement row, string? direction)
     {
         switch (direction)
         {
             case "up":
             {
                 row.Classes.Remove(RowDraggingDownStyleClass);
-                if (row.Classes.Contains(RowDraggingUpStyleClass) == false)
+                if (!row.Classes.Contains(RowDraggingUpStyleClass))
                 {
                     row.Classes.Add(RowDraggingUpStyleClass);
                 }
@@ -188,7 +188,7 @@ public abstract class BaseDataGridDropHandler<T> : DropHandlerBase
             case "down":
             {
                 row.Classes.Remove(RowDraggingUpStyleClass);
-                if (row.Classes.Contains(RowDraggingDownStyleClass) == false)
+                if (!row.Classes.Contains(RowDraggingDownStyleClass))
                 {
                     row.Classes.Add(RowDraggingDownStyleClass);
                 }
