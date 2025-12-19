@@ -138,7 +138,7 @@ public abstract class FsCockpitServiceBase : DeviceServiceBase
             spaceDigitCode = data;
         }
 
-        byte[] digitArray = Enumerable.Repeat(spaceDigitCode, 15).ToArray();
+        byte[] digitArray = Enumerable.Repeat(spaceDigitCode, 16).ToArray();
 
         foreach (char charData in text)
         {
