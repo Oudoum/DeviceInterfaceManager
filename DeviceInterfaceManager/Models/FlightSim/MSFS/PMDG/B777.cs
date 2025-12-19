@@ -648,7 +648,9 @@ public static class B777
     private const int EVT_EFB_L_KEY_START = EVT_EFB_L_START + 30;
     private const int EVT_EFB_R_START = EVT_EFB_L_KEY_START + 55;
     private const int EVT_EFB_R_KEY_START = EVT_EFB_R_START + 30;
-
+    private const int CDU_EVT_OFFSET_R = Event.EVT_CDU_R_L1 - Event.EVT_CDU_L_L1;
+    private const int CDU_EVT_OFFSET_C = Event.EVT_CDU_C_L1 - Event.EVT_CDU_L_L1;
+    
     public enum Event
     {
         // Overhead - Hydraulic
@@ -1127,7 +1129,6 @@ public static class B777
         EVT_CDU_L_BRITENESS = THIRD_PARTY_EVENT_ID_MIN + 400,
 
         EVT_CDU_R_L1 = THIRD_PARTY_EVENT_ID_MIN + 401,
-        CDU_EVT_OFFSET_R = EVT_CDU_R_L1 - EVT_CDU_L_L1,
         EVT_CDU_R_L2 = CDU_EVT_OFFSET_R + EVT_CDU_L_L2,
         EVT_CDU_R_L3 = CDU_EVT_OFFSET_R + EVT_CDU_L_L3,
         EVT_CDU_R_L4 = CDU_EVT_OFFSET_R + EVT_CDU_L_L4,
@@ -1199,7 +1200,6 @@ public static class B777
         EVT_CDU_R_BRITENESS = CDU_EVT_OFFSET_R + EVT_CDU_L_BRITENESS,
 
         EVT_CDU_C_L1 = THIRD_PARTY_EVENT_ID_MIN + 653,
-        CDU_EVT_OFFSET_C = EVT_CDU_C_L1 - EVT_CDU_L_L1,
         EVT_CDU_C_L2 = CDU_EVT_OFFSET_C + EVT_CDU_L_L2,
         EVT_CDU_C_L3 = CDU_EVT_OFFSET_C + EVT_CDU_L_L3,
         EVT_CDU_C_L4 = CDU_EVT_OFFSET_C + EVT_CDU_L_L4,
