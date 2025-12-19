@@ -9,19 +9,19 @@ public partial class Inserting : ObservableObject, IModifier
     private bool _isActive = true;
 
     [ObservableProperty]
-    private char? _character = ':';
+    private string? _text = ":";
     
     [ObservableProperty]
     private int _position = 1;
 
     public void Apply(ref StringBuilder value)
     {
-        if (Character is null)
+        if (Text is null)
         {
             return;
         }
 
-        value.Insert(Position, Character.Value);
+        value.Insert(Position, Text);
     }
 
     public object Clone()
