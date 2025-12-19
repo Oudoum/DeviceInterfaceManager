@@ -480,7 +480,7 @@
                                                       Margin="0 -3 0 0"
                                                       OnContent=""
                                                       OffContent="" />
-                                        <TextBlock Text="Padding"
+                                        <TextBlock Text="Inserting"
                                                    FontWeight="Bold"
                                                    Width="100"
                                                    VerticalAlignment="Center" />
