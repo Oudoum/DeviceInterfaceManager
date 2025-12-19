@@ -37,11 +37,9 @@ internal static class Program
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console(LogEventLevel.Warning)
-            .WriteTo.File(App.UserDataPath + @"\Logs\Log.txt", LogEventLevel.Warning, rollingInterval: RollingInterval.Day)
+            .WriteTo.File(App.UserDataPath + @"\Logs\Log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day)
             .Filter.ByExcluding(logEvent => logEvent.MessageTemplate.Text.Contains("binding"))
             .CreateLogger();
-
-        Log.Information("Starting up");
 
         return AppBuilder.Configure<App>()
             .UsePlatformDetect()
