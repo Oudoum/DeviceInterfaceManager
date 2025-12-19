@@ -14,14 +14,25 @@ public class SerilogSink : ILogSink
 
     public bool IsEnabled(LogEventLevel level, string area)
     {
-        return _logger.IsEnabled(ConvertLogLevel(level));
+        return area switch
+        {
+            "Property" => false,
+            "Binding" => false,
+            "Animations" => false,
+            "Visual" => false,
+            "Layout" => false,
+            "Control" => false,
+            "HotAvalonia" => false,
+            "Dialog" => false,
+            _ => _logger.IsEnabled(ConvertLogLevel(level))
+        };
     }
 
     public void Log(LogEventLevel level, string area, object? source, string messageTemplate)
     {
         if (IsEnabled(level, area))
         {
-            _logger.Write(ConvertLogLevel(level), messageTemplate);
+            _logger.Write(ConvertLogLevel(level), "{Area}: {Message}", area, messageTemplate);
         }
     }
 
@@ -29,7 +40,7 @@ public class SerilogSink : ILogSink
     {
         if (IsEnabled(level, area))
         {
-            _logger.Write(ConvertLogLevel(level), messageTemplate, propertyValues);
+            _logger.Write(ConvertLogLevel(level), "{Area}: {Message} - {Details}", area, messageTemplate, propertyValues);
         }
     }
 
