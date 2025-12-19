@@ -70,6 +70,8 @@ public class FsCockpitSerialPortService : SerialPortService
             FsCockpitServiceBase.AirbusN2PfdCpt => new FsCockpitAirbusN2PfdService(this),
             FsCockpitServiceBase.AirbusN2PfdFo => new FsCockpitAirbusN2PfdService(this),
             FsCockpitServiceBase.AirbusAcpPro => new FsCockpitAirbusAcpProService(this),
+            FsCockpitServiceBase.AirbusSidestickCpt => new FsCockpitAirbusSidestick(this),
+            FsCockpitServiceBase.AirbusSidestickFo => new FsCockpitAirbusSidestick(this),
             _ => null
         };
 
