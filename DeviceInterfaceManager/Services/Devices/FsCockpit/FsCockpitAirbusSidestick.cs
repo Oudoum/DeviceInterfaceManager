@@ -6,7 +6,9 @@ public class FsCockpitAirbusSidestick : FsCockpitServiceBase
 {
     public FsCockpitAirbusSidestick(FsCockpitSerialPortService fsCockpitSerialPortService) : base(fsCockpitSerialPortService)
     {
+        Inputs.Builder inputsBuilder = new();
         Outputs.Builder outputsBuilder = new();
+        Inputs = inputsBuilder.Build();
         Outputs = outputsBuilder.SetDatalineInfo(1, 1).Build();
     }
 
