@@ -155,7 +155,7 @@
                 </Border>
 
                 <Border Classes="b1"
-                        IsVisible="{Binding !!DeviceService.Outputs.Analog}">
+                        IsVisible="{Binding !!DeviceService.Outputs.Analog.Count}">
                     <StackPanel Classes="sp1">
                         <StackPanel Classes="sp2">
                             <PathIcon Data="{StaticResource Numeric7BoxOutline}" />
