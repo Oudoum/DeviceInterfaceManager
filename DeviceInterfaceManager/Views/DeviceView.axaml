@@ -30,6 +30,12 @@
             </TabItem.Header>
         </TabItem>
         <TabItem IsSelected="{Binding IsInputTestSelected}" Content="{Binding InputTestViewModel}">
+            <TabItem.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                    <Binding Path="!!DeviceService.Inputs.Switch.Count" />
+                    <Binding Path="!!DeviceService.Inputs.Analog.Count" />
+                </MultiBinding>
+            </TabItem.IsVisible>
             <TabItem.Header>
                 <StackPanel>
                     <PathIcon Data="{StaticResource Import}" />
@@ -38,6 +44,14 @@
             </TabItem.Header>
         </TabItem>
         <TabItem IsSelected="{Binding IsOutputTestSelected}" Content="{Binding OutputTestViewModel}">
+            <TabItem.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                    <Binding Path="!!DeviceService.Outputs.Led.Count" />
+                    <Binding Path="!!DeviceService.Outputs.Dataline.Count" />
+                    <Binding Path="!!DeviceService.Outputs.SevenSegment.Count" />
+                    <Binding Path="!!DeviceService.Outputs.Analog.Count" />
+                </MultiBinding>
+            </TabItem.IsVisible>
             <TabItem.Header>
                 <StackPanel>
                     <PathIcon Data="{StaticResource Export}" />
