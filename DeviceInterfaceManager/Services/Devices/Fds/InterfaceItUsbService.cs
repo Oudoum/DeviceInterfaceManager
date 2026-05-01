@@ -162,14 +162,14 @@ public partial class InterfaceItUsbService : DeviceServiceBase
     private static partial ErrorCode interfaceIT_OpenControllers();
 
     [LibraryImport("interfaceITAPI x64.dll", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial ErrorCode interfaceIT_GetDeviceList(byte[]? buffer, ref uint bufferSize, string? boardType);
+    private static partial ErrorCode interfaceIT_GetDeviceList(byte[]? buffer, ref uint bufferSize, string? boardType = null);
 
     private static IEnumerable<string> interfaceIT_GetDeviceList()
     {
         uint bufferSize = 0;
-        CheckError(interfaceIT_GetDeviceList(null, ref bufferSize, null));
+        CheckError(interfaceIT_GetDeviceList(null, ref bufferSize));
         byte[] deviceList = new byte[bufferSize];
-        CheckError(interfaceIT_GetDeviceList(deviceList, ref bufferSize, null));
+        CheckError(interfaceIT_GetDeviceList(deviceList, ref bufferSize));
         return Encoding.UTF8.GetString(deviceList).TrimEnd('\0').Split('\0').AsEnumerable();
     }
 
