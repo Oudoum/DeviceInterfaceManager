@@ -85,7 +85,7 @@ public partial class HomeView : UserControl
         }
     }
 
-    private void OnDragOver(object? sender, DragEventArgs e)
+    private static void OnDragOver(object? sender, DragEventArgs e)
     {
         e.DragEffects = DragDropEffects.None;
         DropLogic(e);

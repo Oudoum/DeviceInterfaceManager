@@ -13,7 +13,7 @@ public partial class Display : ObservableObject, ICloneable
     {
         DigitCount = 3;
     }
-    
+
     [ObservableProperty]
     public partial bool IsLeftPadded { get; set; } = true;
 

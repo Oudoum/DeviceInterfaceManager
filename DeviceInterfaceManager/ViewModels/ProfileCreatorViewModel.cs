@@ -15,7 +15,6 @@ using DeviceInterfaceManager.Models;
 using DeviceInterfaceManager.Services;
 using DeviceInterfaceManager.Services.Devices;
 using DeviceInterfaceManager.ViewModels.Dialogs;
-using FluentAvalonia.Core;
 using FluentAvalonia.UI.Controls;
 using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia.Fluent;
@@ -47,7 +46,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     public partial ProfileCreatorModel? ProfileCreatorModel { get; private set; }
 
     private string? _previousProfileName;
-    
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ChangeDeviceCommand))]
     [NotifyCanExecuteChangedFor(nameof(SaveProfileCommand))]
@@ -499,7 +498,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                             if (!isShown)
                             {
                                 string rowType = "input rows";
-                                if (selectedItems.Count() == 1)
+                                if (selectedItems.Count == 1)
                                 {
                                     rowType = "input row";
                                 }
@@ -521,7 +520,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                             if (!isShown)
                             {
                                 string rowType = "output rows";
-                                if (selectedItems.Count() == 1)
+                                if (selectedItems.Count == 1)
                                 {
                                     rowType = "output row";
                                 }

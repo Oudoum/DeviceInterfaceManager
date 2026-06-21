@@ -118,14 +118,11 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
     [RelayCommand]
     private void ChangeLogicalOperator(string logicalOperator)
     {
-        if (SelectedPrecondition is not null)
+        SelectedPrecondition?.IsOrOperator = logicalOperator switch
         {
-            SelectedPrecondition.IsOrOperator = logicalOperator switch
-            {
-                "AND" => false,
-                "OR" => true,
-                _ => SelectedPrecondition.IsOrOperator
-            };
-        }
+            "AND" => false,
+            "OR" => true,
+            _ => SelectedPrecondition.IsOrOperator
+        };
     }
 }

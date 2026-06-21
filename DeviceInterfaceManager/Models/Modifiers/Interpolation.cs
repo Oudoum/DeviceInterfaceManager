@@ -8,8 +8,6 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-#pragma warning disable CS0657 // Not a valid attribute location for this declaration
-
 namespace DeviceInterfaceManager.Models.Modifiers;
 
 public partial class Interpolation : ObservableObject, IModifier

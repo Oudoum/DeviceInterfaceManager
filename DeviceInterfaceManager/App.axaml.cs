@@ -7,7 +7,6 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.DependencyInjection;
@@ -21,7 +20,6 @@ using HanumanInstitute.MvvmDialogs;
 using HanumanInstitute.MvvmDialogs.Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using HotAvalonia;
 
 namespace DeviceInterfaceManager;
 
@@ -37,8 +35,11 @@ public class App : Application
 
     public override void Initialize()
     {
-        this.EnableHotReload();
         AvaloniaXamlLoader.Load(this);
+
+#if DEBUG
+        this.AttachDeveloperTools();
+#endif
 
         Directory.CreateDirectory(ProfilesPath);
 
@@ -192,10 +193,7 @@ public class App : Application
 
         desktop.MainWindow.WindowState = WindowState.Normal;
         desktop.MainWindow.ShowInTaskbar = true;
-        if (_trayIcon is not null)
-        {
-            _trayIcon.IsVisible = false;
-        }
+        _trayIcon?.IsVisible = false;
 
         desktop.MainWindow.Show();
     }

@@ -4,7 +4,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using FluentAvalonia.UI.Controls;
 
 namespace DeviceInterfaceManager.Views;
 

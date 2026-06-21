@@ -49,6 +49,8 @@ public class ItemsControlDropHandler : DropHandlerBase
                 return true;
             }
 
+            case DragDropEffects.None:
+            case DragDropEffects.Copy:
             default:
                 return false;
         }

@@ -135,11 +135,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
 
     public int? Input { get; set; }
 
-    private string? _eventType;
-
     public string? EventType
     {
-        get => _eventType;
+        get;
         set
         {
             switch (value)
@@ -165,7 +163,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
                     break;
             }
 
-            _eventType = value;
+            field = value;
         }
     }
 

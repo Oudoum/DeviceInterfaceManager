@@ -20,10 +20,10 @@ public partial class SelectConnectionDialogModel : AskTextBoxDialogModel
 
     public IConnection? SelectedConnection
     {
-        get => _selectedConnection;
+        get;
         set
         {
-            _selectedConnection = value;
+            field = value;
             if (value is null)
             {
                 PreSelectedConnection = GetSelectedConnection();

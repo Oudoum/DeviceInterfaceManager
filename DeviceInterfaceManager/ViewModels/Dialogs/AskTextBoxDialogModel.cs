@@ -16,7 +16,7 @@ public class AskTextBoxDialogModel : ObservableValidator
     public static ValidationResult? ValidateFileName(string name, ValidationContext validationContext)
     {
         char[] invalidChars = Path.GetInvalidFileNameChars();
-        char[] invalidCharsInName = name.Where(ch => invalidChars.Contains(ch)).Distinct().ToArray();
+        char[] invalidCharsInName = name.Where(invalidChars.Contains).Distinct().ToArray();
 
         if (invalidCharsInName.Length == 0)
         {

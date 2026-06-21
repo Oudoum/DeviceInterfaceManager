@@ -5,8 +5,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-#pragma warning disable CS0657 // Not a valid attribute location for this declaration
-
 namespace DeviceInterfaceManager.Models.Devices;
 
 public class ComponentInfo
@@ -37,19 +35,13 @@ public class ComponentInfo
     public void UpdatePosition(int position, bool isSet)
     {
         Component? component = Components.FirstOrDefault(c => c.Position == position);
-        if (component is not null)
-        {
-            component.IsSet = isSet;
-        }
+        component?.IsSet = isSet;
     }
 
     public void UpdatePosition(int position, int value)
     {
         Component? component = Components.FirstOrDefault(c => c.Position == position);
-        if (component is not null)
-        {
-            component.Value = value;
-        }
+        component?.Value = value;
     }
 
     public async Task PerformOperationOnAllComponents(Func<int, Task> operationOnElement)
@@ -63,7 +55,7 @@ public class ComponentInfo
 
 public partial class Component : ObservableObject
 {
-    public Component(int position)
+    private Component(int position)
     {
         Position = position;
         Name = position.ToString();

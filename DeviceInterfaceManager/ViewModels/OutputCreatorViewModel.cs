@@ -215,11 +215,9 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
         Position = Output.Position;
     }
 
-    private string? _dataType;
-
     public string? DataType
     {
-        get => _dataType;
+        get;
         set
         {
             IsMsfsSimConnect = value switch
@@ -250,7 +248,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
                     break;
             }
 
-            _dataType = value;
+            field = value;
         }
     }
 
