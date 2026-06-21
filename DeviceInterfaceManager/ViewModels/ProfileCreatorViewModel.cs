@@ -44,7 +44,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private ProfileCreatorModel? _profileCreatorModel;
+    public partial ProfileCreatorModel? ProfileCreatorModel { get; private set; }
 
     private string? _previousProfileName;
     
@@ -58,19 +58,19 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(AddInputCommand))]
     [NotifyCanExecuteChangedFor(nameof(AddOutputCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartProfilesCommand))]
-    private string? _profileName;
+    public partial string? ProfileName { get; set; }
 
     [ObservableProperty]
-    private IDeviceService? _inputOutputDevice;
+    public partial IDeviceService? InputOutputDevice { get; set; }
 
     [ObservableProperty]
-    private bool _infoBarIsOpen;
+    public partial bool InfoBarIsOpen { get; set; }
 
     [ObservableProperty]
-    private string? _infoBarMessage;
+    public partial string? InfoBarMessage { get; set; }
 
     [ObservableProperty]
-    private InfoBarSeverity _infoBarSeverity;
+    public partial FAInfoBarSeverity InfoBarSeverity { get; set; }
 
     private void SetInfoBar(string? message, InfoBarSeverity severity)
     {
@@ -381,7 +381,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     //Button 6
     [ObservableProperty]
-    private bool? _isSortedAscending;
+    public partial bool? IsSortedAscending { get; set; }
 
     [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private void SortInputOutput()

@@ -80,16 +80,16 @@ public partial class Component : ObservableObject
     [JsonIgnore] public string? Name { get; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private bool _isSet;
+    [JsonIgnore]
+    public partial bool IsSet { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private int _value;
+    [JsonIgnore]
+    public partial int Value { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private string? _stringValue;
+    [JsonIgnore]
+    public partial string? StringValue { get; set; }
 
     public static IEnumerable<Component> GetComponents(int first, int last)
     {

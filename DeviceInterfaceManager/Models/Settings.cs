@@ -9,34 +9,34 @@ namespace DeviceInterfaceManager.Models;
 public partial class Settings : ObservableObject
 {
     [ObservableProperty]
-    private bool _minimizedHide;
+    public partial bool MinimizedHide { get; set; }
 
     [ObservableProperty]
-    private bool _autoHide;
+    public partial bool AutoHide { get; set; }
 
     [ObservableProperty]
-    private bool _checkForUpdates;
+    public partial bool CheckForUpdates { get; set; }
 
     [ObservableProperty]
-    private bool _server;
+    public partial bool Server { get; set; }
 
     [ObservableProperty]
-    private string? _ipAddress;
+    public partial string? IpAddress { get; set; }
 
     [ObservableProperty]
-    private int? _port;
+    public partial int? Port { get; set; }
 
     [ObservableProperty]
-    private bool _fdsUsb;
+    public partial bool FdsUsb { get; set; }
 
     [ObservableProperty]
-    private bool _fdsEthernet;
+    public partial bool FdsEthernet { get; set; }
 
     [ObservableProperty]
-    private bool _fsCockpit;
+    public partial bool FsCockpit { get; set; }
 
     [ObservableProperty]
-    private ObservableCollection<IConnection>? _connections = [];
+    public partial ObservableCollection<IConnection>? Connections { get; set; } = [];
 
     public static Settings CreateSettings()
     {
@@ -87,10 +87,9 @@ public partial class Connection : ObservableObject, IConnection
     }
 
     [ObservableProperty]
-    private string? _driverName;
-
+    public partial string? DriverName { get; set; }
     [ObservableProperty]
-    private string? _connectionName;
+    public partial string? ConnectionName { get; set; }
 }
 
 public partial class FsCockpitConnection : Connection
@@ -104,5 +103,5 @@ public partial class FsCockpitConnection : Connection
     }
 
     [ObservableProperty]
-    private bool _hasHighTensionDetents;
+    public partial bool HasHighTensionDetents { get; set; }
 }

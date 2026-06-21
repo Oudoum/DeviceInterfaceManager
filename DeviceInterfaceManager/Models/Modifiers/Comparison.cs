@@ -8,10 +8,10 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 public partial class Comparison : ObservableObject, IModifier
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private char _operator = Equal;
+    public partial char Operator { get; set; } = Equal;
 
     public static char[] Operators => [Equal, NotEqual, GreaterThan, LessThan, GreaterThanOrEqual, LessThanOrEqual];
 
@@ -23,13 +23,13 @@ public partial class Comparison : ObservableObject, IModifier
     private const char LessThanOrEqual = '≤';
 
     [ObservableProperty]
-    private string _value = string.Empty;
+    public partial string Value { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _trueValue = string.Empty;
+    public partial string TrueValue { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _falseValue = string.Empty;
+    public partial string FalseValue { get; set; } = string.Empty;
 
     private const double Tolerance = 0.000001;
 

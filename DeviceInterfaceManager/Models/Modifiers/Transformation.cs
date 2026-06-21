@@ -9,11 +9,11 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 public partial class Transformation : ObservableObject, IModifier
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private string _expression = "$";
-    
+    public partial string Expression { get; set; } = "$";
+
     public void Apply(ref StringBuilder value)
     {
         string expression = Expression.Replace("$", value.ToString());

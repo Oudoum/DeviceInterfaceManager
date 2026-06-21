@@ -85,7 +85,7 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string? _currentVersion;
+    public partial string? CurrentVersion { get; set; }
 
     private static UpdateManager CreateUpdateManager()
     {
@@ -94,7 +94,7 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool _isUpToDate;
+    public partial bool IsUpToDate { get; set; }
 
     [RelayCommand]
     private async Task CheckForUpdatesAsync(UpdateManager? updateManager)
@@ -120,7 +120,7 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string? _wasmModuleUpdaterMessage;
+    public partial string? WasmModuleUpdaterMessage { get; set; }
 
     [RelayCommand]
     private async Task UpdateDimWasmModuleAsync() => WasmModuleUpdaterMessage = await WasmModuleUpdateService.Create().InstallWasmModule();

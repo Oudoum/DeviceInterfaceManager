@@ -26,17 +26,17 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly SettingsViewModel _settingsViewModel;
 
     [ObservableProperty]
-    private ObservableCollection<IDeviceService> _inputOutputDevices;
+    public partial ObservableCollection<IDeviceService> InputOutputDevices { get; set; }
 
     [ObservableProperty]
-    private ObservableCollection<DeviceViewModel> _deviceViewModels = [];
+    public partial ObservableCollection<DeviceViewModel> DeviceViewModels { get; set; } = [];
 
     [ObservableProperty]
-    private ObservableObject? _currentViewModel;
+    public partial ObservableObject? CurrentViewModel { get; set; }
 
     [ObservableProperty]
-    private object? _selectedItem;
-    
+    public partial object? SelectedItem { get; set; }
+
     public async Task OnLoaded()
     {
         await _settingsViewModel.StartupAsync();

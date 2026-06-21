@@ -103,7 +103,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     public string? Description { get; set; }
 
     [ObservableProperty]
-    private string? _outputType;
+    public partial string? OutputType { get; set; }
 
     partial void OnOutputTypeChanged(string? value)
     {
@@ -142,15 +142,15 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isDisplay;
+    public partial bool IsDisplay { get; set; }
 
     public static string[] OutputTypes => [ProfileCreatorModel.Led, ProfileCreatorModel.Dataline, ProfileCreatorModel.SevenSegment, ProfileCreatorModel.Analog];
 
     [ObservableProperty]
-    private IEnumerable<Component?>? _components;
+    public partial IEnumerable<Component?>? Components { get; set; }
 
     [ObservableProperty]
-    private Component? _output;
+    public partial Component? Output { get; set; }
 
     partial void OnOutputChanged(Component? value)
     {
@@ -182,7 +182,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     public int[]? Outputs { get; set; }
 
     [ObservableProperty]
-    private ObservableCollection<int> _outputsCollection = [];
+    public partial ObservableCollection<int> OutputsCollection { get; set; } = [];
 
     [RelayCommand]
     private void RemoveOutputs(IList list)
@@ -200,7 +200,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private int? _position;
+    public partial int? Position { get; set; }
 
     [RelayCommand]
     private void AddOutput()
@@ -255,7 +255,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isMsfsSimConnect;
+    public partial bool IsMsfsSimConnect { get; set; }
 
     partial void OnIsMsfsSimConnectChanged(bool value)
     {
@@ -280,10 +280,10 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isPmdg;
+    public partial bool IsPmdg { get; set; }
 
     [ObservableProperty]
-    private bool _isPmdg737;
+    public partial bool IsPmdg737 { get; set; }
 
     partial void OnIsPmdg737Changed(bool value)
     {
@@ -298,7 +298,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isPmdg777;
+    public partial bool IsPmdg777 { get; set; }
 
     partial void OnIsPmdg777Changed(bool value)
     {
@@ -323,7 +323,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private bool _isDim;
+    public partial bool IsDim { get; set; }
 
     partial void OnIsDimChanged(bool value)
     {
@@ -341,7 +341,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
 
 
     [ObservableProperty]
-    private string? _data;
+    public partial string? Data { get; set; }
 
     partial void OnDataChanged(string? value)
     {
@@ -360,7 +360,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private string? _unit;
+    public partial string? Unit { get; set; }
 
     partial void OnUnitChanged(string? value)
     {
@@ -371,10 +371,10 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private string? _searchPmdgData;
+    public partial string? SearchPmdgData { get; set; }
 
     [ObservableProperty]
-    private IEnumerable<string?>? _pmdgDataEnumerable;
+    public partial IEnumerable<string?>? PmdgDataEnumerable { get; set; }
 
     public string?[] PmdgDataArrayIndices => GetPmdgDataArrayIndices();
 
@@ -444,7 +444,7 @@ public partial class OutputCreatorViewModel : BaseCreatorViewModel, IOutputCreat
     }
 
     [ObservableProperty]
-    private Display? _display;
+    public partial Display? Display { get; set; }
 
     private async Task SetOutputPosition(int position, bool isEnabled)
     {

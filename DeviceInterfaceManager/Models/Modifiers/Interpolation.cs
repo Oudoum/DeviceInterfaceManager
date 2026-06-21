@@ -43,7 +43,7 @@ public partial class Interpolation : ObservableObject, IModifier
     }
 
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
     private ObservableCollection<InterpolationKeyValuePair> _values = [];
@@ -80,12 +80,12 @@ public partial class Interpolation : ObservableObject, IModifier
     }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private double _min;
+    [JsonIgnore]
+    public partial double Min { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private double _max;
+    [JsonIgnore]
+    public partial double Max { get; set; }
 
     [RelayCommand]
     [property: JsonIgnore]
@@ -204,7 +204,7 @@ public partial class Interpolation : ObservableObject, IModifier
         public double Key { get; set; }
 
         [ObservableProperty]
-        private double _value;
+        public partial double Value { get; set; }
 
         public object Clone()
         {

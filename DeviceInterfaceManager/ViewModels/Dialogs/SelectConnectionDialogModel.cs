@@ -16,9 +16,7 @@ public partial class SelectConnectionDialogModel : AskTextBoxDialogModel
     public List<IConnection> FilteredConnections => Connections?.Where(connection => connection.DriverName == DriverName).ToList() ?? [];
 
     [ObservableProperty]
-    private IConnection? _preSelectedConnection = new Connection();
-
-    private IConnection? _selectedConnection;
+    public partial IConnection? PreSelectedConnection { get; private set; } = new Connection();
 
     public IConnection? SelectedConnection
     {

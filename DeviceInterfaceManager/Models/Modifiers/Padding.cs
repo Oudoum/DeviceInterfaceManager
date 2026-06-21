@@ -7,10 +7,10 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 public partial class Padding : ObservableObject, IModifier
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private char? _character = Zero;
+    public partial char? Character { get; set; } = Zero;
 
     public static char[] Characters => [Space, Zero, One];
 
@@ -19,10 +19,10 @@ public partial class Padding : ObservableObject, IModifier
     private const char One = '1';
 
     [ObservableProperty]
-    private int _length = 5;
-    
+    public partial int Length { get; set; } = 5;
+
     [ObservableProperty]
-    private PaddingDirection _direction = PaddingDirection.Left;
+    public partial PaddingDirection Direction { get; set; } = PaddingDirection.Left;
 
     public static PaddingDirection[] PaddingDirections => Enum.GetValues<PaddingDirection>();
 

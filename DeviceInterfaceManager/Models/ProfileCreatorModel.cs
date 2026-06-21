@@ -42,28 +42,28 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string SevenSegment = "7 Segment";
 
     [ObservableProperty]
-    private string? _description;
+    public partial string? Description { get; set; }
 
     [ObservableProperty]
-    private string? _deviceName;
+    public partial string? DeviceName { get; set; }
 
     [ObservableProperty]
-    private ObservableCollection<InputCreator> _inputCreators = [];
+    public partial ObservableCollection<InputCreator> InputCreators { get; set; } = [];
 
     [ObservableProperty]
-    private ObservableCollection<OutputCreator> _outputCreators = [];
+    public partial ObservableCollection<OutputCreator> OutputCreators { get; set; } = [];
 }
 
 public partial class InputCreator : ObservableObject, IInputCreator, IActive, ICloneable
 {
     [ObservableProperty]
-    private Guid _id = Guid.NewGuid();
+    public partial Guid Id { get; set; } = Guid.NewGuid();
 
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private string? _description;
+    public partial string? Description { get; set; }
 
     partial void OnDescriptionChanged(string? value)
     {
@@ -74,34 +74,34 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
     }
 
     [ObservableProperty]
-    private string? _inputType;
+    public partial string? InputType { get; set; }
 
     [ObservableProperty]
-    private int? _input;
+    public partial int? Input { get; set; }
 
     [ObservableProperty]
-    private string? _eventType;
+    public partial string? EventType { get; set; }
 
     [ObservableProperty]
-    private string? _event;
+    public partial string? Event { get; set; }
 
     [ObservableProperty]
-    private long? _dataPress;
+    public partial long? DataPress { get; set; }
 
     [ObservableProperty]
-    private long? _dataPress2;
+    public partial long? DataPress2 { get; set; }
 
     [ObservableProperty]
-    private long? _dataRelease;
+    public partial long? DataRelease { get; set; }
 
     [ObservableProperty]
-    private long? _dataRelease2;
+    public partial long? DataRelease2 { get; set; }
 
     [ObservableProperty]
-    private Interpolation? _interpolation;
+    public partial Interpolation? Interpolation { get; set; }
 
     [ObservableProperty]
-    private Precondition[]? _preconditions;
+    public partial Precondition[]? Preconditions { get; set; }
 
     public object Clone()
     {
@@ -122,13 +122,13 @@ public partial class InputCreator : ObservableObject, IInputCreator, IActive, IC
 public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, ICloneable
 {
     [ObservableProperty]
-    private Guid _id = Guid.NewGuid();
+    public partial Guid Id { get; set; } = Guid.NewGuid();
 
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private string? _description;
+    public partial string? Description { get; set; }
 
     partial void OnDescriptionChanged(string? value)
     {
@@ -139,36 +139,36 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
     }
 
     [ObservableProperty]
-    private string? _outputType;
+    public partial string? OutputType { get; set; }
 
     [ObservableProperty]
-    private int[]? _outputs;
+    public partial int[]? Outputs { get; set; }
 
     [ObservableProperty]
-    private string? _dataType;
+    public partial string? DataType { get; set; }
 
     [ObservableProperty]
-    private string? _data;
+    public partial string? Data { get; set; }
 
     [ObservableProperty]
-    private string? _unit;
+    public partial string? Unit { get; set; }
 
     [ObservableProperty]
-    private IModifier[]? _modifiers;
+    public partial IModifier[]? Modifiers { get; set; }
 
     [ObservableProperty]
-    private Display? _display;
+    public partial Display? Display { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private string? _flightSimValue;
+    [JsonIgnore]
+    public partial string? FlightSimValue { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
-    private string? _outputValue;
+    [JsonIgnore]
+    public partial string? OutputValue { get; set; }
 
     [ObservableProperty]
-    private Precondition[]? _preconditions;
+    public partial Precondition[]? Preconditions { get; set; }
 
     public object Clone()
     {
@@ -196,20 +196,20 @@ public partial class OutputCreator : ObservableObject, IOutputCreator, IActive, 
 public partial class Precondition : ObservableObject, IPrecondition
 {
     [ObservableProperty]
-    private bool _isActive;
+    public partial bool IsActive { get; set; }
 
     [ObservableProperty]
-    private Guid _referenceId;
+    public partial Guid ReferenceId { get; set; }
 
     [ObservableProperty]
-    private char? _operator;
+    public partial char? Operator { get; set; }
 
     [ObservableProperty]
-    private string? _comparisonValue;
+    public partial string? ComparisonValue { get; set; }
 
     [ObservableProperty]
-    private bool _isOrOperator;
+    public partial bool IsOrOperator { get; set; }
 
     [ObservableProperty]
-    private bool _useOutputValue;
+    public partial bool UseOutputValue { get; set; }
 }

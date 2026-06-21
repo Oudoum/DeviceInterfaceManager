@@ -5,17 +5,17 @@ namespace DeviceInterfaceManager.Models;
 public partial class ProfileMapping : ObservableObject
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private string? _profileName;
+    public partial string? ProfileName { get; set; }
 
     [ObservableProperty]
-    private string? _id;
+    public partial string? Id { get; set; }
 
     [ObservableProperty]
-    private string? _deviceName;
+    public partial string? DeviceName { get; set; }
 
     [ObservableProperty]
-    private string? _aircraft;
+    public partial string? Aircraft { get; set; }
 }

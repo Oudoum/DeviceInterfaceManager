@@ -15,12 +15,12 @@ public partial class Display : ObservableObject, ICloneable
     }
     
     [ObservableProperty]
-    private bool _isLeftPadded = true;
+    public partial bool IsLeftPadded { get; set; } = true;
 
     public static Dictionary<string, char> PaddingCharacters => new() { ["Zero"] = '0', ["Space"] = ' ' };
 
     [ObservableProperty]
-    private char _paddingCharacter = PaddingCharacters["Zero"];
+    public partial char PaddingCharacter { get; set; } = PaddingCharacters["Zero"];
 
     public static int[] DigitCounts => [1, 2, 3, 4, 5, 6, 7, 8];
 

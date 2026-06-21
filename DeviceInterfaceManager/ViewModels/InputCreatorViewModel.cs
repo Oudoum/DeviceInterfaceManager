@@ -89,10 +89,10 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     public string? Description { get; set; }
 
     [ObservableProperty]
-    private bool _isAnalog;
+    public partial bool IsAnalog { get; set; }
 
     [ObservableProperty]
-    private string? _inputType;
+    public partial string? InputType { get; set; }
 
     partial void OnInputTypeChanged(string? value)
     {
@@ -128,10 +128,10 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     public static string[] InputTypes => [ProfileCreatorModel.Switch, ProfileCreatorModel.Analog];
 
     [ObservableProperty]
-    private IEnumerable<Component?>? _components;
+    public partial IEnumerable<Component?>? Components { get; set; }
 
     [ObservableProperty]
-    private Component? _component;
+    public partial Component? Component { get; set; }
 
     public int? Input { get; set; }
 
@@ -170,7 +170,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private bool _isMsfsSimConnect;
+    public partial bool IsMsfsSimConnect { get; set; }
 
     partial void OnIsMsfsSimConnectChanged(bool value)
     {
@@ -190,7 +190,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private bool _isKEvent;
+    public partial bool IsKEvent { get; set; }
 
     partial void OnIsKEventChanged(bool value)
     {
@@ -208,7 +208,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private bool _isRpn;
+    public partial bool IsRpn { get; set; }
 
     partial void OnIsRpnChanged(bool value)
     {
@@ -228,10 +228,10 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private bool _isPmdg;
+    public partial bool IsPmdg { get; set; }
 
     [ObservableProperty]
-    private bool _isPmdg737;
+    public partial bool IsPmdg737 { get; set; }
 
     partial void OnIsPmdg737Changed(bool value)
     {
@@ -246,7 +246,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private bool _isPmdg777;
+    public partial bool IsPmdg777 { get; set; }
 
     partial void OnIsPmdg777Changed(bool value)
     {
@@ -283,7 +283,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private string? _event;
+    public partial string? Event { get; set; }
 
     partial void OnEventChanged(string? value)
     {
@@ -294,19 +294,19 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private long? _dataPress;
+    public partial long? DataPress { get; set; }
 
     [ObservableProperty]
-    private long? _dataPress2;
+    public partial long? DataPress2 { get; set; }
 
     [ObservableProperty]
-    private long? _dataRelease;
+    public partial long? DataRelease { get; set; }
 
     [ObservableProperty]
-    private long? _dataRelease2;
+    public partial long? DataRelease2 { get; set; }
 
     [ObservableProperty]
-    private string? _searchPmdgEvent;
+    public partial string? SearchPmdgEvent { get; set; }
 
     partial void OnSearchPmdgEventChanged(string? value)
     {
@@ -323,7 +323,7 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     }
 
     [ObservableProperty]
-    private IEnumerable<string?>? _pmdgEventEnumerable;
+    public partial IEnumerable<string?>? PmdgEventEnumerable { get; set; }
 
     public static Mouse[] PmdgMouseFlags =>
     [
@@ -340,9 +340,9 @@ public partial class InputCreatorViewModel : BaseCreatorViewModel, IInputCreator
     
     [RelayCommand]
     private void ClearPmdgMouseRelease() => DataRelease = null;
-    
+
     [ObservableProperty]
-    private Interpolation? _interpolation;
+    public partial Interpolation? Interpolation { get; set; }
 
     [RelayCommand]
     private void CreateInterpolation() => Interpolation ??= new Interpolation();

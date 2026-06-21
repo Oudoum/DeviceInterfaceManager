@@ -41,7 +41,7 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
     public IEnumerable<OutputCreator> OutputCreators { get; set; }
 
     [ObservableProperty]
-    private OutputCreator? _selectedOutputCreator;
+    public partial OutputCreator? SelectedOutputCreator { get; set; }
 
     partial void OnSelectedOutputCreatorChanged(OutputCreator? value)
     {
@@ -56,10 +56,10 @@ public abstract partial class BaseCreatorViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private ObservableCollection<PreconditionModel>? _preconditions;
+    public partial ObservableCollection<PreconditionModel>? Preconditions { get; set; }
 
     [ObservableProperty]
-    private PreconditionModel? _selectedPrecondition;
+    public partial PreconditionModel? SelectedPrecondition { get; set; }
 
     partial void OnSelectedPreconditionChanged(PreconditionModel? value)
     {

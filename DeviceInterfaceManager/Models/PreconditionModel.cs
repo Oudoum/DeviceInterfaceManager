@@ -7,10 +7,10 @@ namespace DeviceInterfaceManager.Models;
 public partial class PreconditionModel : Precondition
 {
     [ObservableProperty]
-    private string? _description;
+    public partial string? Description { get; set; }
 
     [ObservableProperty]
-    private bool _hasError;
+    public partial bool HasError { get; set; }
 
     public PreconditionModel(OutputCreator outputCreator)
     {

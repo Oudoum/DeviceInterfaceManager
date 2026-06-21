@@ -6,13 +6,13 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 public partial class Substring : ObservableObject, IModifier
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private int _start;
+    public partial int Start { get; set; }
 
     [ObservableProperty]
-    private int _end = 7;
+    public partial int End { get; set; } = 7;
 
     public void Apply(ref StringBuilder value)
     {

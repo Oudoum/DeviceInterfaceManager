@@ -37,11 +37,10 @@ public partial class HomeViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private ObservableCollection<ProfileMapping> _profileMappings = [];
+    public partial ObservableCollection<ProfileMapping> ProfileMappings { get; set; } = [];
 
     [ObservableProperty]
-    private string? _aircraftTitle;
-
+    public partial string? AircraftTitle { get; set; }
 
     public HomeViewModel(ILogger<HomeViewModel> logger, SimConnectClientService simConnectClientService, PmdgHelperService pmdgHelperService, ObservableCollection<IDeviceService> inputOutputDevices, SettingsViewModel settingsViewModel)
     {
@@ -305,7 +304,7 @@ public partial class HomeViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool _isStarted;
+    public partial bool IsStarted { get; set; }
 
     [RelayCommand(IncludeCancelCommand = true)]
     private async Task StartProfilesAsync(CancellationToken token = default)

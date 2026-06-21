@@ -6,13 +6,13 @@ namespace DeviceInterfaceManager.Models.Modifiers;
 public partial class Inserting : ObservableObject, IModifier
 {
     [ObservableProperty]
-    private bool _isActive = true;
+    public partial bool IsActive { get; set; } = true;
 
     [ObservableProperty]
-    private string? _text = ":";
-    
+    public partial string? Text { get; set; } = ":";
+
     [ObservableProperty]
-    private int _position = 1;
+    public partial int Position { get; set; } = 1;
 
     public void Apply(ref StringBuilder value)
     {
