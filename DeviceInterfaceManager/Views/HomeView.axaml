@@ -61,7 +61,7 @@
                     BorderBrush="Gray"
                     BorderThickness="2">
                 <Grid>
-                    <ui:ProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
+                    <ui:FAProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
                                      IsIndeterminate="{Binding StartProfilesCommand.IsRunning}"
                                      Height="160"
                                      Width="160"/>

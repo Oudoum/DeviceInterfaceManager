@@ -272,16 +272,16 @@ public partial class SettingsViewModel : ObservableObject
             dialogModel.Connections = new ObservableCollection<IConnection>(Settings.Connections);
         }
 
-        ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
+        FAContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
         {
             Content = dialogModel,
             Title = title,
             PrimaryButtonText = "OK",
             SecondaryButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         });
 
-        if (result == ContentDialogResult.Primary)
+        if (result == FAContentDialogResult.Primary)
         {
             Settings.Connections = dialogModel.Connections;
         }

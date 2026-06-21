@@ -1,11 +1,10 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 using DeviceInterfaceManager.Services.Devices;
-using FluentAvalonia.UI.Windowing;
 
 namespace DeviceInterfaceManager.Views;
 
-public partial class MainWindow : AppWindow
+public partial class MainWindow : Window
 {
     
     public MainWindow()

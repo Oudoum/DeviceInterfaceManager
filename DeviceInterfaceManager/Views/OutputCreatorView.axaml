@@ -108,19 +108,19 @@
                                             <TextBlock Text="{Binding}"
                                                        Background="Transparent">
                                                 <TextBlock.ContextFlyout>
-                                                    <ui:CommandBarFlyout
+                                                    <ui:FACommandBarFlyout
                                                         ShowMode="TransientWithDismissOnPointerMoveAway">
-                                                        <ui:CommandBarButton
+                                                        <ui:FACommandBarButton
                                                             ToolTip.Tip="Delete"
                                                             Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveOutputsCommand,
                                                         FallbackValue={x:Null}}"
                                                             CommandParameter="{Binding $parent[ListBox].SelectedItems}">
-                                                            <ui:CommandBarButton.IconSource>
-                                                                <ui:PathIconSource
+                                                            <ui:FACommandBarButton.IconSource>
+                                                                <ui:FAPathIconSource
                                                                     Data="{StaticResource TrashCanOutline}" />
-                                                            </ui:CommandBarButton.IconSource>
-                                                        </ui:CommandBarButton>
-                                                    </ui:CommandBarFlyout>
+                                                            </ui:FACommandBarButton.IconSource>
+                                                        </ui:FACommandBarButton>
+                                                    </ui:FACommandBarFlyout>
                                                 </TextBlock.ContextFlyout>
                                             </TextBlock>
                                         </DataTemplate>
@@ -234,16 +234,16 @@
                                          Text="{Binding Expression}" />
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
@@ -304,16 +304,16 @@
                                 </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
@@ -384,16 +384,16 @@
                                 </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
@@ -447,16 +447,16 @@
                                 </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
@@ -505,16 +505,16 @@
                                 </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>
@@ -552,7 +552,7 @@
                                 <StackPanel Orientation="Horizontal"
                                             HorizontalAlignment="Center"
                                             Spacing="5">
-                                    <ui:NumberBox PlaceholderText="Start"
+                                    <ui:FANumberBox PlaceholderText="Start"
                                                   Width="100"
                                                   Minimum="0"
                                                   Maximum="255"
@@ -560,7 +560,7 @@
                                                   SpinButtonPlacementMode="Compact"
                                                   Value="{Binding Start,
                                               Converter={StaticResource DoubleToIntConverter}}" />
-                                    <ui:NumberBox PlaceholderText="End"
+                                    <ui:FANumberBox PlaceholderText="End"
                                                   Width="100"
                                                   Minimum="0"
                                                   Maximum="255"
@@ -571,16 +571,16 @@
                                 </StackPanel>
                             </Expander>
                             <Grid.ContextFlyout>
-                                <ui:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <ui:CommandBarButton ToolTip.Tip="Delete"
+                                <ui:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                    <ui:FACommandBarButton ToolTip.Tip="Delete"
                                                          Command="{Binding $parent[UserControl].((vm:OutputCreatorViewModel)DataContext).RemoveModifierCommand,
                                                          FallbackValue={x:Null}}"
                                                          CommandParameter="{Binding}">
-                                        <ui:CommandBarButton.IconSource>
-                                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                        </ui:CommandBarButton.IconSource>
-                                    </ui:CommandBarButton>
-                                </ui:CommandBarFlyout>
+                                        <ui:FACommandBarButton.IconSource>
+                                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                        </ui:FACommandBarButton.IconSource>
+                                    </ui:FACommandBarButton>
+                                </ui:FACommandBarFlyout>
                             </Grid.ContextFlyout>
                         </Grid>
                     </DataTemplate>

@@ -1,82 +1,94 @@
 <Window xmlns="https://github.com/avaloniaui"
-               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-               xmlns:ui="using:FluentAvalonia.UI.Controls"
-               xmlns:vm="using:DeviceInterfaceManager.ViewModels"
-               xmlns:devices="clr-namespace:DeviceInterfaceManager.Services.Devices"
-               mc:Ignorable="d"
-               x:Class="DeviceInterfaceManager.Views.MainWindow"
-               x:DataType="vm:MainWindowViewModel"
-               Width="1800"
-               Height="1000"
-               MinWidth="1000"
-               MinHeight="650"
-               WindowStartupLocation="CenterScreen"
-               Title="Device Interface Manager">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:vm="using:DeviceInterfaceManager.ViewModels"
+        xmlns:devices="clr-namespace:DeviceInterfaceManager.Services.Devices"
+        mc:Ignorable="d"
+        x:Class="DeviceInterfaceManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1800"
+        Height="1000"
+        MinWidth="1000"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="Full"
+        Title="Device Interface Manager">
 
     <Window.Styles>
-        <Style Selector="TextBlock#TitleText">
-            <Setter Property="Foreground" Value="Transparent" />
+        <Style Selector="WindowDrawnDecorations /template/ Panel#PART_TitleTextPanel > TextBlock">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
     </Window.Styles>
-    
+
     <Interaction.Behaviors>
         <EventTriggerBehavior EventName="Loaded">
             <InvokeCommandAction Command="{Binding OnLoaded}" />
         </EventTriggerBehavior>
     </Interaction.Behaviors>
 
-    <ui:NavigationView AlwaysShowHeader="False"
-                       IsSettingsVisible="False"
-                       PaneTitle="DIM"
-                       SelectedItem="{Binding SelectedItem}"
-                       Content="{Binding CurrentViewModel}">
 
-        <ui:NavigationView.MenuItems>
-            <ui:NavigationViewItem IsSelected="True" Content="Home"
-                                   IsEnabled="{Binding !ProfileCreatorViewModel.IsStarted}">
-                <ui:NavigationViewItem.IconSource>
-                    <ui:PathIconSource Data="{StaticResource HomeOutline}" />
-                </ui:NavigationViewItem.IconSource>
-            </ui:NavigationViewItem>
-            <ui:NavigationViewItemSeparator />
-            <ui:NavigationViewItem Content="Profile Creator" IsEnabled="{Binding !HomeViewModel.IsStarted}">
-                <ui:NavigationViewItem.IconSource>
-                    <ui:PathIconSource Data="{StaticResource ShapePlusOutline}" />
-                </ui:NavigationViewItem.IconSource>
-            </ui:NavigationViewItem>
-            <ui:NavigationViewItemSeparator />
-            <ui:NavigationViewItem Content="Devices" SelectsOnInvoked="False">
-                <ui:NavigationViewItem.IconSource>
-                    <ui:PathIconSource Data="{StaticResource Devices}" />
-                </ui:NavigationViewItem.IconSource>
-                <ui:NavigationViewItem.InfoBadge>
-                    <ui:InfoBadge Value="{Binding InputOutputDevices.Count}" />
-                </ui:NavigationViewItem.InfoBadge>
-                <ui:NavigationViewItem.MenuItemsSource>
-                    <Binding Path="InputOutputDevices" />
-                </ui:NavigationViewItem.MenuItemsSource>
-                <ui:NavigationViewItem.DataTemplates>
-                    <DataTemplate DataType="{x:Type devices:IDeviceService}">
-                        <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent"
-                                    PointerPressed="DeviceOnPointerPressed">
-                            <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
-                            <TextBlock FontSize="14" Text="{Binding DeviceName}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ui:NavigationViewItem.DataTemplates>
-            </ui:NavigationViewItem>
-        </ui:NavigationView.MenuItems>
+    <Grid RowDefinitions="31,*">
 
-        <ui:NavigationView.FooterMenuItems>
-            <ui:NavigationViewItem Content="Settings">
-                <ui:NavigationViewItem.IconSource>
-                    <ui:PathIconSource Data="{StaticResource CogOutline}" />
-                </ui:NavigationViewItem.IconSource>
-            </ui:NavigationViewItem>
-        </ui:NavigationView.FooterMenuItems>
+        <ui:FANavigationView Grid.Row="1"
+                             AlwaysShowHeader="False"
+                             IsSettingsVisible="False"
+                             PaneTitle="DIM"
+                             SelectedItem="{Binding SelectedItem}"
+                             Content="{Binding CurrentViewModel}">
 
-    </ui:NavigationView>
+            <ui:FANavigationView.MenuItems>
+                <ui:FANavigationViewItem IsSelected="True" Content="Home"
+                                         IsEnabled="{Binding !ProfileCreatorViewModel.IsStarted}">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FAPathIconSource Data="{StaticResource HomeOutline}" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItemSeparator />
+                <ui:FANavigationViewItem Content="Profile Creator" IsEnabled="{Binding !HomeViewModel.IsStarted}">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FAPathIconSource Data="{StaticResource ShapePlusOutline}" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+                <ui:FANavigationViewItemSeparator />
+                <ui:FANavigationViewItem Content="Devices" SelectsOnInvoked="False">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FAPathIconSource Data="{StaticResource Devices}" />
+                    </ui:FANavigationViewItem.IconSource>
+                    <ui:FANavigationViewItem.InfoBadge>
+                        <ui:FAInfoBadge Value="{Binding InputOutputDevices.Count}" />
+                    </ui:FANavigationViewItem.InfoBadge>
+                    <ui:FANavigationViewItem.MenuItemsSource>
+                        <Binding Path="InputOutputDevices" />
+                    </ui:FANavigationViewItem.MenuItemsSource>
+                    <ui:FANavigationViewItem.DataTemplates>
+                        <DataTemplate DataType="{x:Type devices:IDeviceService}">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Background="Transparent"
+                                        PointerPressed="DeviceOnPointerPressed">
+                                <PathIcon Data="{Binding Icon}" ToolTip.Tip="{Binding Id}" />
+                                <TextBlock FontSize="14" Text="{Binding DeviceName}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ui:FANavigationViewItem.DataTemplates>
+                </ui:FANavigationViewItem>
+            </ui:FANavigationView.MenuItems>
+
+            <ui:FANavigationView.FooterMenuItems>
+                <ui:FANavigationViewItem Content="Settings">
+                    <ui:FANavigationViewItem.IconSource>
+                        <ui:FAPathIconSource Data="{StaticResource CogOutline}" />
+                    </ui:FANavigationViewItem.IconSource>
+                </ui:FANavigationViewItem>
+            </ui:FANavigationView.FooterMenuItems>
+
+        </ui:FANavigationView>
+
+    </Grid>
 
 </Window>

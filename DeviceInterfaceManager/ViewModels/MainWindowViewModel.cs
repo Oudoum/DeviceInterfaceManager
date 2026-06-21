@@ -50,7 +50,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         switch (value)
         {
-            case NavigationViewItem navigationViewItem:
+            case FANavigationViewItem navigationViewItem:
                 CurrentViewModel = (navigationViewItem.Content as string) switch
                 {
                     "Home" => HomeViewModel,

@@ -72,7 +72,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
     [ObservableProperty]
     public partial FAInfoBarSeverity InfoBarSeverity { get; set; }
 
-    private void SetInfoBar(string? message, InfoBarSeverity severity)
+    private void SetInfoBar(string? message, FAInfoBarSeverity severity)
     {
         InfoBarMessage = message;
         InfoBarSeverity = severity;
@@ -105,17 +105,17 @@ public partial class ProfileCreatorViewModel : ObservableObject
         dialogModel.ObservableCollection = _inputOutputDevices;
         dialogModel.SelectedItem = InputOutputDevice;
 
-        ContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
+        FAContentDialogResult result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, new ContentDialogSettings
         {
             Content = dialogModel,
             Title = "Device",
             PrimaryButtonText = "OK",
             SecondaryButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         });
 
         IDeviceService? inputOutputDevice = dialogModel.SelectedItem;
-        if (result == ContentDialogResult.Primary && inputOutputDevice is not null)
+        if (result == FAContentDialogResult.Primary && inputOutputDevice is not null)
         {
             if (changeProfileName)
             {
@@ -175,13 +175,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            SetInfoBar(e.Message, InfoBarSeverity.Error);
+            SetInfoBar(e.Message, FAInfoBarSeverity.Error);
             return;
         }
 
         if (profileCreatorModel is null)
         {
-            SetInfoBar("Profile could not be loaded.", InfoBarSeverity.Error);
+            SetInfoBar("Profile could not be loaded.", FAInfoBarSeverity.Error);
             return;
         }
         
@@ -200,13 +200,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     break;
             }
 
-            TaskDialogStandardResult dialogResult = await _dialogService.ShowTaskDialogAsync(
+            FATaskDialogStandardResult dialogResult = await _dialogService.ShowTaskDialogAsync(
                 Ioc.Default.GetService<MainWindowViewModel>()!,
                 new TaskDialogSettings
                 {
                     Header = "Profile not for device",
                     Content = "Are you sure you want to load this profile? All mapped positions will be removed!",
-                    Buttons = [TaskDialogButton.YesButton, TaskDialogButton.NoButton]
+                    Buttons = [FATaskDialogButton.YesButton, FATaskDialogButton.NoButton]
                 });
 
             if (!CheckRemap(dialogResult, profileCreatorModel))
@@ -226,20 +226,20 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 InputOutputDevice = inputOutputDevice;
             }
 
-            SetInfoBar(_previousProfileName + " successfully loaded.", InfoBarSeverity.Success);
+            SetInfoBar(_previousProfileName + " successfully loaded.", FAInfoBarSeverity.Success);
         }
             
         profileCreatorModel.DeviceName = InputOutputDevice?.DeviceName;
     }
 
-    private bool CheckRemap(TaskDialogStandardResult result, ProfileCreatorModel profileCreatorModel)
+    private static bool CheckRemap(FATaskDialogStandardResult result, ProfileCreatorModel profileCreatorModel)
     {
         switch (result)
         {
-            case TaskDialogStandardResult.No:
+            case FATaskDialogStandardResult.No:
                 break;
 
-            case TaskDialogStandardResult.Yes:
+            case FATaskDialogStandardResult.Yes:
                 foreach (InputCreator inputCreator in profileCreatorModel.InputCreators)
                 {
                     inputCreator.Input = null;
@@ -268,16 +268,16 @@ public partial class ProfileCreatorViewModel : ObservableObject
             return true;
         }
 
-        TaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
+        FATaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new TaskDialogSettings
             {
                 Header = "Overwrite",
                 Content = $"Are you sure you want to overwrite the profile for {ProfileCreatorModel.DeviceName}?",
-                Buttons = [TaskDialogButton.YesButton, TaskDialogButton.NoButton]
+                Buttons = [FATaskDialogButton.YesButton, FATaskDialogButton.NoButton]
             });
 
-        return result == TaskDialogStandardResult.Yes;
+        return result == FATaskDialogStandardResult.Yes;
     }
 
     private bool CanEditProfile()
@@ -294,11 +294,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
             _ = Directory.CreateDirectory(Path.GetDirectoryName(NewFilePath) ?? string.Empty);
             await File.WriteAllTextAsync(NewFilePath, JsonSerializer.Serialize(ProfileCreatorModel, _serializerOptions));
 
-            SetInfoBar(ProfileName + " successfully saved.", InfoBarSeverity.Success);
+            SetInfoBar(ProfileName + " successfully saved.", FAInfoBarSeverity.Success);
         }
         catch (Exception e)
         {
-            SetInfoBar(e.Message, InfoBarSeverity.Error);
+            SetInfoBar(e.Message, FAInfoBarSeverity.Error);
         }
     }
 
@@ -326,22 +326,22 @@ public partial class ProfileCreatorViewModel : ObservableObject
         dialogModel.Title = "Please enter your profile name:";
         dialogModel.Text = _previousProfileName;
 
-        ContentDialogResult result;
+        FAContentDialogResult result;
         ContentDialogSettings contentDialogSettings = new()
         {
             Content = dialogModel,
             Title = "Profile name",
             PrimaryButtonText = "OK",
             SecondaryButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary
+            DefaultButton = FAContentDialogButton.Primary
         };
 
         do
         {
             result = await _dialogService.ShowContentDialogAsync(App.MainWindowViewModel, contentDialogSettings);
-        } while (result == ContentDialogResult.Primary && dialogModel.CheckForErrors());
+        } while (result == FAContentDialogResult.Primary && dialogModel.CheckForErrors());
 
-        return result == ContentDialogResult.Primary ? dialogModel.Text : null;
+        return result == FAContentDialogResult.Primary ? dialogModel.Text : null;
     }
 
     //Button 5
@@ -367,11 +367,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
                     text = text.Replace(_previousProfileName, profileName);
                     await File.WriteAllTextAsync(NewFilePath, text);
 
-                    SetInfoBar($"{_previousProfileName} successfully renamed to {profileName}.", InfoBarSeverity.Success);
+                    SetInfoBar($"{_previousProfileName} successfully renamed to {profileName}.", FAInfoBarSeverity.Success);
                 }
                 catch (Exception e)
                 {
-                    SetInfoBar(e.Message, InfoBarSeverity.Error);
+                    SetInfoBar(e.Message, FAInfoBarSeverity.Error);
                 }
             }
 
@@ -412,23 +412,23 @@ public partial class ProfileCreatorViewModel : ObservableObject
         ProfileCreatorModel.InputCreators = new ObservableCollection<InputCreator>(sortedInputList);
         ProfileCreatorModel.OutputCreators = new ObservableCollection<OutputCreator>(sortedOutputList);
 
-        SetInfoBar(ProfileName + " successfully sorted.", InfoBarSeverity.Success);
+        SetInfoBar(ProfileName + " successfully sorted.", FAInfoBarSeverity.Success);
     }
 
     //Button 7
     [RelayCommand(CanExecute = nameof(CanEditProfile))]
     private async Task ClearProfileAsync()
     {
-        TaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
+        FATaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new TaskDialogSettings
             {
                 Header = "Clear",
                 Content = "Are you sure you want to clear all inputs and outputs?",
-                Buttons = [TaskDialogButton.YesButton, TaskDialogButton.NoButton]
+                Buttons = [FATaskDialogButton.YesButton, FATaskDialogButton.NoButton]
             });
 
-        if (result == TaskDialogStandardResult.Yes)
+        if (result == FATaskDialogStandardResult.Yes)
         {
             ProfileCreatorModel?.InputCreators.Clear();
             ProfileCreatorModel?.OutputCreators.Clear();
@@ -449,15 +449,15 @@ public partial class ProfileCreatorViewModel : ObservableObject
 
     private async Task<bool> ShowConfirmationDialogAsync(string rowType)
     {
-        TaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
+        FATaskDialogStandardResult result = await _dialogService.ShowTaskDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new TaskDialogSettings
             {
                 Header = "Delete",
                 Content = $"Are you sure you want to delete the selected {rowType}?",
-                Buttons = [TaskDialogButton.YesButton, TaskDialogButton.NoButton]
+                Buttons = [FATaskDialogButton.YesButton, FATaskDialogButton.NoButton]
             });
-        return result == TaskDialogStandardResult.Yes;
+        return result == FATaskDialogStandardResult.Yes;
     }
 
     [RelayCommand]
@@ -644,7 +644,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
             ProfileCreatorModel.OutputCreators,
             inputCreator.Preconditions);
 
-        ContentDialogResult inputResult = await _dialogService.ShowContentDialogAsync(
+        FAContentDialogResult inputResult = await _dialogService.ShowContentDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new ContentDialogSettings
             {
@@ -652,11 +652,11 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 Title = "Input Creator",
                 PrimaryButtonText = "OK",
                 SecondaryButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Primary,
+                DefaultButton = FAContentDialogButton.Primary,
                 FullSizeDesired = true
             });
 
-        if (inputResult == ContentDialogResult.Primary)
+        if (inputResult == FAContentDialogResult.Primary)
         {
             inputCreator.Preconditions = inputCreatorViewModel.Copy();
         }
@@ -679,7 +679,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
             ProfileCreatorModel.OutputCreators,
             outputCreator.Preconditions);
 
-        ContentDialogResult outputResult = await _dialogService.ShowContentDialogAsync(
+        FAContentDialogResult outputResult = await _dialogService.ShowContentDialogAsync(
             Ioc.Default.GetService<MainWindowViewModel>()!,
             new ContentDialogSettings
             {
@@ -687,13 +687,13 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 Title = "Output Creator",
                 PrimaryButtonText = "OK",
                 SecondaryButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Primary,
+                DefaultButton = FAContentDialogButton.Primary,
                 FullSizeDesired = true
             });
 
         await InputOutputDevice.ResetAllOutputsAsync();
 
-        if (outputResult == ContentDialogResult.Primary)
+        if (outputResult == FAContentDialogResult.Primary)
         {
             outputCreator.Preconditions = outputCreatorViewModel.Copy();
         }
@@ -721,7 +721,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
                 await _profile.DisposeAsync();
             }
 
-            SetInfoBar(ProfileName + " stopped.", InfoBarSeverity.Informational);
+            SetInfoBar(ProfileName + " stopped.", FAInfoBarSeverity.Informational);
             return;
         }
 
@@ -730,7 +730,7 @@ public partial class ProfileCreatorViewModel : ObservableObject
         if (!token.IsCancellationRequested)
         {
             _profile = new ProfileService(_simConnectClientService, _pmdgHelperService, ProfileCreatorModel, InputOutputDevice);
-            SetInfoBar(ProfileName + " started.", InfoBarSeverity.Informational);
+            SetInfoBar(ProfileName + " started.", FAInfoBarSeverity.Informational);
             return;
         }
 

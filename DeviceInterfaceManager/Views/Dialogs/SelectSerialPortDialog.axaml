@@ -55,16 +55,16 @@
                         <CheckBox Grid.Column="2"
                                   IsChecked="{Binding HasHighTensionDetents}" />
                         <Grid.ContextFlyout>
-                            <controls:CommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
-                                <controls:CommandBarButton ToolTip.Tip="Delete"
+                            <controls:FACommandBarFlyout ShowMode="TransientWithDismissOnPointerMoveAway">
+                                <controls:FACommandBarButton ToolTip.Tip="Delete"
                                                            Command="{Binding $parent[UserControl].((vm:SelectSerialPortDialogModel)DataContext).RemoveMappingCommand,
                                                          FallbackValue={x:Null}}"
                                                            CommandParameter="{Binding}">
-                                    <controls:CommandBarButton.IconSource>
-                                        <controls:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                    </controls:CommandBarButton.IconSource>
-                                </controls:CommandBarButton>
-                            </controls:CommandBarFlyout>
+                                    <controls:FACommandBarButton.IconSource>
+                                        <controls:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                    </controls:FACommandBarButton.IconSource>
+                                </controls:FACommandBarButton>
+                            </controls:FACommandBarFlyout>
                         </Grid.ContextFlyout>
                     </Grid>
                 </DataTemplate>

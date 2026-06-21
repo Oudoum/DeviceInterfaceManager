@@ -72,7 +72,6 @@ public class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        BindingPlugins.DataValidators.RemoveAt(0);
         GC.KeepAlive(typeof(DialogService));
 
         CreateTrayIcon();

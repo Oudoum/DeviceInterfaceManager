@@ -28,61 +28,61 @@
                 </StackPanel>
             </DockPanel>
 
-            <ui:SettingsExpander Header="Application">
-                <ui:SettingsExpander.IconSource>
-                    <ui:PathIconSource Data="{StaticResource ApplicationOutline}" />
-                </ui:SettingsExpander.IconSource>
+            <ui:FASettingsExpander Header="Application">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAPathIconSource Data="{StaticResource ApplicationOutline}" />
+                </ui:FASettingsExpander.IconSource>
 
-                <ui:SettingsExpanderItem Content="Autohide on startup"
+                <ui:FASettingsExpanderItem Content="Autohide on startup"
                                          Description="The window starts directly into the tray and all assigned profiles start automatically">
-                    <ui:SettingsExpanderItem.Footer>
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.AutoHide}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="Minimize to tray"
+                <ui:FASettingsExpanderItem Content="Minimize to tray"
                                          Description="The application moves to tray if minimized">
-                    <ui:SettingsExpanderItem.Footer>
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.MinimizedHide}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="Updates"
+                <ui:FASettingsExpanderItem Content="Updates"
                                          Description="Automatically check for updates">
-                    <ui:SettingsExpanderItem.Footer>
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.CheckForUpdates}"
                                       ToolTip.Tip="The application checks for updates while starting." />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Height="73">
-                    <ui:SettingsExpanderItem.Content>
-                        <ui:InfoBar Title="Device Interface Manager is up-to-date."
+                <ui:FASettingsExpanderItem Height="73">
+                    <ui:FASettingsExpanderItem.Content>
+                        <ui:FAInfoBar Title="Device Interface Manager is up-to-date."
                                     IsOpen="{Binding IsUpToDate}"
                                     Severity="Success" />
-                    </ui:SettingsExpanderItem.Content>
-                    <ui:SettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem.Content>
+                    <ui:FASettingsExpanderItem.Footer>
                         <Button Content="Check for updates"
                                 Command="{Binding CheckForUpdatesCommand}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-            </ui:SettingsExpander>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="Drivers">
-                <ui:SettingsExpander.IconSource>
-                    <ui:PathIconSource Data="{StaticResource Memory}" />
-                </ui:SettingsExpander.IconSource>
+            <ui:FASettingsExpander Header="Drivers">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAPathIconSource Data="{StaticResource Memory}" />
+                </ui:FASettingsExpander.IconSource>
 
                 <!-- FDS -->
-                <ui:SettingsExpanderItem Content="Flightdeck Solutions USB">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Flightdeck Solutions USB">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.FdsUsb}"
                                       Command="{Binding ToggleFdsUsbCommand}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="Flightdeck Solutions E-Series">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Flightdeck Solutions E-Series">
+                    <ui:FASettingsExpanderItem.Footer>
                         <StackPanel Orientation="Horizontal"
                                     Spacing="10">
                             <Button Command="{Binding ChangeInterfaceItEthernetDeviceCommand}"
@@ -94,46 +94,46 @@
                             <ToggleSwitch IsChecked="{Binding Settings.FdsEthernet}"
                                           Command="{Binding ToggleFdsEthernetCommand}" />
                         </StackPanel>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- CPflight -->
-                <ui:SettingsExpanderItem Content="CPflight USB">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="CPflight USB">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsEnabled="False" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="CPflight Ethernet">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="CPflight Ethernet">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsEnabled="False" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- HID -->
-                <ui:SettingsExpanderItem Content="Human Interface Device [HID]">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Human Interface Device [HID]">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsEnabled="False" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- Arduino -->
-                <ui:SettingsExpanderItem Content="Arduino">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Arduino">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsEnabled="False" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- SIOC -->
-                <ui:SettingsExpanderItem Content="SIOC">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="SIOC">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsEnabled="False" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- FSCockpit -->
-                <ui:SettingsExpanderItem Content="FSCockpit">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="FSCockpit">
+                    <ui:FASettingsExpanderItem.Footer>
                         <StackPanel Orientation="Horizontal"
                                     Spacing="10">
                             <Button Command="{Binding ChangeFsCockpitDeviceCommand}"
@@ -145,12 +145,12 @@
                             <ToggleSwitch IsChecked="{Binding Settings.FsCockpit}"
                                           Command="{Binding ToggleFsCockpitCommand}" />
                         </StackPanel>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- Connections -->
-                <ui:SettingsExpanderItem IsVisible="{Binding !!Settings.Connections.Count}">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem IsVisible="{Binding !!Settings.Connections.Count}">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ItemsControl ItemsSource="{Binding Settings.Connections}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -164,87 +164,87 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-            </ui:SettingsExpander>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="SimConnect">
-                <ui:SettingsExpander.IconSource>
-                    <ui:PathIconSource Data="{StaticResource TransitConnectionVariant}" />
-                </ui:SettingsExpander.IconSource>
+            <ui:FASettingsExpander Header="SimConnect">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAPathIconSource Data="{StaticResource TransitConnectionVariant}" />
+                </ui:FASettingsExpander.IconSource>
 
-                <ui:SettingsExpanderItem Content="WASM Module"
+                <ui:FASettingsExpanderItem Content="WASM Module"
                                          Description="{Binding WasmModuleUpdaterMessage}">
-                    <ui:SettingsExpanderItem.Footer>
+                    <ui:FASettingsExpanderItem.Footer>
                         <Button Content="Install or update WASM Module"
                                 Command="{Binding UpdateDimWasmModuleCommand}" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-            </ui:SettingsExpander>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="Server">
-                <ui:SettingsExpander.IconSource>
-                    <ui:PathIconSource Data="{StaticResource ServerNetworkOutline}" />
-                </ui:SettingsExpander.IconSource>
+            <ui:FASettingsExpander Header="Server">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAPathIconSource Data="{StaticResource ServerNetworkOutline}" />
+                </ui:FASettingsExpander.IconSource>
 
-                <ui:SettingsExpanderItem Content="Server">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Server">
+                    <ui:FASettingsExpanderItem.Footer>
                         <ToggleSwitch IsChecked="{Binding Settings.Server }"
                                       Command="{Binding StartServerCommand }" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="IP-Address">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="IP-Address">
+                    <ui:FASettingsExpanderItem.Footer>
                         <TextBox Classes="clear"
                                  Watermark="127.0.0.1"
                                  Text="{Binding Settings.IpAddress}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="120"
                                  MaxWidth="220" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="Port">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Port">
+                    <ui:FASettingsExpanderItem.Footer>
                         <TextBox Classes="clear"
                                  Watermark="2024"
                                  Text="{Binding Settings.Port}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="90"
                                  MaxWidth="180" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-            </ui:SettingsExpander>
+            </ui:FASettingsExpander>
 
-            <ui:SettingsExpander Header="Info">
-                <ui:SettingsExpander.IconSource>
-                    <ui:PathIconSource Data="{StaticResource InformationOutline}" />
-                </ui:SettingsExpander.IconSource>
+            <ui:FASettingsExpander Header="Info">
+                <ui:FASettingsExpander.IconSource>
+                    <ui:FAPathIconSource Data="{StaticResource InformationOutline}" />
+                </ui:FASettingsExpander.IconSource>
 
-                <ui:SettingsExpanderItem Content="Discord">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="Discord">
+                    <ui:FASettingsExpanderItem.Footer>
                         <HyperlinkButton NavigateUri="https://discord.gg/8SS5ew4WvT">
                             <Svg Height="42" Path="/Assets/Images/icon_clyde_white_RGB.svg" />
                         </HyperlinkButton>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem Content="GitHub">
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem Content="GitHub">
+                    <ui:FASettingsExpanderItem.Footer>
                         <HyperlinkButton NavigateUri="https://github.com/Oudoum/DeviceInterfaceManager">
                             <Svg Height="42" Path="/Assets/Images/github-mark-white.svg" />
                         </HyperlinkButton>
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
-                <ui:SettingsExpanderItem>
-                    <ui:SettingsExpanderItem.Footer>
+                <ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem.Footer>
                         <HyperlinkButton Command="{Binding OpenUserDataFolderCommand}" Content="User Data" />
-                    </ui:SettingsExpanderItem.Footer>
-                </ui:SettingsExpanderItem>
-            </ui:SettingsExpander>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
         </StackPanel>
     </ScrollViewer>

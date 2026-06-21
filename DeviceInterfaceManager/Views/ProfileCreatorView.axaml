@@ -24,165 +24,165 @@
 
         <StackPanel Grid.Row="0">
 
-            <ui:CommandBar>
-                <ui:CommandBar.PrimaryCommands>
+            <ui:FACommandBar>
+                <ui:FACommandBar.PrimaryCommands>
 
-                    <ui:CommandBarButton Label="New" Command="{Binding CreateProfileCommandCommand }">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource FilePlusOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="New" Command="{Binding CreateProfileCommandCommand }">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource FilePlusOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Load" Command="{Binding LoadProfileCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource FolderOpenOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="Load" Command="{Binding LoadProfileCommand}">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource FolderOpenOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Change Device" Command="{Binding ChangeDeviceCommand }">
-                        <ui:CommandBarButton.CommandParameter>
+                    <ui:FACommandBarButton Label="Change Device" Command="{Binding ChangeDeviceCommand }">
+                        <ui:FACommandBarButton.CommandParameter>
                             <sys:Boolean>False</sys:Boolean>
-                        </ui:CommandBarButton.CommandParameter>
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource Devices}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                        </ui:FACommandBarButton.CommandParameter>
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource Devices}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Save" Command="{Binding SaveProfileCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource ContentSaveOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="Save" Command="{Binding SaveProfileCommand}">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource ContentSaveOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Save as" Command="{Binding SaveProfileAsCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource ContentSaveEditOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="Save as" Command="{Binding SaveProfileAsCommand}">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource ContentSaveEditOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Rename" Command="{Binding ChangeProfileNameCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource RenameOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="Rename" Command="{Binding ChangeProfileNameCommand}">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource RenameOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Sort"
+                    <ui:FACommandBarButton Label="Sort"
                                          Command="{Binding SortInputOutputCommand}"
                                          Classes.null="{Binding IsSortedAscending, Converter={x:Static ObjectConverters.IsNull}}"
                                          Classes.ascending="{Binding IsSortedAscending}"
                                          Classes.descending="{Binding !IsSortedAscending}">
-                        <ui:CommandBarButton.Styles>
-                            <Style Selector="ui|CommandBarButton.ascending">
+                        <ui:FACommandBarButton.Styles>
+                            <Style Selector="ui|FACommandBarButton.ascending">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalAscending}" />
+                                    <ui:FAPathIconSource Data="{StaticResource SortAlphabeticalAscending}" />
                                 </Setter>
                             </Style>
-                            <Style Selector="ui|CommandBarButton.descending">
+                            <Style Selector="ui|FACommandBarButton.descending">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabeticalDescending}" />
+                                    <ui:FAPathIconSource Data="{StaticResource SortAlphabeticalDescending}" />
                                 </Setter>
                             </Style>
-                            <Style Selector="ui|CommandBarButton.null">
+                            <Style Selector="ui|FACommandBarButton.null">
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource SortAlphabetical}" />
+                                    <ui:FAPathIconSource Data="{StaticResource SortAlphabetical}" />
                                 </Setter>
                             </Style>
-                        </ui:CommandBarButton.Styles>
-                    </ui:CommandBarButton>
+                        </ui:FACommandBarButton.Styles>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarButton Label="Clear" Command="{Binding ClearProfileCommand}">
-                        <ui:CommandBarButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                        </ui:CommandBarButton.IconSource>
-                    </ui:CommandBarButton>
+                    <ui:FACommandBarButton Label="Clear" Command="{Binding ClearProfileCommand}">
+                        <ui:FACommandBarButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                        </ui:FACommandBarButton.IconSource>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarToggleButton Label="Always On Top" IsCheckedChanged="ToggleButtonOnIsCheckedChanged"
+                    <ui:FACommandBarToggleButton Label="Always On Top" IsCheckedChanged="ToggleButtonOnIsCheckedChanged"
                                                HotKey="F1">
-                        <ui:CommandBarToggleButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource ArrowUpBoldBoxOutline}" />
-                        </ui:CommandBarToggleButton.IconSource>
-                    </ui:CommandBarToggleButton>
+                        <ui:FACommandBarToggleButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource ArrowUpBoldBoxOutline}" />
+                        </ui:FACommandBarToggleButton.IconSource>
+                    </ui:FACommandBarToggleButton>
 
-                    <ui:CommandBarToggleButton Name="FlightSimValueToggleButton"
+                    <ui:FACommandBarToggleButton Name="FlightSimValueToggleButton"
                                                Label="Flight Sim Value"
                                                HotKey="F3">
-                        <ui:CommandBarToggleButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource AirplaneTakeoff}" />
-                        </ui:CommandBarToggleButton.IconSource>
-                    </ui:CommandBarToggleButton>
+                        <ui:FACommandBarToggleButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource AirplaneTakeoff}" />
+                        </ui:FACommandBarToggleButton.IconSource>
+                    </ui:FACommandBarToggleButton>
 
-                    <ui:CommandBarToggleButton Name="OutputValueToggleButton"
+                    <ui:FACommandBarToggleButton Name="OutputValueToggleButton"
                                                Label="Output Value"
                                                HotKey="F4">
-                        <ui:CommandBarToggleButton.IconSource>
-                            <ui:PathIconSource Data="{StaticResource AirplaneLanding}" />
-                        </ui:CommandBarToggleButton.IconSource>
-                    </ui:CommandBarToggleButton>
+                        <ui:FACommandBarToggleButton.IconSource>
+                            <ui:FAPathIconSource Data="{StaticResource AirplaneLanding}" />
+                        </ui:FACommandBarToggleButton.IconSource>
+                    </ui:FACommandBarToggleButton>
 
-                    <ui:CommandBarButton Classes.start="{Binding !IsStarted}"
+                    <ui:FACommandBarButton Classes.start="{Binding !IsStarted}"
                                          Classes.stop="{Binding IsStarted}"
                                          Classes.running="{Binding StartProfilesCommand.IsRunning}"
                                          HotKey="F5">
-                        <ui:CommandBarButton.Styles>
-                            <Style Selector="ui|CommandBarButton.start">
+                        <ui:FACommandBarButton.Styles>
+                            <Style Selector="ui|FACommandBarButton.start">
                                 <Setter Property="Label" Value="Start" />
                                 <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Play}" />
+                                    <ui:FAPathIconSource Data="{StaticResource Play}" />
                                 </Setter>
                             </Style>
-                            <Style Selector="ui|CommandBarButton.stop">
+                            <Style Selector="ui|FACommandBarButton.stop">
                                 <Setter Property="Label" Value="Stop" />
                                 <Setter Property="Command" Value="{Binding StartProfilesCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Stop}" />
+                                    <ui:FAPathIconSource Data="{StaticResource Stop}" />
                                 </Setter>
                             </Style>
-                            <Style Selector="ui|CommandBarButton.running">
+                            <Style Selector="ui|FACommandBarButton.running">
                                 <Setter Property="Label" Value="Cancel" />
                                 <Setter Property="Command" Value="{Binding StartProfilesCancelCommand}" />
                                 <Setter Property="IconSource">
-                                    <ui:PathIconSource Data="{StaticResource Cancel}" />
+                                    <ui:FAPathIconSource Data="{StaticResource Cancel}" />
                                 </Setter>
                             </Style>
-                        </ui:CommandBarButton.Styles>
-                    </ui:CommandBarButton>
+                        </ui:FACommandBarButton.Styles>
+                    </ui:FACommandBarButton>
 
-                    <ui:CommandBarElementContainer>
-                        <ui:ProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
+                    <ui:FACommandBarElementContainer>
+                        <ui:FAProgressRing IsVisible="{Binding StartProfilesCommand.IsRunning}"
                                          IsIndeterminate="{Binding StartProfilesCommand.IsRunning}"
                                          BorderThickness="5" />
-                    </ui:CommandBarElementContainer>
+                    </ui:FACommandBarElementContainer>
 
-                    <ui:CommandBarSeparator />
+                    <ui:FACommandBarSeparator />
 
-                    <ui:CommandBarElementContainer Margin="10 10 0 0">
+                    <ui:FACommandBarElementContainer Margin="10 10 0 0">
                         <ComboBox ItemsSource="{Binding EventDataTypePreSelections}"
                                   SelectedItem="{Binding EventDataTypePreSelection}" />
-                    </ui:CommandBarElementContainer>
+                    </ui:FACommandBarElementContainer>
 
-                </ui:CommandBar.PrimaryCommands>
-                <ui:CommandBar.SecondaryCommands>
-                    <ui:CommandBarSeparator />
-                </ui:CommandBar.SecondaryCommands>
-            </ui:CommandBar>
+                </ui:FACommandBar.PrimaryCommands>
+                <ui:FACommandBar.SecondaryCommands>
+                    <ui:FACommandBarSeparator />
+                </ui:FACommandBar.SecondaryCommands>
+            </ui:FACommandBar>
 
-            <ui:CommandBar>
-                <ui:CommandBar.Styles>
+            <ui:FACommandBar>
+                <ui:FACommandBar.Styles>
                     <Style Selector="TextBlock">
                         <Setter Property="Margin" Value="10 0 10 0" />
                         <Setter Property="VerticalAlignment" Value="Center" />
                     </Style>
-                </ui:CommandBar.Styles>
-                <ui:CommandBar.PrimaryCommands>
+                </ui:FACommandBar.Styles>
+                <ui:FACommandBar.PrimaryCommands>
 
-                    <ui:CommandBarElementContainer>
+                    <ui:FACommandBarElementContainer>
                         <TextBlock Text="{Binding InputOutputDevice.DeviceName, FallbackValue='None'}" />
-                    </ui:CommandBarElementContainer>
+                    </ui:FACommandBarElementContainer>
 
-                    <ui:CommandBarSeparator />
+                    <ui:FACommandBarSeparator />
 
-                    <ui:CommandBarElementContainer
+                    <ui:FACommandBarElementContainer
                         IsHitTestVisible="{Binding InputOutputDevice, Converter={x:Static ObjectConverters.IsNotNull}}"
                         PointerPressed="InputElementOnPointerPressed">
                         <TextBlock Text="{Binding ProfileName, FallbackValue='---'}" />
@@ -197,12 +197,12 @@
                                          Width="400" />
                             </Flyout>
                         </FlyoutBase.AttachedFlyout>
-                    </ui:CommandBarElementContainer>
+                    </ui:FACommandBarElementContainer>
 
-                </ui:CommandBar.PrimaryCommands>
-            </ui:CommandBar>
+                </ui:FACommandBar.PrimaryCommands>
+            </ui:FACommandBar>
 
-            <ui:InfoBar IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay}"
+            <ui:FAInfoBar IsOpen="{Binding InfoBarIsOpen, Mode=TwoWay}"
                         Severity="{Binding InfoBarSeverity}"
                         Message="{Binding InfoBarMessage}" />
         </StackPanel>
@@ -256,38 +256,38 @@
                     </Setter>
                     <Setter Property="ContextFlyout">
                         <ui:FAMenuFlyout Placement="Bottom" ShowMode="TransientWithDismissOnPointerMoveAway">
-                            <ui:MenuFlyoutItem Text="Activate"
+                            <ui:FAMenuFlyoutItem Text="Activate"
                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).ActivateInputOutputCreatorCommand,
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
-                                <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOutline}" />
-                                </ui:MenuFlyoutItem.IconSource>
-                            </ui:MenuFlyoutItem>
-                            <ui:MenuFlyoutItem Text="Deactivate"
+                                <ui:FAMenuFlyoutItem.IconSource>
+                                    <ui:FAPathIconSource Data="{StaticResource ToggleSwitchOutline}" />
+                                </ui:FAMenuFlyoutItem.IconSource>
+                            </ui:FAMenuFlyoutItem>
+                            <ui:FAMenuFlyoutItem Text="Deactivate"
                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeactivateInputOutputCreatorCommand,
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
-                                <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ToggleSwitchOffOutline}" />
-                                </ui:MenuFlyoutItem.IconSource>
-                            </ui:MenuFlyoutItem>
-                            <ui:MenuFlyoutItem Text="Duplicate"
+                                <ui:FAMenuFlyoutItem.IconSource>
+                                    <ui:FAPathIconSource Data="{StaticResource ToggleSwitchOffOutline}" />
+                                </ui:FAMenuFlyoutItem.IconSource>
+                            </ui:FAMenuFlyoutItem>
+                            <ui:FAMenuFlyoutItem Text="Duplicate"
                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DuplicateInputOutputCreatorRowCommand,
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
-                                <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource ContentDuplicate}" />
-                                </ui:MenuFlyoutItem.IconSource>
-                            </ui:MenuFlyoutItem>
-                            <ui:MenuFlyoutItem Text="Delete"
+                                <ui:FAMenuFlyoutItem.IconSource>
+                                    <ui:FAPathIconSource Data="{StaticResource ContentDuplicate}" />
+                                </ui:FAMenuFlyoutItem.IconSource>
+                            </ui:FAMenuFlyoutItem>
+                            <ui:FAMenuFlyoutItem Text="Delete"
                                                Command="{Binding $parent.((vm:ProfileCreatorViewModel)DataContext).DeleteInputOutputCreatorRowCommand,
                                                FallbackValue={x:Null}}"
                                                CommandParameter="{Binding $parent[DataGrid].SelectedItems}">
-                                <ui:MenuFlyoutItem.IconSource>
-                                    <ui:PathIconSource Data="{StaticResource TrashCanOutline}" />
-                                </ui:MenuFlyoutItem.IconSource>
-                            </ui:MenuFlyoutItem>
+                                <ui:FAMenuFlyoutItem.IconSource>
+                                    <ui:FAPathIconSource Data="{StaticResource TrashCanOutline}" />
+                                </ui:FAMenuFlyoutItem.IconSource>
+                            </ui:FAMenuFlyoutItem>
                         </ui:FAMenuFlyout>
                     </Setter>
                     <Setter Property="Content">
@@ -671,11 +671,11 @@
                                                 <ToolTip.Tip>
                                                     <ScrollViewer MaxHeight="200"
                                                                   Width="65">
-                                                        <ui:ItemsRepeater ItemsSource="{Binding Outputs}">
-                                                            <ui:ItemsRepeater.Layout>
-                                                                <ui:StackLayout Orientation="Vertical" />
-                                                            </ui:ItemsRepeater.Layout>
-                                                        </ui:ItemsRepeater>
+                                                        <ui:FAItemsRepeater ItemsSource="{Binding Outputs}">
+                                                            <ui:FAItemsRepeater.Layout>
+                                                                <ui:FAStackLayout Orientation="Vertical" />
+                                                            </ui:FAItemsRepeater.Layout>
+                                                        </ui:FAItemsRepeater>
                                                     </ScrollViewer>
                                                 </ToolTip.Tip>
                                                 <Grid.Styles>
