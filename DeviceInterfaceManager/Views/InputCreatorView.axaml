@@ -98,7 +98,7 @@
                                    VerticalAlignment="Center"
                                    Text="Event" />
                         <AutoCompleteBox Grid.Column="1"
-                                         Watermark="Search..."
+                                         PlaceholderText="Search..."
                                          FilterMode="ContainsOrdinal"
                                          SelectedItem="{Binding Event}"
                                          ItemsSource="{Binding PmdgEventEnumerable}"
@@ -128,7 +128,7 @@
                                  TextWrapping="Wrap"
                                  AcceptsReturn="True"
                                  AcceptsTab="True"
-                                 Watermark="SimVar/K:Event/H:Event/RPN"
+                                 PlaceholderText="SimVar/K:Event/H:Event/RPN"
                                  Text="{Binding Event}" />
                     </Grid>
 
@@ -174,7 +174,7 @@
                                      Classes.secondParameter="{Binding IsKEvent}"
                                      Text="{Binding DataPress, Converter={StaticResource NullableConverter}}" />
                             <TextBox Classes="clearButton"
-                                     Watermark="Parameter 2"
+                                     PlaceholderText="Parameter 2"
                                      Text="{Binding DataPress2, Converter={StaticResource NullableConverter}}">
                                 <TextBox.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
@@ -223,7 +223,7 @@
                                      Classes.secondParameter="{Binding IsKEvent}"
                                      Text="{Binding DataRelease, Converter={StaticResource NullableConverter}}" />
                             <TextBox Classes="clearButton"
-                                     Watermark="Parameter 2"
+                                     PlaceholderText="Parameter 2"
                                      Text="{Binding DataRelease2, Converter={StaticResource NullableConverter}}">
                                 <TextBox.IsVisible>
                                     <MultiBinding Converter="{x:Static BoolConverters.And}">

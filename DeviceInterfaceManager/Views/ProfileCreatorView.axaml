@@ -189,7 +189,7 @@
                         <FlyoutBase.AttachedFlyout>
                             <Flyout Placement="BottomEdgeAlignedLeft">
                                 <TextBox Text="{Binding ProfileCreatorModel.Description, FallbackValue=''}"
-                                         Watermark="Description"
+                                         PlaceholderText="Description"
                                          TextWrapping="Wrap"
                                          AcceptsTab="True"
                                          AcceptsReturn="True"

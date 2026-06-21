@@ -114,7 +114,7 @@
                 <TextBox Grid.Column="1"
                          Classes="clearButton"
                          HorizontalAlignment="Stretch"
-                         Watermark="Comparison Value"
+                         PlaceholderText="Comparison Value"
                          Text="{Binding SelectedPrecondition.ComparisonValue, FallbackValue=''}" />
             </Grid>
 

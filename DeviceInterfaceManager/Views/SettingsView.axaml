@@ -197,7 +197,7 @@
                 <ui:FASettingsExpanderItem Content="IP-Address">
                     <ui:FASettingsExpanderItem.Footer>
                         <TextBox Classes="clear"
-                                 Watermark="127.0.0.1"
+                                 PlaceholderText="127.0.0.1"
                                  Text="{Binding Settings.IpAddress}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="120"
@@ -208,7 +208,7 @@
                 <ui:FASettingsExpanderItem Content="Port">
                     <ui:FASettingsExpanderItem.Footer>
                         <TextBox Classes="clear"
-                                 Watermark="2024"
+                                 PlaceholderText="2024"
                                  Text="{Binding Settings.Port}"
                                  HorizontalContentAlignment="Center"
                                  MinWidth="90"

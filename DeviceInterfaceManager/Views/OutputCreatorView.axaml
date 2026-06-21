@@ -138,7 +138,7 @@
                                    Text="PMDG Data" />
                         <AutoCompleteBox Grid.Column="1"
                                          HorizontalAlignment="Stretch"
-                                         Watermark="Search..."
+                                         PlaceholderText="Search..."
                                          FilterMode="ContainsOrdinal"
                                          SelectedItem="{Binding Data}"
                                          ItemsSource="{Binding PmdgDataEnumerable}"
@@ -180,7 +180,7 @@
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
                                  TextWrapping="Wrap"
-                                 Watermark="SimVar / L:Var"
+                                 PlaceholderText="SimVar / L:Var"
                                  Text="{Binding Data}" />
                     </Grid>
 
@@ -193,7 +193,7 @@
                         <TextBox Grid.Column="1"
                                  Classes="clearButton"
                                  HorizontalAlignment="Stretch"
-                                 Watermark="Unit"
+                                 PlaceholderText="Unit"
                                  Text="{Binding Unit}" />
                     </Grid>
 
@@ -228,7 +228,7 @@
                                     </StackPanel>
                                 </Expander.Header>
                                 <TextBox VerticalAlignment="Center"
-                                         Watermark="Expression"
+                                         PlaceholderText="Expression"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          Text="{Binding Expression}" />
@@ -287,17 +287,17 @@
                                               SelectedItem="{Binding Operator}"
                                               ItemsSource="{Binding Operators}" />
                                     <TextBox VerticalAlignment="Center"
-                                             Watermark="Compare Value"
+                                             PlaceholderText="Compare Value"
                                              Width="120"
                                              Text="{Binding Value}"
                                              ToolTip.Tip="{Binding Value.Length}" />
                                     <TextBox VerticalAlignment="Center"
-                                             Watermark="True Value"
+                                             PlaceholderText="True Value"
                                              Width="120"
                                              Text="{Binding TrueValue}"
                                              ToolTip.Tip="{Binding TrueValue.Length}" />
                                     <TextBox VerticalAlignment="Center"
-                                             Watermark="False Value"
+                                             PlaceholderText="False Value"
                                              Width="120"
                                              Text="{Binding FalseValue}"
                                              ToolTip.Tip="{Binding FalseValue.Length}" />
@@ -437,7 +437,7 @@
                                              MaxLength="1"
                                              Text="{Binding Character, Converter={StaticResource NullableCharConverter}}" />
                                     <TextBox VerticalAlignment="Center"
-                                             Watermark="Length"
+                                             PlaceholderText="Length"
                                              Width="120"
                                              Text="{Binding Length}" />
                                     <ComboBox VerticalAlignment="Center"
@@ -499,7 +499,7 @@
                                              MaxLength="1"
                                              Text="{Binding Text, Converter={StaticResource NullableCharConverter}}" />
                                     <TextBox VerticalAlignment="Center"
-                                             Watermark="Length"
+                                             PlaceholderText="Length"
                                              Width="120"
                                              Text="{Binding Position}" />
                                 </StackPanel>

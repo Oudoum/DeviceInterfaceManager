@@ -202,7 +202,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate DataType="devices:Component">
                                         <TextBox
-                                            Watermark="Data"
+                                            PlaceholderText="Data"
                                             HorizontalAlignment="Center"
                                             HorizontalContentAlignment="Center"
                                             FontSize="18"
