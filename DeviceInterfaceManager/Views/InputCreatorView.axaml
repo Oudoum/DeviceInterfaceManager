@@ -162,6 +162,12 @@
                                 <Binding Path="!IsAnalog"></Binding>
                             </MultiBinding>
                         </Grid.IsVisible>
+                        <Grid.IsEnabled>
+                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                <Binding Path="!IsPmdg"/>
+                                <Binding Path="#MousePressComboBox.SelectedItem" Converter="{x:Static ObjectConverters.IsNull}"/>
+                            </MultiBinding>
+                        </Grid.IsEnabled>
                         <TextBlock Grid.Column="0"
                                    Classes="switchData"
                                    Classes.analogData="{Binding IsAnalog}"
@@ -210,8 +216,13 @@
 
                     <!-- Data Release -->
                     <Grid ColumnDefinitions="* 2*"
-                          IsEnabled="{Binding #MouseReleaseComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}"
                           IsVisible="{Binding !IsAnalog}">
+                        <Grid.IsEnabled>
+                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                <Binding Path="!IsPmdg"/>
+                                <Binding Path="#MouseReleaseComboBox.SelectedItem" Converter="{x:Static ObjectConverters.IsNull}"/>
+                            </MultiBinding>
+                        </Grid.IsEnabled>
                         <TextBlock Grid.Column="0"
                                    VerticalAlignment="Center"
                                    Text="Data Release" />
