@@ -1,7 +1,15 @@
+using System.Text.Json.Serialization;
+
 namespace DeviceInterfaceManager.Models;
 
 public class DigitFormatting
 {
+    [JsonConstructor]
+    public DigitFormatting()
+    {
+        
+    }
+
     public DigitFormatting(int digit)
     {
         Digit = digit;
@@ -19,7 +27,7 @@ public class DigitFormatting
         return checkedSum is not null && (checkedSum & (1 << (Digit - 1))) != 0;
     }
 
-    public int Digit { get; }
+    public int Digit { get; set; }
 
     public bool IsDigitChecked { get; set; }
 
