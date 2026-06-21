@@ -447,6 +447,7 @@
                                         <DataTemplate>
                                             <TextBlock
                                                 Classes.hasMultiple="{Binding Interpolation, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Name="TextBlockEventType"
                                                 Text="{Binding EventType}"
                                                 Margin="12"
                                                 VerticalAlignment="Center">
@@ -474,8 +475,10 @@
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}{1}">
-                                                        <Binding Path="DataPress"
-                                                                 Converter="{StaticResource EnumToLongConverter}" />
+                                                        <MultiBinding Converter="{StaticResource EnumToLongConverter}" TargetNullValue="">
+                                                            <Binding Path="EventType" />
+                                                            <Binding Path="DataPress" />
+                                                        </MultiBinding>
                                                         <Binding Path="DataPress2"
                                                                  StringFormat="{} │ {0}"
                                                                  TargetNullValue="" />
@@ -494,8 +497,10 @@
                                             <TextBlock Margin="12" VerticalAlignment="Center">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}{1}">
-                                                        <Binding Path="DataRelease"
-                                                                 Converter="{StaticResource EnumToLongConverter}" />
+                                                        <MultiBinding Converter="{StaticResource EnumToLongConverter}" TargetNullValue="">
+                                                            <Binding Path="EventType" />
+                                                            <Binding Path="DataRelease" />
+                                                        </MultiBinding>
                                                         <Binding Path="DataRelease2"
                                                                  StringFormat="{} │ {0}"
                                                                  TargetNullValue="" />
