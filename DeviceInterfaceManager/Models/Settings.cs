@@ -34,6 +34,9 @@ public partial class Settings : ObservableObject
 
     [ObservableProperty]
     public partial bool FsCockpit { get; set; }
+    
+    [ObservableProperty]
+    public partial bool PoldragonetEnet { get; set; }
 
     [ObservableProperty]
     public partial ObservableCollection<IConnection>? Connections { get; set; } = [];

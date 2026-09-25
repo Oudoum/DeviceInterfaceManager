@@ -17,6 +17,7 @@ public partial class ProfileCreatorModel : ObservableObject
     public const string Arduino = "Arduino";
     public const string Sioc = "SIOC";
     public const string FsCockpit = "FSCockpit";
+    public const string PoldragonetEnet = "Poldragonet ENET";
 
     //Data-/EventTypes
     public const string Pmdg737 = "PMDG737";

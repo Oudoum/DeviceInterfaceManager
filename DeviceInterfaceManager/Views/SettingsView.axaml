@@ -147,6 +147,23 @@
                         </StackPanel>
                     </ui:FASettingsExpanderItem.Footer>
                 </ui:FASettingsExpanderItem>
+                
+                <!-- Poldragonet Ethernet -->
+                <ui:FASettingsExpanderItem Content="Poldragonet Ethernet">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <Button Command="{Binding ChangePoldragonetEthernetDeviceCommand}"
+                                    IsEnabled="{Binding !Settings.PoldragonetEnet}">
+                                <Button.Content>
+                                    <PathIcon Data="{StaticResource CogOutline}" />
+                                </Button.Content>
+                            </Button>
+                            <ToggleSwitch IsChecked="{Binding Settings.PoldragonetEnet}"
+                                          Command="{Binding TogglePoldragonetEthernetCommand}" />
+                        </StackPanel>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
 
                 <!-- Connections -->
                 <ui:FASettingsExpanderItem IsVisible="{Binding !!Settings.Connections.Count}">

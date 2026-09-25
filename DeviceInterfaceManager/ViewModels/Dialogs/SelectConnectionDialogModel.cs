@@ -53,6 +53,7 @@ public partial class SelectConnectionDialogModel : AskTextBoxDialogModel
         {
             ProfileCreatorModel.FdsEnet => new Connection(DriverName, PreSelectedConnection.ConnectionName),
             ProfileCreatorModel.FsCockpit => new FsCockpitConnection(DriverName, PreSelectedConnection.ConnectionName),
+            ProfileCreatorModel.PoldragonetEnet => new Connection(DriverName, PreSelectedConnection.ConnectionName),
             _ => null
         };
 
@@ -72,6 +73,7 @@ public partial class SelectConnectionDialogModel : AskTextBoxDialogModel
         {
             ProfileCreatorModel.FdsEnet => new Connection(),
             ProfileCreatorModel.FsCockpit => new FsCockpitConnection(),
+            ProfileCreatorModel.PoldragonetEnet => new Connection(),
             _ => null
         };
 

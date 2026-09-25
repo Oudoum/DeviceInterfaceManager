@@ -11,6 +11,7 @@ using DeviceInterfaceManager.Services;
 using DeviceInterfaceManager.Services.Devices;
 using DeviceInterfaceManager.Services.Devices.Fds;
 using DeviceInterfaceManager.Services.Devices.FsCockpit;
+using DeviceInterfaceManager.Services.Devices.Poldragonet;
 using DeviceInterfaceManager.ViewModels.Dialogs;
 using FluentAvalonia.UI.Controls;
 using HanumanInstitute.MvvmDialogs;
@@ -33,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     private CancellationTokenSource? _fdsUsbCts;
     private CancellationTokenSource? _fdsEnetCts;
     private CancellationTokenSource? _fsCockpitCts;
+    private CancellationTokenSource? _poldragonetEntetCts;
 
     public SettingsViewModel(ILogger<SettingsViewModel> logger, ObservableCollection<IDeviceService> inputOutputDevices, SignalRServerService signalRServerService, SignalRClientService signalRClientService, IDialogService dialogService)
     {
@@ -75,6 +77,11 @@ public partial class SettingsViewModel : ObservableObject
         {
             await ToggleFsCockpitAsync();
         }
+
+        if (Settings.PoldragonetEnet)
+        {
+            await TogglePoldragonetEthernetAsync();
+        }
     }
 
     public void Disconnect()
@@ -82,6 +89,7 @@ public partial class SettingsViewModel : ObservableObject
         _fdsUsbCts?.Cancel();
         _fdsEnetCts?.Cancel();
         _fsCockpitCts?.Cancel();
+        _poldragonetEntetCts?.Cancel();
     }
 
     [ObservableProperty]
@@ -260,6 +268,42 @@ public partial class SettingsViewModel : ObservableObject
     {
         await ChangeSerialPortDeviceAsync(ProfileCreatorModel.FsCockpit);
     }
+
+    [RelayCommand]
+    private async Task TogglePoldragonetEthernetAsync()
+    {
+        if (!Settings.PoldragonetEnet)
+        {
+            await DisconnectAndRemove<PoldragonetEthernetService>(_poldragonetEntetCts);
+            return;
+        }
+
+        if (Settings.Connections is null)
+        {
+            return;
+        }
+
+        _poldragonetEntetCts = new CancellationTokenSource();
+        foreach (IConnection connection in Settings.Connections)
+        {
+            if (connection is not Connection poldragonetEthernetConnection ||
+                string.IsNullOrEmpty(poldragonetEthernetConnection.DriverName) ||
+                string.IsNullOrWhiteSpace(poldragonetEthernetConnection.ConnectionName) ||
+                poldragonetEthernetConnection.DriverName != ProfileCreatorModel.PoldragonetEnet)
+            {
+                continue;
+            }
+
+            PoldragonetEthernetService poldragonetEthernetService = new(connection.ConnectionName, _logger);
+            if (await poldragonetEthernetService.ConnectAsync(_poldragonetEntetCts.Token) == ConnectionStatus.Connected)
+            {
+                _inputOutputDevices.Add(poldragonetEthernetService);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChangePoldragonetEthernetDeviceAsync() => await ChangeInternetProtocolDeviceAsync(ProfileCreatorModel.PoldragonetEnet);
 
     private async Task ChangeDeviceAsync<TSelectConnectionDialogModel>(string driverName, string title, string text) where TSelectConnectionDialogModel : SelectConnectionDialogModel
     {
