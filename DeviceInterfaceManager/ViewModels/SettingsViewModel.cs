@@ -131,7 +131,7 @@ public partial class SettingsViewModel : ObservableObject
     private async Task DisconnectAndRemove<T>(CancellationTokenSource? cancellationTokenSource) where T : IDeviceService
     {
         if (cancellationTokenSource is not null)
-        { 
+        {
             await cancellationTokenSource.CancelAsync();
         }
 
@@ -291,7 +291,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         await ChangeDeviceAsync<SelectSerialPortDialogModel>(driverName, "COM Connections", "Select a serial port.");
     }
- 
+
     private async Task ChangeInternetProtocolDeviceAsync(string driverName)
     {
         await ChangeDeviceAsync<SelectInternetProtocolDialogModel>(driverName, "IP Connections", "Add an IP-Address.");
