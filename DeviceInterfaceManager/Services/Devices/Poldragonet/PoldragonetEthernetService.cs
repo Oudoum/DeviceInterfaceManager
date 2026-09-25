@@ -53,12 +53,12 @@ public class PoldragonetEthernetService : DeviceServiceBase
 
     public override Task SetDatalineAsync(int position, bool isEnabled)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public override Task SetSevenSegmentAsync(int position, string data)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public override async Task SetAnalogAsync(int position, double value)
